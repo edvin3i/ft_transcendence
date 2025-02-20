@@ -4,21 +4,21 @@ volumes:
                 name: djstatic
                 driver: local
                 driver_opts:
-                        device: data/djstatic
+                        device: ${PWD}/data/djstatic
                         o: bind
                         type: none
         postgres:
                 name: postgres
                 driver: local
                 driver_opts:
-                        device: data/postgres
+                        device: ${PWD}/data/postgres
                         o: bind
                         type: none
         frontend:
                 name: frontend
                 driver: local
                 driver_opts:
-                        device: srcs/frontend
+                        device: ${PWD}/srcs/frontend
                         o: bind
                         type: none     
 networks:
@@ -63,7 +63,7 @@ services:
     depends_on:
       - postgres
     volumes:
-      - djstatic:/ft_transcendence/static/
+      - djstatic:/app/static/
     env_file:
       - .env
     networks:
