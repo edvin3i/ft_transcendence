@@ -1,0 +1,18 @@
+[project]
+name = "djback"
+version = "0.1.0"
+description = "Backend part for ft_transcendence"
+readme = "README.md"
+requires-python = "==3.12"
+dependencies = [
+    "channels==4.2.0",
+    "daphne==4.1.2",
+    "django==5.1.6",
+    "gunicorn==22.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "ruff>=0.9.7",
+]
