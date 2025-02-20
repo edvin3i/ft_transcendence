@@ -1,0 +1,127 @@
+version: '3.9'
+
+volumes:
+        static:
+                name: djstatic
+                driver: local
+                driver_opts:
+                        device: ${HOME}/data/djstatic
+                        o: bind
+                        type: none
+        frontend:
+                name: frontend
+                driver: local
+                driver_opts:
+                        device: ${HOME}/data/frontend
+                        o: bind
+                        type: none
+        postgres:
+                name: postgres
+                driver: local
+                driver_opts:
+                        device: ${HOME}/data/postgres
+                        o: bind
+                        type: none     
+networks:
+  inception:
+    name: tnet
+    driver: bridge
+
+services:
+  nginx:
+    container_name: nginx
+    build: 
+      context: .
+      dockerfile: containers/nginx/Dockerfile
+    ports:
+      - "443:443"
+    depends_on:
+      - django
+      - adminer
+    volumes:
+      - frontend:/var/www/
+    networks:
+      - tnet
+    restart: always
+  django:
+    container_name: django
+    build: 
+      context: .
+      dockerfile: containers/django/Dockerfile
+    environment:
+        DOMAIN_NAME: ${DOMAIN_NAME}
+        DB_HOST: ${DB_HOST}
+        DB_NAME: ${DB_NAME}
+        DB_USER: ${DB_USER}
+        DB_PASSWORD: ${DB_PASSWORD}
+        DJ_ADMIN: ${DJ_ADMIN}
+        DJ_ADM_PASS: ${DJ_ADM_PASS}
+        DJ_ADM_EMAIL: ${DJ_ADM_EMAIL}
+        DJ_REDIS_PASSWORD: ${DJ_REDIS_PASSWORD}
+        DJ_CACHE_KEY_SALT: ${DJ_CACHE_KEY_SALT}
+    ports:
+      - "8080"
+    depends_on:
+      - postgres
+    volumes:
+      - djstatic:/ft_transcendence/static/
+    env_file:
+      - .env
+    networks:
+      - tnet
+    restart: always
+  postgres:
+    container_name: postgres
+    shm_size: 128mb
+    build: 
+      context: .
+      dockerfile: containers/postgres/Dockerfile
+      args:
+        - POSTGRES_DB=${DB_NAME}
+        - POSTGRES_USER=${DB_USER}
+        - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+        - "5432:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    networks:
+      - tnet
+    restart: always
+  redis:
+    container_name: redis
+    build:
+      context: .
+      dockerfile: containers/redis/Dockerfile
+      args:
+        DJ_REDIS_PASSWORD: ${DJ_REDIS_PASSWORD}
+    ports:
+      - "6379"
+    networks:
+      - tnet
+    restart: always
+  adminer:
+    container_name: adminer
+    build:
+      context: .
+      dockerfile: containers/adminer/Dockerfile
+    depends_on:
+      - postgres
+    ports:
+      - "9090"
+    networks:
+      - tnet
+    restart: always
+  adminerneo:
+    container_name: adminer
+    build:
+      context: .
+      dockerfile: containers/adminerneo/4/Dockerfile
+    depends_on:
+      - postgres
+    ports:
+      - "9091"
+    networks:
+      - tnet
+    restart: always
