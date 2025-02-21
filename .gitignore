@@ -204,6 +204,7 @@ cython_debug/
 *.app
 
 .env
+*.sqlite3
 
 
 .DS_Store

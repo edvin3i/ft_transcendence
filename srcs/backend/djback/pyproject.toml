@@ -3,12 +3,16 @@ name = "djback"
 version = "0.1.0"
 description = "Backend part for ft_transcendence"
 readme = "README.md"
-requires-python = "==3.12"
+requires-python = ">=3.12"
 dependencies = [
     "channels==4.2.0",
     "daphne==4.1.2",
+    "django-filter==25.1",
     "django==5.1.6",
+    "djangorestframework==3.15.2",
     "gunicorn==22.0.0",
+    "markdown==3.7",
+    "psycopg2-binary>=2.9.10",
 ]
 
 [dependency-groups]
