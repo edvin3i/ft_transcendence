@@ -1,13 +1,13 @@
 DOCKER_COMPOSE	=	docker compose
 DCOMPOSE_CONFG	=	docker-compose.yml
-# DATA_DIR		=	$(PWD)/data
-DATA_DIR		=	./data
+DATA_DIR		=	$(PWD)/data
+# DATA_DIR		=	./data
 RM				=	rm -rf
 
 
 create_dirs:
 	@echo "\e[36mCreating the volumes (dirs) at $(DATA_DIR)\e[0m"
-	@mkdir -p $(DATA_DIR)/postgres
+	@mkdir -p $(DATA_DIR)/pgdata
 	@mkdir -p $(DATA_DIR)/djstatic
 # @mkdir -p $(DATA_DIR)/frontend
 

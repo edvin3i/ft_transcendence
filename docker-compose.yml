@@ -4,16 +4,16 @@ volumes:
                 name: djstatic
                 driver: local
                 driver_opts:
-                        device: ./data/djstatic
+                        device: ${HOME}/data/djstatic
                         o: bind
                         type: none
-        postgres:
-                name: postgres
-                driver: local
-                driver_opts:
-                        device: ./data/postgres
-                        o: bind
-                        type: none
+        pgdata:
+                # name: pgdata
+                # driver: local
+                # driver_opts:
+                #         device: ${HOME}/data/pgdata
+                #         o: bind
+                #         type: none
         frontend:
                 name: frontend
                 driver: local
@@ -29,7 +29,7 @@ networks:
 services:
   nginx:
     container_name: nginx
-    build: 
+    build:
       context: .
       dockerfile: containers/nginx/Dockerfile
     ports:
@@ -66,7 +66,6 @@ services:
     depends_on:
       - postgres
     volumes:
-      # - ./data/djstatic:/app/static/
        - djstatic:/app/static/
     networks:
       - tnet
@@ -83,10 +82,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
         - "5432:5432"
-    # volumes:
-    #   - postgres:/var/lib/postgresql/data/
-    # env_file:
-    #   - .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data/
     networks:
       - tnet
     restart: always
