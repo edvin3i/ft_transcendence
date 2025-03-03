@@ -4,21 +4,21 @@ volumes:
                 name: djstatic
                 driver: local
                 driver_opts:
-                        device: ${PWD}/data/djstatic
+                        device: ./data/djstatic
                         o: bind
                         type: none
         postgres:
                 name: postgres
                 driver: local
                 driver_opts:
-                        device: ${PWD}/data/postgres
+                        device: ./data/postgres
                         o: bind
                         type: none
         frontend:
                 name: frontend
                 driver: local
                 driver_opts:
-                        device: ${PWD}/srcs/frontend
+                        device: ./srcs/frontend
                         o: bind
                         type: none     
 networks:
@@ -33,11 +33,12 @@ services:
       context: .
       dockerfile: containers/nginx/Dockerfile
     ports:
-      - "443:443"
+      - "4443:443"
     depends_on:
       - django
     volumes:
       - frontend:/var/www/
+      - djstatic:/var/www/djstatic/
     networks:
       - tnet
     restart: always
@@ -61,11 +62,12 @@ services:
         DJ_REDIS_PASSWORD: ${DJ_REDIS_PASSWORD}
         DJ_CACHE_KEY_SALT: ${DJ_CACHE_KEY_SALT}
     ports:
-      - "8000"
+      - "8000:8000"
     depends_on:
       - postgres
     volumes:
-      - djstatic:/app/static/
+      # - ./data/djstatic:/app/static/
+       - djstatic:/app/static/
     networks:
       - tnet
     restart: always

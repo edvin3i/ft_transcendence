@@ -1,6 +1,7 @@
 DOCKER_COMPOSE	=	docker compose
 DCOMPOSE_CONFG	=	docker-compose.yml
-DATA_DIR		=	$(PWD)/data
+# DATA_DIR		=	$(PWD)/data
+DATA_DIR		=	./data
 RM				=	rm -rf
 
 
@@ -24,6 +25,17 @@ start:
 
 stop:
 	$(DOCKER_COMPOSE) -f $(DCOMPOSE_CONFG) stop
+
+re:
+	$(DOCKER_COMPOSE) -f $(DCOMPOSE_CONFG) stop
+	$(DOCKER_COMPOSE) -f $(DCOMPOSE_CONFG) down --rmi all --volumes --remove-orphans
+	docker system prune -f
+	docker volume prune -f
+	docker network prune -f
+	$(RM) $(DATA_DIR)
+	$(DOCKER_COMPOSE) -f $(DCOMPOSE_CONFG) up -d
+
+	
 
 list:
 	docker ps

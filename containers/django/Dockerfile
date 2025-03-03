@@ -13,3 +13,4 @@ RUN uv sync
 ENTRYPOINT [ "sh", "/tmp/entrypoint.sh" ]
 
 CMD [ "uv", "run", "gunicorn", "-b", "0.0.0.0:8000", "djback.wsgi" ]
+# CMD ["uv", "run", "python3", "manage.py", "runserver", "0.0.0.0:8000"]
