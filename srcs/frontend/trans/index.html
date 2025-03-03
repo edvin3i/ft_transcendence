@@ -1,54 +1,201 @@
 <!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ft_transcendence</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            color: white;
-            text-align: center;
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            max-width: 600px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-        }
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-        p {
-            font-size: 1.2rem;
-        }
-        .loader {
-            width: 50px;
-            height: 50px;
-            border: 5px solid white;
-            border-top-color: transparent;
-            border-radius: 50%;
-            margin: 20px auto;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>ft_transcendence</h1>
-        <p>Le projet est en cours de développement.<br> Quelque chose d'incroyable arrive bientôt !</p>
-        <div class="loader"></div>
-    </div>
-</body>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Game</title>
+	</head>
+	<body>
+		<header>
+			<h1>Game</h1>
+			<p>Welcome to the game!</p>
+		</header>
+	
+		<hr>
+		
+		<main>
+			<div id="login">
+				<p>Please, log in to play the game.</p>
+				<button>Log in with GMail</button>
+				<p>---or---</p>
+				<form id="loginForm" method="POST" onsubmit=handleLogin(event)>
+					<div>
+						<label for="email">Enter your email:</label>
+						<input type="email"
+								id="email"
+								placeholder="username@email.com"
+								required
+								pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+								title="username@email.com">
+					</div>
+					<div>
+						<label for="password">Enter your password:</label>
+						<input type="password"
+								id="password"
+								placeholder="********"
+								required>
+					</div>
+					<button type="submit">Log in</button>
+				</form>
+				<p id="loginResult"></p>
+				<div>
+					<p style="display: inline;">Don't have an account?</p>
+					<button style="display: inline;" onclick=startAccountCreation()>Create account</button>
+				</div>
+			</div>
+				
+			<div id="accountCreation" hidden>
+				<p>Please, create your account to play the game.</p>
+				<button>Sign up with GMail</button>
+				<p>---or---</p>
+				<form id="accountCreationForm" method="POST" onsubmit=handleAccountCreation(event)>
+					<div>
+						<label for="newEmail">Enter your email:</label>
+						<input type="email"
+								id="newEmail"
+								placeholder="username@email.com"
+								required
+								pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+								title="username@email.com">
+					</div>
+					<div>
+						<label for="newPassword">Enter your password:</label>
+						<input  type="password"
+								id="newPassword"
+								placeholder="********"
+								required>
+					</div>
+					<button type="submit">Create account</button>
+				</form>
+				<p id="accountCreationResult"></p>
+				<div>
+					<p style="display: inline;">Already have an account?</p>
+					<button style="display: inline;" onclick=startLogin()>Log in</button>
+				</div>
+			</div>
+			
+			<div id="userProfile" hidden>
+				<p>You have just successfully logged in to your account!</p>
+				<button onclick=logOut()>Log out</button>
+			</div>
+
+
+			<hr>
+
+			<canvas id="canvas" width="500" height="300"></canvas>
+		</main>
+	
+		<hr>
+	
+		<footer>
+			<p>© 2025 All rights reserved</p>
+		</footer>
+
+		<script>
+			const users = [];
+
+			function handleLogin(event)
+			{
+				event.preventDefault();
+
+				const email = document.getElementById("email").value;
+				const password = document.getElementById("password").value;
+
+				if (users.find(user => user.email === email))
+				{
+					if (password === users.find(user => user.email === email).password)
+					{
+						document.getElementById("email").blur();
+						document.getElementById("password").blur();
+						document.getElementById("email").value = "";
+						document.getElementById("password").value = "";
+						document.getElementById("loginResult").innerHTML = "";
+						openUserProfile();
+					}
+					else
+					{
+						document.getElementById("loginResult").innerHTML = 
+							`Wrong password!`;
+						document.getElementById("loginResult").hidden = false;
+						document.getElementById("password").value = "";
+						document.getElementById("password").focus();
+					}
+				}
+				else
+				{
+					document.getElementById("loginResult").innerHTML = 
+						`User with email ${email} not found`;
+					document.getElementById("loginResult").hidden = false;
+					document.getElementById("email").focus();
+				}
+			}
+
+			function handleAccountCreation(event)
+			{
+				event.preventDefault();
+
+				const email = document.getElementById("newEmail").value;
+				const password = document.getElementById("newPassword").value;
+
+				if (users.find(user => user.email === email))
+				{
+					document.getElementById("accountCreationResult").innerHTML = 
+						`User with email ${email} already exists`;
+					document.getElementById("accountCreationResult").hidden = false;
+					document.getElementById("newEmail").focus();
+				}
+				else
+				{
+					users.push({email, password});
+					document.getElementById("newEmail").blur();
+					document.getElementById("newPassword").blur();
+					document.getElementById("newEmail").value = "";
+					document.getElementById("newPassword").value = "";
+					document.getElementById("accountCreationForm").hidden = true;
+					document.getElementById("accountCreationResult").innerHTML = 
+						`You have just successfully created your account!`;
+					document.getElementById("accountCreationResultResult").hidden = false;
+				}
+			}
+
+			function startAccountCreation()
+			{
+				document.getElementById("email").value = "";
+				document.getElementById("password").value = "";
+				document.getElementById("loginResult").innerHTML = "";
+				document.getElementById("login").hidden = true;
+				document.getElementById("accountCreation").hidden = false;
+				document.getElementById("accountCreationForm").hidden = false;
+			}
+			
+			function startLogin()
+			{
+				document.getElementById("login").hidden = false;
+				document.getElementById("newEmail").value = "";
+				document.getElementById("newPassword").value = "";
+				document.getElementById("accountCreationResult").innerHTML = "";
+				document.getElementById("accountCreation").hidden = true;
+			}
+			
+			function openUserProfile()
+			{
+				document.getElementById("login").hidden = true;
+				document.getElementById("accountCreation").hidden = true;
+				document.getElementById("userProfile").hidden = false;
+			}
+
+			function logOut()
+			{
+				document.getElementById("login").hidden = false;
+				document.getElementById("accountCreation").hidden = true;
+				document.getElementById("userProfile").hidden = true;
+			}
+
+			const canvas = document.getElementById("canvas");
+			canvas.width = 500;
+			canvas.height = 300;
+			const ctx = canvas.getContext("2d");
+			ctx.strokeRect(0, 0, canvas.width, canvas.height);
+		</script>
+	</body>
 </html>
