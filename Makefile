@@ -7,8 +7,8 @@ RM				=	rm -rf
 
 create_dirs:
 	@echo "\e[36mCreating the volumes (dirs) at $(DATA_DIR)\e[0m"
-	@mkdir -p $(DATA_DIR)/pgdata
 	@mkdir -p $(DATA_DIR)/djstatic
+	@mkdir -p $(DATA_DIR)/djmedia
 # @mkdir -p $(DATA_DIR)/frontend
 
 build: create_dirs
