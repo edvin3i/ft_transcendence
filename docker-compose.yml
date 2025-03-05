@@ -1,19 +1,19 @@
 
 volumes:
         djstatic:
-                name: djstatic
-                driver: local
-                driver_opts:
-                        device: ${PWD}/data/djstatic
-                        o: bind
-                        type: none
+                # name: djstatic
+                # driver: local
+                # driver_opts:
+                #         device: ${PWD}/data/djstatic
+                #         o: bind
+                #         type: none
         djmedia:
-                name: djmedia
-                driver: local
-                driver_opts:
-                        device: ${PWD}/data/djmedia
-                        o: bind
-                        type: none
+                # name: djmedia
+                # driver: local
+                # driver_opts:
+                #         device: ${PWD}/data/djmedia
+                #         o: bind
+                #         type: none
         pgdata:
                 # name: pgdata
                 # driver: local
@@ -56,6 +56,7 @@ services:
       context: .
       dockerfile: containers/django/Dockerfile
     environment:
+        DJANGO_MODE: ${DJANGO_MODE}
         DJ_DEBUG: ${DJ_DEBUG}
         DOMAIN_NAME: ${DOMAIN_NAME}
         DJ_SECRET_KEY: ${DJ_SECRET_KEY}

@@ -14,8 +14,20 @@ create_dirs:
 build: create_dirs
 	$(DOCKER_COMPOSE) -f $(DCOMPOSE_CONFG) build
 
-up: create_dirs
-	$(DOCKER_COMPOSE) -f $(DCOMPOSE_CONFG) up -d
+up:
+	@echo "Usage: make up [dev|stage|prod]"
+
+up-dev: create_dirs
+	@echo "Starting developer mode..."
+	@DJANGO_MODE=dev $(DOCKER_COMPOSE) -f $(DCOMPOSE_CONFG) up -d
+
+up-stage: create_dirs
+	@echo "Starting staging mode..."
+	@DJANGO_MODE=stage $(DOCKER_COMPOSE) -f $(DCOMPOSE_CONFG) up -d
+
+up-prod: create_dirs
+	@echo "Starting producrion mode..."
+	@DJANGO_MODE=prod $(DOCKER_COMPOSE) -f $(DCOMPOSE_CONFG) up -d
 
 down:
 	$(DOCKER_COMPOSE) -f $(DCOMPOSE_CONFG) down

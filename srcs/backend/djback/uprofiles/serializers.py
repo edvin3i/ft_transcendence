@@ -5,12 +5,12 @@ from .models import User, UserProfile
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name']
+        fields = ["username", "first_name", "last_name"]
+
 
 class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
     class Meta:
         model = UserProfile
-        fields = ['user', 'avatar', 'bio']
-
+        fields = ["user", "avatar", "bio"]

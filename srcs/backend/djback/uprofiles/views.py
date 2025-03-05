@@ -6,9 +6,11 @@ from django.forms import model_to_dict
 from .models import User, UserProfile
 from .serializers import UserProfileSerializer
 
-# class UserProfileAPIView(generics.ListAPIView):
-#     queryset = UserProfile.objects.all()
-#     serializer_class = UserProfileSerializer
+
+class UserProfileAPIView(generics.ListAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+
 
 # class UserProfileAPIView(APIView):
 #     def get(self, request):
