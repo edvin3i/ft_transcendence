@@ -1,5 +1,5 @@
 [project]
-name = "djback"
+name = "transa"
 version = "0.1.0"
 description = "Backend part for ft_transcendence"
 readme = "README.md"

@@ -232,7 +232,7 @@ wheels = [
 ]
 
 [[package]]
-name = "djback"
+name = "transa"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

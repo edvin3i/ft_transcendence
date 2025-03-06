@@ -4,6 +4,10 @@ from PIL import Image
 
 
 class UserProfile(models.Model):
+    """
+    User Profile Model class represents the user account
+    nd inherits base Django User model
+    """
     user = models.OneToOneField(
         User, on_delete=models.CASCADE
     )  # Delete profile when user is deleted

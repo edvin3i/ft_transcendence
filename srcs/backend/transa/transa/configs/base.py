@@ -44,7 +44,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "djback.urls"
+ROOT_URLCONF = "transa.urls"
 
 TEMPLATES = [
     {
@@ -62,7 +62,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "djback.wsgi.application"
+WSGI_APPLICATION = "transa.wsgi.application"
 
 
 # Database
