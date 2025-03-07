@@ -12,6 +12,21 @@ class UsersProfilesListAPIView(generics.ListAPIView):
     serializer_class = UserProfileSerializer
 
 
+class UserProfileCreateAPIView(generics.CreateAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+
+
+class UserProfileUpdateAPIView(generics.UpdateAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+
+
+class UserProfileDestroyAPIView(generics.DestroyAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+
+
 # class UserProfileAPIView(APIView):
 #     def get(self, request):
 #         return Response({'title': 'SomeOne'})
