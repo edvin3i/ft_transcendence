@@ -32,6 +32,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "uprofiles",
+    "game",
+    "tournaments",
 ]
 
 MIDDLEWARE = [

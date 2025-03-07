@@ -27,7 +27,7 @@ EOF
 # uv run python manage.py createsuperuser --no-input
 
 echo "  Collecting static files..."
-uv run python manage.py collectstatic
+uv run python manage.py collectstatic --no-input
 
 echo "🚀 Starting Gunicorn..."
 exec "$@"

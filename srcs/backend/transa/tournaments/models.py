@@ -1,6 +1,5 @@
 from django.db import models
 from uprofiles.models import UserProfile
-from game.models import Match
 
 
 class Tournament(models.Model):
@@ -10,7 +9,7 @@ class Tournament(models.Model):
 
     name = models.CharField(max_length=32)
     creator = models.ForeignKey(
-        UserProfile, related_name="tournaments_created", on_delete=models.SET_NULL
+        UserProfile, related_name="tournaments_created", null=True, on_delete=models.SET_NULL
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="created at")
     max_players = models.PositiveIntegerField(default=4)

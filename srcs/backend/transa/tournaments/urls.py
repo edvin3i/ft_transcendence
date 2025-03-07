@@ -3,5 +3,5 @@ from . import views
 
 
 urlpatterns = [
-    path("all", views.TournamentsListAPIView, name="list_of_tournaments"),
+    path("all", views.TournamentsListAPIView.as_view(), name="list_of_tournaments"),
 ]
