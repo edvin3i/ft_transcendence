@@ -7,7 +7,7 @@ from .models import User, UserProfile
 from .serializers import UserProfileSerializer
 
 
-class UserProfileAPIView(generics.ListCreateAPIView):
+class UsersProfilesListAPIView(generics.ListAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
 
