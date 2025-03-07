@@ -20,11 +20,19 @@ class UserProfileCreateAPIView(generics.CreateAPIView):
 class UserProfileUpdateAPIView(generics.UpdateAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
+    lookup_field = "user_id"
 
 
 class UserProfileDestroyAPIView(generics.DestroyAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
+    lookup_field = "user_id"
+
+
+class UserProfileDetailAPIView(generics.RetrieveAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    lookup_field = "user_id"
 
 
 # class UserProfileAPIView(APIView):
