@@ -32,7 +32,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "uprofiles",
-    "auth",
+    # "auth",
     "game",
     "tournaments",
 ]

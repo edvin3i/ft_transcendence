@@ -9,10 +9,20 @@ done
 echo "✅ Database is up!"
 
 echo "⚡️ Make migrations..."
+uv run python manage.py makemigrations uprofiles
 uv run python manage.py makemigrations
 
 echo "⚡️ Applying migrations..."
-uv run python manage.py migrate
+uv run python manage.py migrate --noinput
+
+# Check if migrations applied correctly
+MIGRATION_CHECK=$(uv run python manage.py showmigrations uprofiles | grep '\[ \]')
+if [ ! -z "$MIGRATION_CHECK" ]; then
+  echo "❌ Warning: Some uprofiles migrations may not have applied correctly"
+  echo "$MIGRATION_CHECK"
+else
+  echo "✅ All uprofiles migrations applied successfully"
+fi
 
 echo "⚡️ Creating Django SuperUser..."
 uv run python manage.py shell <<EOF

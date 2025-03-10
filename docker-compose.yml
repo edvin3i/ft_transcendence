@@ -1,19 +1,19 @@
 
 volumes:
         djstatic:
-                name: djstatic
-                driver: local
-                driver_opts:
-                        device: ${PWD}/data/djstatic
-                        o: bind
-                        type: none
+                # name: djstatic
+                # driver: local
+                # driver_opts:
+                #         device: ${PWD}/data/djstatic
+                #         o: bind
+                #         type: none
         djmedia:
-                name: djmedia
-                driver: local
-                driver_opts:
-                        device: ${PWD}/data/djmedia
-                        o: bind
-                        type: none
+                # name: djmedia
+                # driver: local
+                # driver_opts:
+                #         device: ${PWD}/data/djmedia
+                #         o: bind
+                #         type: none
         pgdata:
                 # name: pgdata
                 # driver: local

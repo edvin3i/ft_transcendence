@@ -22,7 +22,7 @@ class UserProfile(models.Model):
     )  # Delete profile when user is deleted
     avatar = models.ImageField(default="default.jpg", upload_to="avatars")
     bio = models.CharField(max_length=300, blank=True)
-
+    
     def __str__(self):
         """
         Returns a string representation of the UserProfile.
@@ -36,13 +36,13 @@ class UserProfile(models.Model):
         """
         Overrides the default save method to resize the avatar image.
 
-        This method first calls the parent class's save method to save the UserProfile,
-        then opens the saved avatar image and resizes it to a maximum of 300x300 pixels
-        if it exceeds those dimensions.
+        This method first calls the parent class's save method to save the 
+        UserProfile, then opens the saved avatar image and resizes it to a 
+        maximum of 300x300 pixels if it exceeds those dimensions.
 
         Args:
             *args: Variable length argument list passed to parent's save method
-            **kwargs: Arbitrary keyword arguments passed to parent's save method
+            **kwargs: Arbitrary keyword arguments passed to parent's save
         """
         super().save(*args, **kwargs)
 
