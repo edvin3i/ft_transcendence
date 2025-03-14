@@ -8,7 +8,7 @@ class Match(models.Model):
     The Match model represents a game match between two players.
     It can be a standalone match (tournament=None) or part of a tournament.
     """
-
+    created_at = models.DateTimeField(auto_now_add=True)
     player1 = models.ForeignKey(
         UserProfile, related_name="matches_as_p1", on_delete=models.CASCADE
     )
@@ -33,3 +33,6 @@ class Match(models.Model):
     )
     round_number = models.PositiveIntegerField(default=1)
     is_finished = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.created_at} | {self.player1} vs {self.player2}, winner: {self.winner}"

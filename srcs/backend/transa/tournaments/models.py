@@ -21,6 +21,9 @@ class Tournament(models.Model):
     is_started = models.BooleanField(default=False)
     is_finished = models.BooleanField(default=False)
 
+    def __str__(self):
+        return f"{self.name}. Max players: {self.max_players}. Created at: {self.created_at}"
+
 
 class TournamentParticipant(models.Model):
     """
