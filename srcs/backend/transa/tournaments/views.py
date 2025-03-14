@@ -1,5 +1,4 @@
-from django.shortcuts import render
-from rest_framework import generics
+from rest_framework import generics, permissions
 from .models import Tournament
 from .serializers import TournamentSerializer
 
@@ -22,3 +21,12 @@ class TournamentCreateAPIView(generics.CreateAPIView):
     queryset = Tournament.objects.all()
     serializer_class = TournamentSerializer
 
+
+class TournamentDeleteAPIView(generics.DestroyAPIView):
+    queryset = Tournament.objects.all()
+    serializer_class = TournamentSerializer
+
+
+class TournamentUpdateAPIView(generics.UpdateAPIView):
+    queryset = Tournament.objects.all()
+    serializer_class = TournamentSerializer
