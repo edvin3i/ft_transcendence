@@ -3,8 +3,16 @@ from . import views
 
 
 urlpatterns = [
-    path("all/", views.UsersProfilesListAPIView.as_view(), name="users_list"),
-    path("create/", views.UserProfileCreateAPIView.as_view(), name="user_create"),
+    path(
+        "all/",
+        views.UsersProfilesListAPIView.as_view(),
+        name="users_list",
+    ),
+    path(
+        "create/",
+        views.UserProfileCreateAPIView.as_view(),
+        name="user_create",
+    ),
     path(
         "update/<int:user_id>/",
         views.UserProfileUpdateAPIView.as_view(),

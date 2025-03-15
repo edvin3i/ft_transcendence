@@ -9,6 +9,7 @@ class TournamentsListAPIView(generics.ListAPIView):
     serializer_class = TournamentSerializer
     permission_classes = [IsAuthenticated]
 
+
 class TournamentDetailAPIView(generics.RetrieveAPIView):
     queryset = Tournament.objects.all()
     serializer_class = TournamentSerializer
