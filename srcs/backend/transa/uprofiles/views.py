@@ -7,6 +7,11 @@ from .models import User, UserProfile
 from .serializers import UserProfileSerializer
 
 
+# In the future, it might be refactored to use ViewSets and custom URLs,
+# but for now, the code is still duplicated.
+# I know it's not ideal, but it's clearer for novice teammates.
+
+
 class UsersProfilesListAPIView(generics.ListAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
