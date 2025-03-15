@@ -1,6 +1,7 @@
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.forms import model_to_dict
 
 from .models import User, UserProfile
@@ -15,29 +16,35 @@ from .serializers import UserProfileSerializer
 class UsersProfilesListAPIView(generics.ListAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
 
 
 class UserProfileCreateAPIView(generics.CreateAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
 
+    permission_classes = [IsAuthenticated] # need to think about registration
+
 
 class UserProfileUpdateAPIView(generics.UpdateAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     lookup_field = "user_id"
+    permission_classes = [IsAuthenticated]
 
 
 class UserProfileDestroyAPIView(generics.DestroyAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     lookup_field = "user_id"
+    permission_classes = [IsAdminUser]
 
 
 class UserProfileDetailAPIView(generics.RetrieveAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     lookup_field = "user_id"
+    permission_classes = [IsAuthenticated]
 
 
 # class UserProfileAPIView(APIView):
