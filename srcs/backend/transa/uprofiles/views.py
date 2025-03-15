@@ -19,7 +19,7 @@ class UserProfileCreateAPIView(generics.CreateAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
 
-    permission_classes = [IsAuthenticated]  # need to think about registration
+    # permission_classes = [IsAuthenticated]  # need to think about registration
 
 
 class UserProfileUpdateAPIView(generics.UpdateAPIView):
