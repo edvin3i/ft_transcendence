@@ -28,3 +28,7 @@ try:
     }
 except KeyError as e:
     raise RuntimeError("Could not find a some DB parameter in environment") from e
+
+REST_FRAMEWORK["DEFAULT_RENDER_CLASSES"] += [
+    "rest_framework.renders.BrowsableAPIRender",
+]

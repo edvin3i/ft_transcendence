@@ -1,5 +1,5 @@
 from .base import *
-
+from .base import REST_FRAMEWORK
 
 DEBUG = True
 
@@ -22,3 +22,8 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+
+REST_FRAMEWORK["DEFAULT_RENDER_CLASSES"] += [
+    "rest_framework.renders.BrowsableAPIRender",
+    ]

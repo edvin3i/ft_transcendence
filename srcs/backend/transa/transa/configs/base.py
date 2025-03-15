@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from transa.configs.dev import REST_FRAMEWORK
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -121,14 +123,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Django REST Framework
+REST_FRAMEWORK = dict()
 
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
+REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = [
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
-    ],
-    "DEFAULT_RENDER_CLASSES": [
+    ]
+REST_FRAMEWORK["DEFAULT_RENDER_CLASSES"] = [
         "rest_framework.renders.JSONRender",
-        "rest_framework.renders.BrowsableAPIRender",
-    ],
-}
+    ]
