@@ -13,9 +13,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 
 
-# Import setting depends the mode
+# Import setting depends on the django mode
 
-DJANGO_MODE = os.getenv("DJANGO_MODE", "dev")
+DJANGO_MODE = os.getenv("DJANGO_MODE", "prod")
 
 if DJANGO_MODE == "prod":
     from .configs.prod import *
