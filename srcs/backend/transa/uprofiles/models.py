@@ -23,7 +23,6 @@ class UserProfile(models.Model):
     )  # Delete profile when user is deleted
     avatar = models.ImageField(default="default.jpg", upload_to="avatars")
     bio = models.CharField(max_length=300, blank=True)
-    # token = Token.objects.create(user=user)
 
     def __str__(self):
         """

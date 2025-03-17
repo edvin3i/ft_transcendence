@@ -7,4 +7,4 @@ class LoginView(APIView):
     authentication_classes = [TokenAuthentication]
 
     def post(self, request):
-        user = 
+        pass
