@@ -40,7 +40,7 @@ services:
       context: .
       dockerfile: containers/nginx/Dockerfile
     ports:
-      - "4443:443"
+      - "${NGINX_PORT_HTTPS}:443"
     depends_on:
       - django
     volumes:
