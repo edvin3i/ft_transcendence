@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "rest_framework",
     # "rest_framework.authtoken",
     'rest_framework_simplejwt',
+    'oauth2_provider',
     "uprofiles",
     "trans_auth",
     "game",
@@ -131,6 +132,7 @@ REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = [
     "rest_framework.authentication.BasicAuthentication",
     "rest_framework.authentication.SessionAuthentication",
     'rest_framework_simplejwt.authentication.JWTAuthentication',
+    'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
 ]
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
     "rest_framework.renderers.JSONRenderer",
@@ -176,4 +178,12 @@ SIMPLE_JWT = {
     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
+}
+
+
+# OAuth2.0 Settings
+
+OAUTH2_PROVIDER = {
+    # this is the list of available scopes
+    'SCOPES': {'read': 'Read scope', 'write': 'Write scope'}
 }

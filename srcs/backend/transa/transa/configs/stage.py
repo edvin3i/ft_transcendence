@@ -10,6 +10,7 @@ ALLOWED_HOSTS = [
 # CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = [
     "https://localhost:4443",
+    "https://localhost",
     "https://gbreana.42.fr",
 ]
 
