@@ -13,6 +13,6 @@ class FortyTwoAuthSerializer(serializers.Serializer):
     code = serializers.CharField(write_only=True)
     client_id = serializers.CharField(read_only=True)
     refresh_token = serializers.CharField(read_only=True)
-    user_name = serializers.CharField(read_only=True)
+    username = serializers.CharField(read_only=True)
 
 
