@@ -181,7 +181,8 @@ SIMPLE_JWT = {
 
 # OAuth2.0 Settings
 
+OA_TOKEN_URL = os.getenv("OA_TOKEN_URL", "https://api.intra.42.fr/oauth/token")
 OA_CLIENT_ID = os.getenv("OA_CLIENT_ID", None)
 OA_SECRET = os.getenv("OA_SECRET", None)
-OA_REDIR_URLS = os.getenv("OA_SECRET", "api/callback/")
+OA_REDIR_URL = os.getenv("OA_SECRET", "api/callback/")
 OA_POST_LOUT_REDIR_URLS = os.getenv("OA_POST_LOUT_REDIR_URLS", "/")
