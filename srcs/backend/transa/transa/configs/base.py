@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     "rest_framework",
     # "rest_framework.authtoken",
     'rest_framework_simplejwt',
-    'oauth2_provider',
     "uprofiles",
     "trans_auth",
     "game",
@@ -132,7 +131,6 @@ REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = [
     "rest_framework.authentication.BasicAuthentication",
     "rest_framework.authentication.SessionAuthentication",
     'rest_framework_simplejwt.authentication.JWTAuthentication',
-    'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
 ]
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
     "rest_framework.renderers.JSONRenderer",
@@ -183,7 +181,7 @@ SIMPLE_JWT = {
 
 # OAuth2.0 Settings
 
-OAUTH2_PROVIDER = {
-    # this is the list of available scopes
-    'SCOPES': {'read': 'Read scope', 'write': 'Write scope'}
-}
+OA_CLIENT_ID = os.getenv("OA_CLIENT_ID", None)
+OA_SECRET = os.getenv("OA_SECRET", None)
+OA_REDIR_URLS = os.getenv("OA_SECRET", "api/callback/")
+OA_POST_LOUT_REDIR_URLS = os.getenv("OA_POST_LOUT_REDIR_URLS", "/")
