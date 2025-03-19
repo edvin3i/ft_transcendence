@@ -7,8 +7,8 @@ from transa.settings import (
     OA_CLIENT_ID,
     OA_SECRET,
     OA_REDIR_URL,
-    OA_POST_LOUT_REDIR_URLS,
-    OA_TOKEN_URL
+    OA_POST_LOUT_REDIR_URL,
+    OA_TOKEN_URL,
 )
 
 
@@ -76,4 +76,3 @@ class FortyTwoAuthSerializer(serializers.Serializer):
             "refresh_token": refresh_jwt,
             "username": user.username,
         }
-
