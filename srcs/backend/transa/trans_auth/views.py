@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import FortyTwoAuthSerializer
 
+
 class FortyTwoCallbackView(GenericAPIView):
     serializer_class = FortyTwoAuthSerializer
 
