@@ -68,4 +68,12 @@ class FortyTwoAuthSerializer(serializers.Serializer):
         )
 
         refresh = RefreshToken.for_user(user)
+        access_jwt = str(refresh.access_token)
+        refresh_jwt = str(refresh)
+
+        return {
+            "access_token": access_jwt,
+            "refresh_token": refresh_jwt,
+            "username": user.username,
+        }
 

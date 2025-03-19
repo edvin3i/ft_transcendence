@@ -16,7 +16,7 @@
 		<main>
 			<div id="login">
 				<p>Please, log in to play the game.</p>
-				<button>Log in with GMail</button>
+				<button onclick="start42Login()">Log in with 42</button>
 				<p>---or---</p>
 				<form id="loginForm" method="POST" onsubmit=handleLogin(event)>
 					<div>
@@ -46,7 +46,7 @@
 				
 			<div id="accountCreation" hidden>
 				<p>Please, create your account to play the game.</p>
-				<button>Sign up with GMail</button>
+				<button  onclick="start42Login()">Sign up with 42</button>
 				<p>---or---</p>
 				<form id="accountCreationForm" method="POST" onsubmit=handleAccountCreation(event)>
 					<div>
@@ -189,6 +189,11 @@
 				document.getElementById("login").hidden = false;
 				document.getElementById("accountCreation").hidden = true;
 				document.getElementById("userProfile").hidden = true;
+			}
+
+			function start42Login()
+			{
+				window.location.href = "https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-42af5be9c50086986d493929592fbd7d5a7cd21427155bad5eb264883602b20a&redirect_uri=https://localhost/api/auth/ft/callback/&response_type=code"
 			}
 
 			const canvas = document.getElementById("canvas");
