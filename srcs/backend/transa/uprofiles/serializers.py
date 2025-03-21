@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from .models import User, UserProfile
+import pyotp
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -51,7 +52,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ["user", "avatar", "bio"]
+        fields = ["user", "avatar", "bio", "is_2fa_enabled", "totp_secret"]
 
     # Add custom create() for nested JSON save
     def create(self, validated_data):
@@ -119,6 +120,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
             user_instance.save()
 
+        instance.is_2fa_enabled = validated_data.get("is_2fa_enabled", instance.is_2fa_enabled)
+        if not instance.is_2fa_enabled:
+            instance.totp_secret = None
+        if instance.is_2fa_enabled and not instance.totp_secret:
+            instance.totp_secret = pyotp.random_base32()
         instance.avatar = validated_data.get("avatar", instance.avatar)
         instance.bio = validated_data.get("bio", instance.bio)
         instance.save()

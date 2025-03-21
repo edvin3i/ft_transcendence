@@ -24,6 +24,10 @@ class UserProfile(models.Model):
     avatar = models.ImageField(default="default.jpg", upload_to="avatars")
     bio = models.CharField(max_length=300, blank=True)
 
+    # TOTP support
+    is_2fa_enabled = models.BooleanField(default=False)
+    totp_secret = models.CharField(max_length=128, default=None, null=True, blank=True)
+
     def __str__(self):
         """
         Returns a string representation of the UserProfile.
