@@ -57,7 +57,7 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
         ft_email = user_data.get("email")
         ft_fname = user_data.get("first_name")
         ft_lname = user_data.get("last_name")
-        ft_avatar = user_data.get("image").get("link")
+        ft_avatar_url = user_data.get("image").get("link")
 
         user, _created = User.objects.get_or_create(
             username=ft_login,
@@ -69,16 +69,19 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
         # If user profile exist - just get it
         user_profile, _created = UserProfile.objects.get_or_create(user=user)
         user_profile.bio = ""
-        user_profile.avatar = ft_avatar
-        user_profile.save
+        user_profile.avatar_url = ft_avatar_url
+        user_profile.save()
 
         refresh = RefreshToken.for_user(user)
         access_jwt = str(refresh.access_token)
         refresh_jwt = str(refresh)
+
 
         return {
             "access_token": access_jwt,
             "refresh_token": refresh_jwt,
             "uprofile_id": user_profile.id,
             "username": user_profile.user.username,
+            "user_avatar_url": user_profile.avatar_url,
+            "user_avatar": user_profile.avatar.path,
         }

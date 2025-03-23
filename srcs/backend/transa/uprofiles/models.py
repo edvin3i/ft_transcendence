@@ -1,5 +1,8 @@
+import urllib.request
+import requests
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
 from rest_framework.authtoken.models import Token
 from PIL import Image
 
@@ -22,6 +25,7 @@ class UserProfile(models.Model):
         User, on_delete=models.CASCADE
     )  # Delete profile when user is deleted
     avatar = models.ImageField(default="default.jpg", upload_to="avatars")
+    avatar_url = models.URLField(null=True, blank=True)
     bio = models.CharField(max_length=300, blank=True)
 
     # TOTP support
@@ -37,6 +41,7 @@ class UserProfile(models.Model):
         """
         return f"{self.user.username} Profile"
 
+
     def save(self, *args, **kwargs):
         """
         Overrides the default save method to resize the avatar image.
@@ -51,10 +56,24 @@ class UserProfile(models.Model):
         """
         super().save(*args, **kwargs)
 
-        img = Image.open(self.avatar.path)
+        # if we have the link to user pic on 42 and default avatar -> set the user pic from 42
+        if self.avatar_url and self.avatar.file.name == "default.jpg":
+            r = requests.get(self.avatar_url)
+            if r.status_code == 200:
+                file_name = f"avatar_{self.user.username}.jpg"
+                self.avatar.save(
+                    file_name,
+                    ContentFile(r.content),
+                    save=False
+                )
 
-        # resize img
-        if img.height > 300 or img.width > 300:
-            output_size = (300, 300)
-            img.thumbnail(output_size)
-            img.save(self.avatar.path)
+        try:
+            img = Image.open(self.avatar.path)
+
+            # resize img
+            if img.height > 300 or img.width > 300:
+                output_size = (300, 300)
+                img.thumbnail(output_size)
+                img.save(self.avatar.path)
+        except Exception as e:
+            print(e) # temporary
