@@ -1,5 +1,4 @@
 import requests
-from rest_framework import request
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from uprofiles.models import User, UserProfile
@@ -12,7 +11,7 @@ from transa.settings import (
 )
 
 
-class FortyTwoAuthSerializer(serializers.Serializer):
+class FortyTwoOpenAuthSerializer(serializers.Serializer):
     code = serializers.CharField(write_only=True)
     client_id = serializers.CharField(read_only=True)
     refresh_token = serializers.CharField(read_only=True)
@@ -58,7 +57,7 @@ class FortyTwoAuthSerializer(serializers.Serializer):
         ft_email = user_data.get("email")
         ft_fname = user_data.get("first_name")
         ft_lname = user_data.get("last_name")
-        # ft_avatar = user_data.get("image").get("link")
+        ft_avatar = user_data.get("image").get("link")
 
         user, _created = User.objects.get_or_create(
             username=ft_login,
@@ -67,6 +66,12 @@ class FortyTwoAuthSerializer(serializers.Serializer):
             last_name=ft_lname,
         )
 
+        # If user profile exist - just get it
+        user_profile, _created = UserProfile.objects.get_or_create(user=user)
+        user_profile.bio = ""
+        user_profile.avatar = ft_avatar
+        user_profile.save
+
         refresh = RefreshToken.for_user(user)
         access_jwt = str(refresh.access_token)
         refresh_jwt = str(refresh)
@@ -74,5 +79,6 @@ class FortyTwoAuthSerializer(serializers.Serializer):
         return {
             "access_token": access_jwt,
             "refresh_token": refresh_jwt,
-            "username": user.username,
+            "uprofile_id": user_profile.id,
+            "username": user_profile.user.username,
         }

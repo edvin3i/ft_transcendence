@@ -1,13 +1,11 @@
-from logging import raiseExceptions
-
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import FortyTwoAuthSerializer
+from .serializers import FortyTwoOpenAuthSerializer
 
 
-class FortyTwoCallbackView(GenericAPIView):
-    serializer_class = FortyTwoAuthSerializer
+class FortyTwoOpenAuthCallbackView(GenericAPIView):
+    serializer_class = FortyTwoOpenAuthSerializer
 
     def get(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.query_params)
