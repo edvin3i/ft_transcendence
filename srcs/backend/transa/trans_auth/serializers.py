@@ -85,3 +85,16 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
             "user_avatar_url": user_profile.avatar_url,
             "user_avatar": user_profile.avatar.path,
         }
+
+
+class TwoFactorAuthSetupSerializer(serializers.Serializer):
+    uprofile = UserProfile.objects.get()
+
+
+class TwoFactorAuthConfirmSerializer(serializers.Serializer):
+    pass
+
+
+class TwoFactorAuthDisableSerializer(serializers.Serializer):
+    pass
+
