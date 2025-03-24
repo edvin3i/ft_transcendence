@@ -41,7 +41,6 @@ class UserProfile(models.Model):
         """
         return f"{self.user.username} Profile"
 
-
     def save(self, *args, **kwargs):
         """
         Overrides the default save method to resize the avatar image.
@@ -61,11 +60,7 @@ class UserProfile(models.Model):
             r = requests.get(self.avatar_url)
             if r.status_code == 200:
                 file_name = f"avatar_{self.user.username}.jpg"
-                self.avatar.save(
-                    file_name,
-                    ContentFile(r.content),
-                    save=False
-                )
+                self.avatar.save(file_name, ContentFile(r.content), save=False)
 
         try:
             img = Image.open(self.avatar.path)
@@ -76,4 +71,4 @@ class UserProfile(models.Model):
                 img.thumbnail(output_size)
                 img.save(self.avatar.path)
         except Exception as e:
-            print(e) # temporary
+            print(e)  # temporary

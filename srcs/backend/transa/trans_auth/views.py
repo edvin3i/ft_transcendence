@@ -24,7 +24,7 @@ class TwoFactorAuthSetupAPIView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TwoFactorAuthSetupSerializer
 
-    def get_queryset(self): # just for GenericAPIView
+    def get_queryset(self):  # just for GenericAPIView
         return None
 
     def post(self, request, *args, **kwargs):
@@ -55,3 +55,8 @@ class TwoFactorAuthDisableAPIView(GenericAPIView):
     def get_queryset(self):
         return None
 
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.save()
+        return Response(data, status=status.HTTP_200_OK)
