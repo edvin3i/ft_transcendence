@@ -95,7 +95,7 @@ class TwoFactorAuthSetupSerializer(serializers.Serializer):
         try:
             profile = UserProfile.objects.get(user=current_user)
         except:
-            raise serializers.ValidationError("USer profile not found")
+            raise serializers.ValidationError("User profile not found")
 
         new_secret = pyotp.random_base32()
         profile.totp_secret = new_secret
@@ -117,8 +117,35 @@ class TwoFactorAuthSetupSerializer(serializers.Serializer):
 
 
 class TwoFactorAuthConfirmSerializer(serializers.Serializer):
-    pass
+    totp_code = serializers.CharField(write_only=True)
 
+    def validate_totp_code(self, totp_code):
+        current_user = self.context['request'].user
+
+        try:
+            profile = UserProfile.objects.get(user=current_user)
+        except:
+            raise serializers.ValidationError("User profile not found")
+
+        if not profile.totp_secret:
+            raise serializers.ValidationError("TOTP is not configured for this user")
+
+        totp = pyotp.TOTP(profile.totp_secret)
+        if not totp.verify(totp_code):
+            raise serializers.ValidationError("Invalid TOTP code")
+
+        return totp_code
+
+    def create(self, validated_data):
+        current_user = self.context['request'].user
+        profile = UserProfile.objects.get(user=current_user)
+
+        profile.is_2fa_enabled = True
+        profile.save()
+
+        return {
+            "detail": "2FA enabled successfully",
+        }
 
 class TwoFactorAuthDisableSerializer(serializers.Serializer):
     pass
