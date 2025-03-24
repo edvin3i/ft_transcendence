@@ -1,4 +1,5 @@
 import requests
+import io, pyotp, qrcode, base64
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from uprofiles.models import User, UserProfile
@@ -88,7 +89,31 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
 
 
 class TwoFactorAuthSetupSerializer(serializers.Serializer):
-    uprofile = UserProfile.objects.get()
+    def create(self, validated_data):
+        current_user = self.context['request'].user
+
+        try:
+            profile = UserProfile.objects.get(user=current_user)
+        except:
+            raise serializers.ValidationError("USer profile not found")
+
+        new_secret = pyotp.random_base32()
+        profile.totp_secret = new_secret
+        profile.save()
+
+        # Generate QR-code and transfer in response in base64
+        qrcode_secret = qrcode.make(new_secret)
+        buffer = io.BytesIO()
+        qrcode_secret.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+        return {
+            "detail": "TOTP secret generated, 2FA pending confirmation",
+            "secret": new_secret,
+            "qrcode": qr_base64,
+        }
 
 
 class TwoFactorAuthConfirmSerializer(serializers.Serializer):

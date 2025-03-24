@@ -1,5 +1,6 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from .serializers import FortyTwoOpenAuthSerializer
 from .serializers import (
@@ -20,13 +21,16 @@ class FortyTwoOpenAuthCallbackView(GenericAPIView):
 
 
 class TwoFactorAuthSetupAPIView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = TwoFactorAuthSetupSerializer
 
 
 class TwoFactorAuthConfirmAPIView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = TwoFactorAuthConfirmSerializer
 
 
 class TwoFactorAuthDisableAPIView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = TwoFactorAuthDisableSerializer
 

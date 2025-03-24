@@ -120,11 +120,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
             user_instance.save()
 
-        instance.is_2fa_enabled = validated_data.get("is_2fa_enabled", instance.is_2fa_enabled)
-        if not instance.is_2fa_enabled:
-            instance.totp_secret = None
-        if instance.is_2fa_enabled and not instance.totp_secret:
-            instance.totp_secret = pyotp.random_base32()
+        # instance.is_2fa_enabled = validated_data.get("is_2fa_enabled", instance.is_2fa_enabled)
+        # if not instance.is_2fa_enabled:
+        #     instance.totp_secret = None
+        # if instance.is_2fa_enabled and not instance.totp_secret:
+        #     instance.totp_secret = pyotp.random_base32()
         instance.avatar = validated_data.get("avatar", instance.avatar)
         instance.bio = validated_data.get("bio", instance.bio)
         instance.save()
