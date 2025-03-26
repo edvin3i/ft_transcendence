@@ -29,7 +29,7 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
             "client_secret": OA_SECRET,
             "redirect_uri": OA_REDIR_URL,
             "code": code,
-            "grant_type": "autorization_code",
+            "grant_type": "authorization_code",
         }
 
         resp = requests.post(token_url, data=data)
@@ -101,7 +101,9 @@ class TwoFactorAuthSetupSerializer(serializers.Serializer):
         profile.save()
 
         # Generate QR-code and transfer in response in base64
-        qrcode_secret = qrcode.make(new_secret)
+        qrcode_secret = qrcode.make(
+            f"otpauth://totp/email:{profile.user.email}?secret={new_secret}",
+        )
         buffer = io.BytesIO()
         qrcode_secret.save(buffer, format="PNG")
         buffer.seek(0)

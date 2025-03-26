@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
     "rest_framework",
     # "rest_framework.authtoken",
     "rest_framework_simplejwt",
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -95,6 +97,17 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+# CORS header setup
+CORS_ALLOWED_ORIGINS = [
+                        "https://localhost",
+                        "https://127.0.0.1",
+                        "http://localhost:8000",
+                        "http://localhost",
+]
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -128,12 +141,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = dict()
 
 REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = [
-    "rest_framework.authentication.BasicAuthentication",
+    # "rest_framework.authentication.BasicAuthentication",
     "rest_framework.authentication.SessionAuthentication",
     "rest_framework_simplejwt.authentication.JWTAuthentication",
 ]
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
     "rest_framework.renderers.JSONRenderer",
+]
+
+REST_FRAMEWORK["DEFAULT_PERMISSION_CLASSES"] = [
+    "rest_framework.permissions.IsAuthenticated",
 ]
 
 # JWT Auth configuration

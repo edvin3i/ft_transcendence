@@ -1,7 +1,7 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from .serializers import FortyTwoOpenAuthSerializer
 from .serializers import (
     TwoFactorAuthSetupSerializer,
@@ -11,6 +11,7 @@ from .serializers import (
 
 
 class FortyTwoOpenAuthCallbackView(GenericAPIView):
+    permission_classes = [AllowAny]
     serializer_class = FortyTwoOpenAuthSerializer
 
     def get(self, request, *args, **kwargs):

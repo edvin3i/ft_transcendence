@@ -1,5 +1,5 @@
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from .models import User, UserProfile
 from .serializers import UserProfileSerializer
 
@@ -10,34 +10,34 @@ from .serializers import UserProfileSerializer
 
 
 class UsersProfilesListAPIView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated]
 
 
 class UserProfileCreateAPIView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
 
-    # permission_classes = [IsAuthenticated]  # need to think about registration
 
 
 class UserProfileUpdateAPIView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     lookup_field = "user_id"
-    permission_classes = [IsAuthenticated]
 
 
 class UserProfileDestroyAPIView(generics.DestroyAPIView):
+    permission_classes = [IsAdminUser]
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     lookup_field = "user_id"
-    permission_classes = [IsAdminUser]
 
 
 class UserProfileDetailAPIView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     lookup_field = "user_id"
-    permission_classes = [IsAuthenticated]
