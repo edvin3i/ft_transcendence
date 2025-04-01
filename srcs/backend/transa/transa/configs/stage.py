@@ -18,15 +18,16 @@ try:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ["DB_NAME"],
-            "USER": os.environ["DB_USER"],
-            "PASSWORD": os.environ["DB_PASSWORD"],
-            "HOST": os.environ["DB_HOST"],
-            "PORT": os.environ["DB_PORT"],
+            "NAME": os.getenv("DB_NAME"),
+            "USER": os.getenv("DB_USER"),
+            "PASSWORD": os.getenv("DB_PASSWORD"),
+            "HOST": os.getenv("DB_HOST"),
+            "PORT": os.getenv("DB_PORT"),
         }
     }
 except KeyError as e:
     raise RuntimeError("Could not find a some DB parameter in environment") from e
+
 
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"].append(
     "rest_framework.renderers.BrowsableAPIRenderer"
