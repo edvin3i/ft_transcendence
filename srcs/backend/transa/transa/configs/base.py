@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 try:
-    SECRET_KEY = os.getenv("DJ_SECRET_KEY")
+    SECRET_KEY = os.getenv("DJ_SECRET_KEY", "superdupersecretkey")
 except KeyError as e:
     raise RuntimeError("Could not find a DJ_SECRET_KEY in environment") from e
 
