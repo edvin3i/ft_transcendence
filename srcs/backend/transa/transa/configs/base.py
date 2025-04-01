@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "trans_auth",
     "game",
     "tournaments",
+    "channels",
 ]
 
 MIDDLEWARE = [
@@ -70,6 +71,17 @@ TEMPLATES = [
         },
     },
 ]
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.ReddisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],
+        },
+    },
+}
+
+ASGI_APPLICATION = "transa.asgi.application"
 
 WSGI_APPLICATION = "transa.wsgi.application"
 
