@@ -15,43 +15,46 @@ async function handleLogin(event)
 	const username = document.getElementById("username").value;
 	const password = document.getElementById("password").value;
 	
-	const response = await fetch('http://localhost:8000/users/login/',
+	const response = await fetch('api/auth/token/',
 		{
 			method: 'POST', 
 			headers: {'Content-Type': 'application/json'}, 
 			body: JSON.stringify({username: username, password: password})
 		});
+	const data = await response.json();
 
+	console.log("Logging into account...");
 	console.log(response.status);
+	console.log(data);
 
 	if (response.ok)
 	{
-		const data = await response.json();
+		console.log("Success!");
 		document.getElementById("username").blur();
 		document.getElementById("password").blur();
 		document.getElementById("username").value = "";
 		document.getElementById("password").value = "";
 		document.getElementById("loginResult").innerHTML = "";
+		/*
+		WE NEED TO GET USER PROFILE DATA!
 		document.getElementById("profileInformation").innerHTML = 
 			`Your information:<br>
-			username: ${data.username}<br>
-			email: ${data.email}`;
+			username: ${data.user.username}<br>
+			email: ${data.user.email}`;
+		*/
 		openUserProfile();
-	}
-	else if (response.status === 404)
-	{
-		document.getElementById("loginResult").innerHTML = 
-			`Account with username ${username} not found`;
-		document.getElementById("loginResult").hidden = false;
-		document.getElementById("username").focus();
 	}
 	else
 	{
+		// VANYA, I WANT TO KNOW IF THE ERROR WAS BECAUSE
+		// SUCH USERNAME DOES NOT EXISTS!
+		console.log("Error!");
 		document.getElementById("loginResult").innerHTML = 
-			`Wrong password!`;
+			`Wrong username or password!`;
 		document.getElementById("loginResult").hidden = false;
 		document.getElementById("password").value = "";
-		document.getElementById("password").focus();
+		document.getElementById("username").blur();
+		document.getElementById("password").blur();
 	}
 }
 
@@ -63,22 +66,25 @@ async function handleAccountCreation(event)
 	const email = document.getElementById("newEmail").value;
 	const password = document.getElementById("newPassword").value;
 
-	const response = await fetch('http://localhost:8000/users/create-account/', 
+	const response = await fetch('api/users/create/', 
 		{
 			method: 'POST',
 			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify(
+			body: JSON.stringify({user: 
 				{
 					username: username,
 					email: email,
 					password: password
-				})
+				}})
 		});
 	const data = await response.json();
-	console.log(data);
+
+	console.log("Creating account...");
+	console.log(response.status);
 
 	if (response.ok)
 	{
+		console.log("Success!");
 		document.getElementById("newUsername").blur();
 		document.getElementById("newEmail").blur();
 		document.getElementById("newPassword").blur();
@@ -93,21 +99,8 @@ async function handleAccountCreation(event)
 	}
 	else
 	{
-		if (data.error === "username_error")
-		{
-			document.getElementById("accountCreationResult").innerHTML = 
-				`Account with username ${username} already exists`;
-			document.getElementById("accountCreationResult").hidden = false;
-			document.getElementById("newUsername").focus();
-		}
-		if (data.error === "email_error")
-		{
-			document.getElementById("accountCreationResult").innerHTML = 
-				`Account with email ${email} already exists`;
-			document.getElementById("accountCreationResult").hidden = false;
-			document.getElementById("newEmail").focus();
-		}
-		if (data.error === "username_and_email_error")
+		console.log("Error!");
+		if (data.user.username && data.user.email)
 		{
 			document.getElementById("newUsername").blur();
 			document.getElementById("newEmail").blur();
@@ -117,6 +110,26 @@ async function handleAccountCreation(event)
 				exist`;
 			document.getElementById("accountCreationResult").hidden = false;
 		}
+		else if (data.user.username)
+		{
+			console.log("username error!");
+			console.log(data.user.username);
+			document.getElementById("accountCreationResult").innerHTML = 
+				`Account with username ${username} already exists`;
+			document.getElementById("accountCreationResult").hidden = false;
+			document.getElementById("newUsername").focus();
+		}
+		else if (data.user.email)
+		{
+			console.log("email error!");
+			console.log(data.user.email);
+			document.getElementById("accountCreationResult").innerHTML = 
+				`Account with email ${email} already exists`;
+			document.getElementById("accountCreationResult").hidden = false;
+			document.getElementById("newEmail").focus();
+		}
+		document.getElementById("newPassword").blur();
+		document.getElementById("newPassword").value = "";
 	}
 }
 
