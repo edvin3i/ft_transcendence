@@ -3,10 +3,21 @@
 	<head>
 		<meta charset="UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<!-- For wss -->
+		<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' wss://localhost;">
+		<!-- end for wss -->
 		<title>transCendenZ</title>
 		<link rel="icon" href="favicon.gif?v=2" type="image/gif"/>
-		<script src="profile.js" defer></script>
-		<script src="pong.js" defer></script>
+
+		<script type="text/javascript">
+			const ws = new WebSocket('wss://localhost/wss/');
+			ws.onopen = () => console.log("Connected!");
+			ws.onmessage = (msg) => console.log("Got:", msg.data);
+		</script>
+
+
+		<!-- <script src="profile.js" defer></script>
+		<script src="pong.js" defer></script> -->
 	</head>
 	<body>
 		<header>
@@ -23,7 +34,7 @@
 
 			<div id="login" hidden>
 				<p>Please, log in to play the game.</p>
-				<button onclick=loginWith42(event)>Log in with GMail</button>
+				<button onclick=loginWith42(event)>Log in with 42</button>
 				<p>---or---</p>
 				<form id="loginForm" method="POST" onsubmit=handleLogin(event)>
 					<div>

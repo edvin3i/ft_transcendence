@@ -14,17 +14,14 @@ COPY containers/django/config/s6 /etc/s6-overlay/s6-rc.d/
 RUN chmod +x /etc/s6-overlay/s6-rc.d/daphne/run && \
     chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run
 
-
 WORKDIR /app
-
 ADD ../../srcs/backend/transa /app
+
 COPY containers/django/entrypoint.sh /tmp/entrypoint.sh
 
 RUN uv sync --no-cache
 
-
 ENTRYPOINT [ "sh", "/tmp/entrypoint.sh" ]
-# ENTRYPOINT ["/init"]
 
 CMD ["sh", "/init"]
 
