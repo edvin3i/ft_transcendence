@@ -36,13 +36,15 @@ INSTALLED_APPS = [
     "rest_framework",
     # "rest_framework.authtoken",
     "rest_framework_simplejwt",
+    # DRF applications
     "uprofiles",
     "trans_auth",
     "game",
     "tournaments",
     # WebSockets applications
+    "channels",
     "chat",
-    "remote",
+    # "remote",
 ]
 
 MIDDLEWARE = [
@@ -76,6 +78,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "transa.wsgi.application"
 
+ASGI_APPLICATION = "transa.asgi.application"
+
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -102,10 +106,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # CORS header setup
 CORS_ALLOWED_ORIGINS = [
-                        "https://localhost",
-                        "https://127.0.0.1",
-                        "http://localhost:8000",
-                        "http://localhost",
+    "https://localhost",
+    "https://127.0.0.1",
+    "http://localhost:8000",
+    "http://localhost",
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True

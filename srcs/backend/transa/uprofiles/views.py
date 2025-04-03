@@ -21,7 +21,6 @@ class UserProfileCreateAPIView(generics.CreateAPIView):
     serializer_class = UserProfileSerializer
 
 
-
 class UserProfileUpdateAPIView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
