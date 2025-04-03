@@ -5,7 +5,6 @@ canvas.height = 300;
 const ctx = canvas.getContext("2d");
 ctx.strokeRect(0, 0, canvas.width, canvas.height);
 */
-function playGame() {
 
   const canvas = document.getElementById("pongCanvas");
   const ctx = canvas.getContext("2d");
@@ -115,4 +114,3 @@ function playGame() {
 
   // Start the game
   gameLoop();
-}
