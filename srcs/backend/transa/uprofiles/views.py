@@ -18,7 +18,7 @@ class UserSelfProfileAPIView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
-    lookup_field = "pk"
+    # lookup_field = "pk"
 
 
 class UserProfileCreateAPIView(generics.CreateAPIView):
