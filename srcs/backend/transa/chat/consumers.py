@@ -2,6 +2,9 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
+    """
+    Simple websocket consumer
+    """
     async def connect(self):
         await self.accept()
         await self.send_json({"messgae": "Hello! Je suis Le Chat!"})
