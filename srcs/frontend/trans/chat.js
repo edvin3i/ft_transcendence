@@ -1,5 +1,6 @@
 const roomName = "general";  // Tu peux changer dynamiquement si besoin
-const socket = new WebSocket(`ws://${window.location.host}/ws/chat/${roomName}/`);
+const socket = new WebSocket("ws://localhost:8001/ws/chat/general/");
+
 
 socket.onmessage = function (e) {
     const data = JSON.parse(e.data);

@@ -1,13 +1,15 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from django.contrib.auth import get_user_model
 from .models import ChatMessage, UserBlock
+from django.contrib.auth import get_user_model
 
-User = get_user_model()
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        # ⚠️ Lazy import pour éviter les erreurs de settings
+        self.User = get_user_model()
+
         if self.scope["user"].is_anonymous:
             await self.close()
             return
@@ -62,13 +64,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if message.startswith("/block "):
             target_username = message.split(" ", 1)[1]
             try:
-                target_user = await database_sync_to_async(User.objects.get)(username=target_username)
-                await database_sync_to_async(UserBlock.objects.get_or_create)(user=user, blocked_user=target_user)
+                target_user = await database_sync_to_async(self.User.objects.get)(username=target_username)
+                await database_sync_to_async(UserBlock.objects.get_or_create)(
+                    user=user,
+                    blocked_user=target_user
+                )
                 await self.send(text_data=json.dumps({
                     "username": "SYSTEM",
                     "message": f"You have blocked {target_username}"
                 }))
-            except User.DoesNotExist:
+            except self.User.DoesNotExist:
                 await self.send(text_data=json.dumps({
                     "username": "SYSTEM",
                     "message": f"User '{target_username}' not found"
@@ -96,7 +101,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user = self.scope["user"]
 
         # ✅ Ne pas recevoir les messages de ceux qu'on a bloqués
-        is_blocked = await database_sync_to_async(UserBlock.objects.filter(user=user, blocked_user__username=sender).exists)()
+        is_blocked = await database_sync_to_async(
+            UserBlock.objects.filter(user=user, blocked_user__username=sender).exists
+        )()
         if is_blocked and sender != "SYSTEM":
             return
 
