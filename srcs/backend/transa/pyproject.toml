@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "channels==4.2.0",
+    "channels_redis>=4.1.0",
     "daphne==4.1.2",
     "django-filter==25.1",
     "django==5.1.6",
