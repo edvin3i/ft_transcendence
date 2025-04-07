@@ -42,8 +42,7 @@ async function handleLogIn(event)
 		document.getElementById("password").value = "";
 		document.getElementById("username").blur();
 		document.getElementById("password").blur();
-		document.getElementById("logInResult").innerHTML = 
-			`Wrong username orpassword!`;
+		document.getElementById("logInResult").innerHTML = `Wrong username or password!`;
 	}
 }
 
