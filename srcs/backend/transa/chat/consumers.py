@@ -7,21 +7,21 @@ from django.contrib.auth import get_user_model
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-    try:
+        try:
         # on autorise même les utilisateurs anonymes
-        self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-        self.room_group_name = f"chat_{self.room_name}"
+            self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
+            self.room_group_name = f"chat_{self.room_name}"
 
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
-        await self.accept()
+            await self.channel_layer.group_add(
+                self.room_group_name,
+                self.channel_name
+            )
+            await self.accept()
 
-        print(f"[WS CONNECT] Joined room {self.room_group_name}")
-    except Exception as e:
-        print(f"❌ WebSocket connect() error: {e}")
-        await self.close()
+            print(f"[WS CONNECT] Joined room {self.room_group_name}")
+        except Exception as e:
+            print(f"❌ WebSocket connect() error: {e}")
+            await self.close()
 
 
         # Envoyer les 50 derniers messages
