@@ -7,13 +7,8 @@ from django.contrib.auth import get_user_model
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        # ⚠️ Lazy import pour éviter les erreurs de settings
-        self.User = get_user_model()
-
-        if self.scope["user"].is_anonymous:
-            await self.close()
-            return
-
+    try:
+        # on autorise même les utilisateurs anonymes
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = f"chat_{self.room_name}"
 
@@ -21,8 +16,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-
         await self.accept()
+
+        print(f"[WS CONNECT] Joined room {self.room_group_name}")
+    except Exception as e:
+        print(f"❌ WebSocket connect() error: {e}")
+        await self.close()
+
 
         # Envoyer les 50 derniers messages
         messages = await database_sync_to_async(list)(
@@ -46,21 +46,30 @@ class ChatConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         message = data.get("message", "")
         user = self.scope["user"]
+        username = user.username if not user.is_anonymous else "Anonymous"
 
-        # ✅ Commande : /invite <username>
+        # ❌ Anonymes ne peuvent pas exécuter de commandes
+        if user.is_anonymous and message.startswith("/"):
+            await self.send(text_data=json.dumps({
+                "username": "SYSTEM",
+                "message": "⚠️ You must be logged in to use commands."
+            }))
+            return
+
+        # ✅ /invite <username>
         if message.startswith("/invite "):
             target_username = message.split(" ", 1)[1]
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     "type": "chat_message",
-                    "message": f"{user.username} invited {target_username} to a game 🎮",
+                    "message": f"{username} invited {target_username} to a game 🎮",
                     "username": "SYSTEM"
                 }
             )
             return
 
-        # ✅ Commande : /block <username>
+        # ✅ /block <username>
         if message.startswith("/block "):
             target_username = message.split(" ", 1)[1]
             try:
@@ -80,19 +89,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }))
             return
 
-        # ✅ Message normal : enregistrer + diffuser
-        await database_sync_to_async(ChatMessage.objects.create)(
-            user=user,
-            room=self.room_name,
-            content=message
-        )
+        # ✅ Message normal
+        if not user.is_anonymous:
+            await database_sync_to_async(ChatMessage.objects.create)(
+                user=user,
+                room=self.room_name,
+                content=message
+            )
 
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 "type": "chat_message",
                 "message": message,
-                "username": user.username
+                "username": username
             }
         )
 
@@ -100,12 +110,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         sender = event["username"]
         user = self.scope["user"]
 
-        # ✅ Ne pas recevoir les messages de ceux qu'on a bloqués
-        is_blocked = await database_sync_to_async(
-            UserBlock.objects.filter(user=user, blocked_user__username=sender).exists
-        )()
-        if is_blocked and sender != "SYSTEM":
-            return
+        # Anonymes ne peuvent bloquer personne
+        if not user.is_anonymous:
+            is_blocked = await database_sync_to_async(
+                UserBlock.objects.filter(user=user, blocked_user__username=sender).exists
+            )()
+            if is_blocked and sender != "SYSTEM":
+                return
 
         await self.send(text_data=json.dumps({
             "username": sender,
