@@ -25,16 +25,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 
         # Envoyer les 50 derniers messages
-        messages = await database_sync_to_async(list)(
-            ChatMessage.objects.filter(room=self.room_name)
-            .order_by("-timestamp")[:50]
-        )
-        for message in reversed(messages):
-            await self.send(text_data=json.dumps({
-                "username": message.user.username,
-                "message": message.content,
-                "timestamp": message.timestamp.strftime("%H:%M:%S")
-            }))
+        # messages = await database_sync_to_async(list)(
+        #     ChatMessage.objects.filter(room=self.room_name)
+        #     .order_by("-timestamp")[:50]
+        # )
+        # for message in reversed(messages):
+        #     await self.send(text_data=json.dumps({
+        #         "username": message.user.username,
+        #         "message": message.content,
+        #         "timestamp": message.timestamp.strftime("%H:%M:%S")
+        #     }))
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
