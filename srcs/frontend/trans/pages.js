@@ -1,37 +1,3 @@
-// function logInPage()
-// {
-// 	return `
-// 		<p>Please, log in to play the game.</p>
-// 		<button id="logInWith42Button">Log in with 42</button>
-// 		<p>---or---</p>
-// 		<form id="logInForm" method="POST">
-// 			<div>
-// 				<label for="username">Enter your username:</label>
-// 				<input  type="username"
-// 						id="username"
-// 						placeholder="username"
-// 						minlength="3"
-// 						maxlength="20"
-// 						pattern="[a-zA-Z0-9_]+"
-// 						title="Username can only contain letters, numbers, and underscores, and must be 3-20 characters long."
-// 						required/>
-// 			</div>
-// 			<div>
-// 				<label for="password">Enter your password:</label>
-// 				<input type="password"
-// 						id="password"
-// 						placeholder="********"
-// 						required/>
-// 			</div>
-// 			<button type="submit">Log in</button>
-// 		</form>
-// 		<p id="logInResult"></p>
-// 		<div>
-// 			<p style="display: inline;">Don't have an account?</p>
-// 			<button style="display: inline;" id="createAccountButton">Create account</button>
-// 		</div>`;
-// }
-
 function logInPage()
 {
 	return `
@@ -73,7 +39,7 @@ function logInPage()
 function accountCreationPage()
 {
 	return `
-		<div id="accountCreationHeader">
+		<div id="accountCreationHeader" class="text-center">
 			<p class="text-center">Please, create your account to play the game.</p>
 			<button id="signUpWith42Button">Sign up with 42</button>
 			<p>---or---</p>
