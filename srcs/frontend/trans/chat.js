@@ -1,8 +1,19 @@
 let socket = null;
 
-function openChat() {
+function openChat(room = "general") {
 	const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-	const wsUrl = `${protocol}://${window.location.host}/ws/chat/general/`;
+	const wsUrl = `${protocol}://${window.location.host}/ws/chat/${room}/`;
+
+	// 👇 Fermer l'ancien socket proprement si besoin
+	if (socket) {
+		socket.onopen = null;
+		socket.onmessage = null;
+		socket.onclose = null;
+		socket.close();
+	}
+
+	// ✅ Mise à jour du nom de room affiché
+	document.getElementById("current-room-name").textContent = room;
 
 	socket = new WebSocket(wsUrl);
 
@@ -22,13 +33,13 @@ function openChat() {
 		console.warn("❌ WebSocket fermé :", event);
 	};
 
-	document.getElementById("send").addEventListener("click", () => {
+	document.getElementById("send").onclick = () => {
 		const input = document.getElementById("chat-message-input");
 		if (input.value.trim() !== "") {
 			socket.send(JSON.stringify({ message: input.value }));
 			input.value = "";
 		}
-	});
+	};
 
 	document.getElementById("chat-message-input").addEventListener("keypress", (e) => {
 		if (e.key === "Enter") {
@@ -37,5 +48,18 @@ function openChat() {
 	});
 }
 
-document.addEventListener("DOMContentLoaded", openChat);
+document.addEventListener("DOMContentLoaded", () => {
+	openChat(); // default
 
+	document.getElementById("join-room").addEventListener("click", () => {
+		const roomInput = document.getElementById("room-name");
+		const room = roomInput.value.trim();
+		console.log("🔁 Room switch requested to:", room); // 👈 log
+	
+		if (room) {
+			document.getElementById("chat-log").innerHTML = ""; // Clear messages
+			openChat(room);
+		}
+	});
+	
+});
