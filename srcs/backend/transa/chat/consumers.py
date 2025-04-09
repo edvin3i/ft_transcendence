@@ -24,23 +24,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             logger.info(f"[✅ CONNECTED] Joined group: {self.room_group_name}")
 
-            messages = await database_sync_to_async(list)(
-                ChatMessage.objects.filter(room=self.room_name).order_by("-timestamp")[:50]
-            )
+            # ⛑ Prépare les messages en dicts (plus aucun ORM dans le async)
+            def fetch_history(room_name):
+                messages = ChatMessage.objects.filter(room=room_name).order_by("-timestamp")[:50]
+                return [
+                    {
+                        "username": m.user.username,
+                        "message": m.content,
+                        "timestamp": m.timestamp.strftime("%H:%M:%S")
+                    }
+                    for m in messages
+                ]
 
-            logger.info(f"[📜 HISTORY] Found {len(messages)} messages in {self.room_name}")
+            history = await database_sync_to_async(fetch_history)(self.room_name)
+            logger.info(f"[📜 HISTORY] Found {len(history)} messages in {self.room_name}")
 
-            for msg in reversed(messages):
-                await self.send(text_data=json.dumps({
-                    "username": msg.user.username,
-                    "message": msg.content,
-                    "timestamp": msg.timestamp.strftime("%H:%M:%S")
-                }))
-                logger.debug(f"[📤 SENT] {msg.user.username}: {msg.content}")
+            for msg in reversed(history):
+                await self.send(text_data=json.dumps(msg))
+                logger.debug(f"[📤 SENT] {msg['username']}: {msg['message']}")
 
-        except Exception as e:
-            logger.error(f"[❌ ERROR] connect() failed: {e}")
+        except Exception:
+            logger.exception("[❌ ERROR] connect() failed")
             await self.close()
+
 
     async def disconnect(self, close_code):
         logger.info(f"[👋 DISCONNECT] Leaving room: {self.room_group_name}")
@@ -100,15 +106,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     logger.warning(f"[❓ USER NOT FOUND] {target_username}")
                 return
 
-            if not user.is_anonymous:
+            if user.is_anonymous:
+                # On utilise un user "Anonymous" générique pour stocker les messages anonymes
+                User = get_user_model()
+                anon_user, _ = await database_sync_to_async(User.objects.get_or_create)(
+                    username="Anonymous"
+                )
+                await database_sync_to_async(ChatMessage.objects.create)(
+                    user=anon_user,
+                    room=self.room_name,
+                    content=message
+                )
+                logger.info(f"[💾 SAVED AS ANON] Anonymous: {message}")
+            else:
                 await database_sync_to_async(ChatMessage.objects.create)(
                     user=user,
                     room=self.room_name,
                     content=message
                 )
                 logger.info(f"[💾 SAVED] {username}: {message}")
-            else:
-                logger.debug(f"[👻 ANON] {username}: {message} (not saved)")
+
 
             await self.channel_layer.group_send(
                 self.room_group_name,
