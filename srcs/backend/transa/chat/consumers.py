@@ -62,9 +62,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             history = await database_sync_to_async(fetch_history)(self.room_name)
             logger.info(f"[📜 HISTORY] Found {len(history)} messages in {self.room_name}")
 
-            for msg in reversed(history):
+            for i, msg in enumerate(reversed(history)):
+                if i == len(history) - 1:
+                    msg["history_end"] = True  # ✅ tag pour la fin
                 await self.send(text_data=json.dumps(msg))
-                logger.debug(f"[📤 SENT] {msg['username']}: {msg['message']}")
+
 
         except Exception:
             logger.exception("[❌ ERROR] connect() failed")
@@ -110,12 +112,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if message.startswith("/block "):
                 target_username = message.split(" ", 1)[1]
                 User = get_user_model()
+                
+                if target_username == user.username:
+                    await self.send(text_data=json.dumps({
+                        "username": "SYSTEM",
+                        "message": "⚠️ You can't block yourself!"
+                    }))
+                    logger.warning(f"[🙃 SELF-BLOCK] {user.username} tried to block themselves")
+                    return
+
                 try:
                     target_user = await database_sync_to_async(User.objects.get)(username=target_username)
                     await database_sync_to_async(UserBlock.objects.get_or_create)(
                         user=user,
                         blocked_user=target_user
                     )
+
                     await self.send(text_data=json.dumps({
                         "username": "SYSTEM",
                         "message": f"You have blocked {target_username}"
