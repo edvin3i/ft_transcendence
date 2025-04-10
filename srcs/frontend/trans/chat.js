@@ -1,11 +1,12 @@
 let socket = null;
+let receivedHistory = false;
+
 
 function openChat(room = "general") {
 	const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 	const token = localStorage.getItem("access_token");
 	const wsUrl = `${protocol}://${window.location.host}/ws/chat/${room}/?token=${token}`;
 
-	// 👇 Fermer proprement l'ancien socket
 	if (socket) {
 		socket.onopen = null;
 		socket.onmessage = null;
@@ -14,44 +15,48 @@ function openChat(room = "general") {
 	}
 
 	document.getElementById("current-room-name").textContent = room;
+	document.getElementById("chat-log").innerHTML = ""; // reset
+
 	console.log("💬 Connecting to:", wsUrl);
-
-	const chatLog = document.getElementById("chat-log");
-	chatLog.innerHTML = ""; // 🔄 Clear log
-
 	socket = new WebSocket(wsUrl);
-
-	let hasDisplayedConnectionNotice = false;
+	receivedHistory = false;
 
 	socket.onopen = () => {
-		console.log("✅ WebSocket connecté :", wsUrl);
+		console.log("✅ WebSocket connected:", wsUrl);
 	};
 
 	socket.onmessage = function (e) {
 		const data = JSON.parse(e.data);
 		const chatLog = document.getElementById("chat-log");
 	
-		// ⬇️ Affiche le message utilisateur
-		const p = document.createElement("p");
-		p.innerHTML = `<strong>${data.username || "Anonymous"}</strong> : ${data.message}`;
-		chatLog.appendChild(p);
+		// Detect first normal message (non-historique)
+		if (!receivedHistory) {
+			receivedHistory = true;
 	
-		// ✅ Message spécial à la fin de l'historique
-		if (data.history_end) {
-			const notice = document.createElement("p");
-			notice.style.fontStyle = "italic";
-			notice.classList.add("text-muted");
-			notice.textContent = "✅ You are connected to the chat.";
-			chatLog.appendChild(notice);
+			// ✅ Affiche "connected" après les messages historiques
+			const connectedP = document.createElement("p");
+			connectedP.classList.add("fw-bold", "text-success", "mt-2");
+			connectedP.style.fontStyle = "italic";
+			connectedP.textContent = "✅ You are connected to the chat.";
+			chatLog.appendChild(connectedP);
 		}
+	
+		const timestamp = data.timestamp ? `<span class="text-info">[${data.timestamp}]</span>` : "";
+		const sender = data.username || "Anonymous";
+		const message = data.message;
+	
+		const p = document.createElement("p");
+		p.innerHTML = `${timestamp} <strong>${sender}</strong> : ${message}`;
+		chatLog.appendChild(p);
+		chatLog.scrollTop = chatLog.scrollHeight;
 	};
 	
 
 	socket.onclose = function (event) {
-		console.warn("❌ WebSocket fermé :", event);
+		console.warn("❌ WebSocket closed:", event);
 
 		if (!event.wasClean && event.code === 1006) {
-			console.warn("🛑 Connexion refusée (probablement token expiré)");
+			console.warn("🛑 Likely invalid/expired token");
 			handleLogout();
 		}
 	};

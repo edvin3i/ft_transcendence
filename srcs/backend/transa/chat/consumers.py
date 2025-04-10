@@ -8,6 +8,7 @@ from urllib.parse import parse_qs
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth import get_user_model
+from datetime import datetime
 
 
 logger = logging.getLogger(__name__)
@@ -161,15 +162,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 )
                 logger.info(f"[💾 SAVED] {username}: {message}")
 
-
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     "type": "chat_message",
                     "username": username,
-                    "message": message
+                    "message": message,
+                    "timestamp": datetime.now().strftime("%H:%M:%S")
                 }
             )
+
 
         except Exception as e:
             logger.error(f"[❌ ERROR] receive() failed: {e}")
@@ -191,5 +193,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.debug(f"[📡 BROADCAST] {sender}: {message}")
         await self.send(text_data=json.dumps({
             "username": sender,
-            "message": message
+            "message": message,
+            "timestamp": event.get("timestamp")
         }))
+
