@@ -123,43 +123,38 @@ async function handleAccountCreation(event)
 function handleLogout() {
 	localStorage.removeItem("access_token");
 	localStorage.removeItem("refresh_token");
-	localStorage.removeItem("username"); // au cas où tu l'utilises aussi
+	localStorage.removeItem("username");
 
 	console.log("🚪 Logged out - tokens removed");
 
-	// Coupe le WebSocket proprement
+	// Ferme le chat si connecté
 	if (typeof socket !== "undefined" && socket) {
 		socket.close();
 	}
 
-	// Remet l'UI à jour
+	// 👇 Revenir à la page d'accueil (login)
+	openLogInPage();
 	updateUIWithUser();
-
-	// Vider le chat visuellement
-	const chatLog = document.getElementById("chat-log");
-	if (chatLog) {
-		chatLog.innerHTML = `<em class="text-muted">🚪 Vous êtes déconnecté.</em>`;
-	}
-
-	// Optionnel : focus sur le champ username ou rediriger
-	 document.getElementById("username")?.focus();
-	 updateUIWithUser(); // pour bien cacher le bandeau après logout
 }
-
 
 function getCurrentUserFromToken() {
 	return localStorage.getItem("username"); // simple et fiable
 }
 
 function updateUIWithUser() {
-	const username = localStorage.getItem("username");
+	const username = getCurrentUserFromToken();
 	const userInfo = document.getElementById("user-info");
 	const userLabel = document.getElementById("logged-user");
+	const chatSection = document.getElementById("chat-section");
 
 	if (username) {
 		userInfo.style.display = "inline-block";
 		userLabel.textContent = `👤 Logged in as: ${username}`;
+		chatSection.style.display = "block"; // 👈 afficher le chat
+		openChat(); // ✅ connecte socket avec bon token
 	} else {
 		userInfo.style.display = "none";
+		userLabel.textContent = "";
+		chatSection.style.display = "none"; // 👈 cache le chat
 	}
 }

@@ -21,8 +21,13 @@ function openChat(room = "general") {
 
 	socket.onopen = () => {
 		console.log("✅ WebSocket connecté :", wsUrl);
+		const chatLog = document.getElementById("chat-log");
+		const p = document.createElement("p");
+		p.style.fontStyle = "italic";
+		p.textContent = "✅ Vous êtes connecté au chat.";
+		chatLog.appendChild(p);
 	};
-
+	
 	socket.onmessage = function (e) {
 		const data = JSON.parse(e.data);
 		const chatLog = document.getElementById("chat-log");
@@ -52,7 +57,6 @@ function openChat(room = "general") {
 
 document.addEventListener("DOMContentLoaded", () => {
 	updateUIWithUser();
-	openChat(); // default
 	
 	document.getElementById("join-room").addEventListener("click", () => {
 		const roomInput = document.getElementById("room-name");

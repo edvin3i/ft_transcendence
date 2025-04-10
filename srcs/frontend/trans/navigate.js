@@ -27,12 +27,15 @@ function openAccountCreationPage() {
 function openUserProfilePage() {
 	renderPage(userProfilePage());
 
+	updateUIWithUser(); // 👈 Ajout ici pour forcer l'affichage correct du bandeau
+
 	const logOutButton = document.getElementById("logOutButton");
-	logOutButton.addEventListener("click", handleLogout);  // 👈 change ici
+	logOutButton.addEventListener("click", handleLogout);
 
 	const startGameButton = document.getElementById("startGameButton");
 	startGameButton.addEventListener("click", startGame);
 }
+
 
 function startGame() {
 	renderPage(gamePage());
@@ -50,6 +53,13 @@ function endGame() {
 // ✅ Appelle updateUI au chargement
 window.onload = () => {
 	updateUIWithUser();
-	openLogInPage();
+
+	const token = localStorage.getItem("access_token");
+	if (token) {
+		openUserProfilePage(); // 👈 s'il est connecté, va direct au profil
+	} else {
+		openLogInPage(); // sinon, login classique
+	}
 };
+
 
