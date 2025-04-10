@@ -1,5 +1,4 @@
-function openLogInPage()
-{
+function openLogInPage() {
 	renderPage(logInPage());
 
 	const logInWith42Button = document.getElementById("logInWith42Button");
@@ -12,10 +11,9 @@ function openLogInPage()
 	createAccountButton.addEventListener("click", openAccountCreationPage);
 }
 
-function openAccountCreationPage()
-{
+function openAccountCreationPage() {
 	renderPage(accountCreationPage());
-	
+
 	const signUpWith42Button = document.getElementById("signUpWith42Button");
 	signUpWith42Button.addEventListener("click", signUpWith42);
 
@@ -26,35 +24,32 @@ function openAccountCreationPage()
 	logInButton.addEventListener("click", openLogInPage);
 }
 
-function openUserProfilePage()
-{
+function openUserProfilePage() {
 	renderPage(userProfilePage());
 
 	const logOutButton = document.getElementById("logOutButton");
-	logOutButton.addEventListener("click", logOut);
+	logOutButton.addEventListener("click", handleLogout);  // 👈 change ici
 
 	const startGameButton = document.getElementById("startGameButton");
 	startGameButton.addEventListener("click", startGame);
 }
 
-function logOut()
-{
-	openLogInPage();
-}
-
-function startGame()
-{
+function startGame() {
 	renderPage(gamePage());
-	
+
 	const endGameButton = document.getElementById("endGameButton");
 	endGameButton.addEventListener("click", endGame);
 
 	playGame();
 }
 
-function endGame()
-{
+function endGame() {
 	openUserProfilePage();
 }
 
-window.onload = openLogInPage();
+// ✅ Appelle updateUI au chargement
+window.onload = () => {
+	updateUIWithUser();
+	openLogInPage();
+};
+

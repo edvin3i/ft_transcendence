@@ -2,7 +2,8 @@ let socket = null;
 
 function openChat(room = "general") {
 	const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-	const wsUrl = `${protocol}://${window.location.host}/ws/chat/${room}/`;
+	const token = localStorage.getItem("access_token"); // récupère le JWT
+	const wsUrl = `${protocol}://${window.location.host}/ws/chat/${room}/?token=${token}`;
 
 	// 👇 Fermer l'ancien socket proprement si besoin
 	if (socket) {
@@ -15,6 +16,7 @@ function openChat(room = "general") {
 	// ✅ Mise à jour du nom de room affiché
 	document.getElementById("current-room-name").textContent = room;
 
+	console.log("💬 Connecting to:", wsUrl);
 	socket = new WebSocket(wsUrl);
 
 	socket.onopen = () => {
@@ -49,17 +51,17 @@ function openChat(room = "general") {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+	updateUIWithUser();
 	openChat(); // default
-
+	
 	document.getElementById("join-room").addEventListener("click", () => {
 		const roomInput = document.getElementById("room-name");
 		const room = roomInput.value.trim();
-		console.log("🔁 Room switch requested to:", room); // 👈 log
-	
+		console.log("🔁 Room switch requested to:", room);
+
 		if (room) {
-			document.getElementById("chat-log").innerHTML = ""; // Clear messages
+			document.getElementById("chat-log").innerHTML = "";
 			openChat(room);
 		}
 	});
-	
 });

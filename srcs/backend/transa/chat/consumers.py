@@ -4,12 +4,35 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import ChatMessage, UserBlock
 from django.contrib.auth import get_user_model
+from urllib.parse import parse_qs
+from rest_framework_simplejwt.tokens import AccessToken
+from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth import get_user_model
+
 
 logger = logging.getLogger(__name__)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        query_string = self.scope["query_string"].decode()
+        token = parse_qs(query_string).get("token", [None])[0]
+
+        if token:
+            try:
+                validated_token = AccessToken(token)
+                user_id = validated_token["user_id"]
+                user = await database_sync_to_async(get_user_model().objects.get)(id=user_id)
+                self.scope["user"] = user
+                logger.info(f"[🔐 JWT AUTH] Connected user: {user.username}")
+            except Exception as e:
+                logger.warning(f"[❌ JWT ERROR] {e}")
+                await self.close()
+                return
+        else:
+            self.scope["user"] = AnonymousUser()
+            logger.info(f"[👤 ANONYMOUS] No token provided.")
+
         try:
             self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
             self.room_group_name = f"chat_{self.room_name}"
