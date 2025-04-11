@@ -39,12 +39,12 @@ function logInPage()
 function accountCreationPage()
 {
 	return `
-		<div id="accountCreationHeader" class="text-center">
+		<div class="text-center" id="accountCreationHeader">
 			<p class="text-center">Please, create your account to play the game.</p>
 			<button id="signUpWith42Button">Sign up with 42</button>
 			<p>---or---</p>
 		</div>
-		<form id="accountCreationForm" method="POST">
+		<form class="text-center" id="accountCreationForm" method="POST">
 			<div>
 				<label for="username">Enter your username:</label>
 				<input  type="username"
@@ -77,7 +77,7 @@ function accountCreationPage()
 			<button type="submit">Create account</button>
 		</form>
 		<p id="accountCreationResult"></p>
-		<div>
+		<div class="text-center">
 			<p style="display: inline;">Already have an account?</p>
 			<button style="display: inline;" id="logInButton">Log in</button>
 		</div>`;
@@ -86,19 +86,50 @@ function accountCreationPage()
 function userProfilePage()
 {
 	return `
-		<p>You have just successfully logged in to your account!</p>
-		<p id="userProfileInformation"></p>
-		<button id="startGameButton">Play Pong</button>
-		<button id="logOutButton">Log out</button>`;
+		<div class="text-center">
+			<p>You have just successfully logged in to your account!</p>
+			<p id="userProfileInformation"></p>
+			<button id="startGameButton">Play Pong</button>
+			<button id="logOutButton">Log out</button>
+		</div>`;
 }
 
 function gamePage()
 {
 	return `
-		<h1>Pong Game 1v1</h1>
-		<canvas id="pongCanvas" width="600" height="400"></canvas>
-		<p>Use W and S for Player 1 (left) and Arrow keys for Player 2 (right)</p>
-		<button id="endGameButton">End game</button>`;
+		<div class="text-center">
+			<h1 class="text-center">Pong Game 1v1</h1>
+			<canvas id="pongCanvas" width="600" height="400"></canvas>
+			<p>Use W and S for Player 1 (left) and Arrow keys for Player 2 (right)</p>
+			
+			<div class="d-flex justify-content-between align-items-center px-4" style="min-height: 100px;">
+				<!-- Chat Button à gauche -->
+				<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#chatBox" aria-expanded="false" aria-controls="chatBox">Chat 💬</button>
+			
+				<!-- Bouton centré -->
+				<div class="d-flex justify-content-center flex-grow-1">
+					<button class="btn btn-danger" id="endGameButton">End game</button>
+				</div>
+			</div>
+
+			<div class="collapse" id="chatBox">
+				<div class="card bg-dark text-light shadow">
+					<div class="card-header">
+						Chat Room
+					</div>
+					<div class="card-body" style="max-height: 300px; overflow-y: auto;" id="chatMessages">
+						<!-- Messages appear here -->
+					</div>
+					<div class="card-footer p-2">
+						<div class="input-group">
+							<input type="text" class="form-control" placeholder="Type a message..." id="chatInput">
+							<button class="btn btn-success" id="sendMessageButton">Send</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>`;
 }
 
 function renderPage(page)
