@@ -1,18 +1,18 @@
-/*
-const canvas = document.getElementById("pongCanvas");
-canvas.width = 500;
-canvas.height = 300;
-const ctx = canvas.getContext("2d");
-ctx.strokeRect(0, 0, canvas.width, canvas.height);
-*/
+
+// const canvas = document.getElementById("pongCanvas");
+// canvas.width = 5000;
+// canvas.height = 3000;
+// const ctx = canvas.getContext("2d");
+// ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
 function playGame() {
 
   const canvas = document.getElementById("pongCanvas");
   const ctx = canvas.getContext("2d");
 
-  const paddleWidth = 10, paddleHeight = 100, ballSize = 10;
-  let player1Y = 150, player2Y = 150, ballX = 300, ballY = 200;
-  let ballSpeedX = 4, ballSpeedY = 4;
+  const paddleWidth = 8, paddleHeight = 60, ballSize = 8;
+  let player1Y = 100, player2Y = 150, ballX = 300, ballY = 200;
+  let ballSpeedX = 1, ballSpeedY = 1;
   let player1Speed = 0, player2Speed = 0;
   let player1Score = 0, player2Score = 0;
 
