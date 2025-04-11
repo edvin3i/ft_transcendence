@@ -54,6 +54,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ["user", "avatar", "bio", "is_2fa_enabled", "totp_secret"]
 
+    def get_object(self):
+        return self.request.user.userprofile
+
+
     # Add custom create() for nested JSON save
     def create(self, validated_data):
         """
