@@ -1,12 +1,21 @@
 let socket = null;
 let receivedHistory = false;
-
+let openRooms = new Set();
+let currentRoom = "general"; // par défaut
 
 function openChat(room = "general") {
 	const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 	const token = localStorage.getItem("access_token");
 	const wsUrl = `${protocol}://${window.location.host}/ws/chat/${room}/?token=${token}`;
-
+	createChatTab(room);
+	document.querySelectorAll("#chat-tabs button").forEach((btn) => {
+		btn.classList.remove("active");
+		if (btn.dataset.room === room) {
+			btn.classList.add("active");
+		}
+	});
+	currentRoom = room;
+	
 	if (socket) {
 		socket.onopen = null;
 		socket.onmessage = null;
@@ -90,3 +99,33 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 	});
 });
+
+function createChatTab(room) {
+	if (openRooms.has(room)) return;
+
+	const tab = document.createElement("button");
+	tab.textContent = `#${room}`;
+	tab.className = "nav-link";
+	tab.dataset.room = room;
+
+	tab.onclick = () => {
+		switchRoom(room);
+	};
+
+	document.getElementById("chat-tabs").appendChild(tab);
+	openRooms.add(room);
+}
+
+function switchRoom(room) {
+	if (room === currentRoom) return;
+
+	document.querySelectorAll("#chat-tabs button").forEach((btn) => {
+		btn.classList.remove("active");
+		if (btn.dataset.room === room) {
+			btn.classList.add("active");
+		}
+	});
+
+	currentRoom = room;
+	openChat(room);
+}
