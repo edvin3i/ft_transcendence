@@ -8,43 +8,51 @@ async function signUpWith42(event)
 	// add 42auth
 }
 
-async function handleLogIn(event)
-{
+async function handleLogIn(event) {
 	event.preventDefault();
 
 	const username = document.getElementById("username").value;
 	const password = document.getElementById("password").value;
 	
-	const response = await fetch('api/auth/token/',
-		{
-			method: 'POST', 
-			headers: {'Content-Type': 'application/json'}, 
-			body: JSON.stringify({username: username, password: password})
-		});
+	const response = await fetch('api/auth/token/', {
+		method: 'POST',
+		headers: {'Content-Type': 'application/json'},
+		body: JSON.stringify({ username, password })
+	});
 
 	console.log(response.status);
-
 	const data = await response.json();
 	console.log(data);
 
-	if (response.ok)
-	{
-		openUserProfilePage();
-		/*
-		document.getElementById("userProfileInformation").innerHTML = 
-			`Your information:<br>
-			username: ${data.user.username}<br>
-			email: ${data.user.email}`;
-		*/
-	}
-	else
-	{
+	if (response.ok) {
+		// ✅ Stockage des tokens
+		localStorage.setItem("access_token", data.access);
+		localStorage.setItem("refresh_token", data.refresh);
+
+		// ✅ Optionnel : décoder le username à partir du token
+		try {
+			const payload = JSON.parse(atob(data.access.split('.')[1]));
+			if (payload?.user_id) {
+				localStorage.setItem("username", username);  // ou payload.username si dispo dans le token
+			}
+		} catch (e) {
+			console.warn("❌ Failed to decode token", e);
+		}
+
+		// ✅ Mise à jour de l’interface et reconnexion WebSocket
+		updateUIWithUser();  // met à jour "Logged in as"
+		openChat();          // reconnecte au WebSocket avec le bon token
+
+		openUserProfilePage();  // redirige vers la page de profil
+	} else {
 		document.getElementById("password").value = "";
 		document.getElementById("username").blur();
 		document.getElementById("password").blur();
 		document.getElementById("logInResult").innerHTML = `Wrong username or password!`;
 	}
 }
+
+
 
 async function handleAccountCreation(event)
 {
@@ -109,5 +117,44 @@ async function handleAccountCreation(event)
 			document.getElementById("accountCreationResult").innerHTML = 
 				`An error has occurred  while creating account!`;
 		}
+	}
+}
+
+function handleLogout() {
+	localStorage.removeItem("access_token");
+	localStorage.removeItem("refresh_token");
+	localStorage.removeItem("username");
+
+	console.log("🚪 Logged out - tokens removed");
+
+	// Ferme le chat si connecté
+	if (typeof socket !== "undefined" && socket) {
+		socket.close();
+	}
+
+	// 👇 Revenir à la page d'accueil (login)
+	openLogInPage();
+	updateUIWithUser();
+}
+
+function getCurrentUserFromToken() {
+	return localStorage.getItem("username"); // simple et fiable
+}
+
+function updateUIWithUser() {
+	const username = getCurrentUserFromToken();
+	const userInfo = document.getElementById("user-info");
+	const userLabel = document.getElementById("logged-user");
+	const chatSection = document.getElementById("chat-section");
+
+	if (username) {
+		userInfo.style.display = "inline-block";
+		userLabel.textContent = `👤 Logged in as: ${username}`;
+		chatSection.style.display = "block"; // 👈 afficher le chat
+		openChat(); // ✅ connecte socket avec bon token
+	} else {
+		userInfo.style.display = "none";
+		userLabel.textContent = "";
+		chatSection.style.display = "none"; // 👈 cache le chat
 	}
 }

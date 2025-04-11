@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 try:
-    SECRET_KEY = os.getenv("DJ_SECRET_KEY", "dev_secret_key")
+    SECRET_KEY = os.getenv("DJ_SECRET_KEY", "superdupersecretkey")
 except KeyError as e:
     raise RuntimeError("Could not find a DJ_SECRET_KEY in environment") from e
 
@@ -75,6 +75,17 @@ TEMPLATES = [
         },
     },
 ]
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],
+        },
+    },
+}
+
+ASGI_APPLICATION = "transa.asgi.application"
 
 WSGI_APPLICATION = "transa.wsgi.application"
 
@@ -204,3 +215,18 @@ OA_CLIENT_ID = os.getenv("OA_CLIENT_ID", None)
 OA_SECRET = os.getenv("OA_SECRET", None)
 OA_REDIR_URL = os.getenv("OA_REDIR_URL", "api/auth/ft/callback/")
 OA_POST_LOUT_REDIR_URL = os.getenv("OA_POST_LOUT_REDIR_URL", "/")
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "DEBUG",
+    },
+}

@@ -12,10 +12,9 @@ function openLogInPage()
 	createAccountButton.addEventListener("click", openAccountCreationPage);
 }
 
-function openAccountCreationPage()
-{
+function openAccountCreationPage() {
 	renderPage(accountCreationPage());
-	
+
 	const signUpWith42Button = document.getElementById("signUpWith42Button");
 	signUpWith42Button.addEventListener("click", signUpWith42);
 
@@ -26,35 +25,42 @@ function openAccountCreationPage()
 	logInButton.addEventListener("click", openLogInPage);
 }
 
-function openUserProfilePage()
-{
+function openUserProfilePage() {
 	renderPage(userProfilePage());
 
+	updateUIWithUser(); // 👈 Ajout ici pour forcer l'affichage correct du bandeau
+
 	const logOutButton = document.getElementById("logOutButton");
-	logOutButton.addEventListener("click", logOut);
+	logOutButton.addEventListener("click", handleLogout);
 
 	const startGameButton = document.getElementById("startGameButton");
 	startGameButton.addEventListener("click", startGame);
 }
 
-function logOut()
-{
-	openLogInPage();
-}
 
-function startGame()
-{
+function startGame() {
 	renderPage(gamePage());
-	
+
 	const endGameButton = document.getElementById("endGameButton");
 	endGameButton.addEventListener("click", endGame);
 
 	playGame();
 }
 
-function endGame()
-{
+function endGame() {
 	openUserProfilePage();
 }
 
-window.onload = openLogInPage();
+// ✅ Appelle updateUI au chargement
+window.onload = () => {
+	updateUIWithUser();
+
+	const token = localStorage.getItem("access_token");
+	if (token) {
+		openUserProfilePage(); // 👈 s'il est connecté, va direct au profil
+	} else {
+		openLogInPage(); // sinon, login classique
+	}
+};
+
+
