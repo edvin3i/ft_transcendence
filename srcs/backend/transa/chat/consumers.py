@@ -36,6 +36,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         try:
             self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
+            if self.room_name.startswith("dm_"):
+            # Vérifie si l'utilisateur est bien concerné
+                participants = self.room_name.replace("dm_", "").split("_")
+                username = self.scope["user"].username
+
+                if username not in participants:
+                    logger.warning(f"[🚫 FORBIDDEN DM ACCESS] {username} tried to access {self.room_name}")
+                    await self.close()
+                    return
+
             self.room_group_name = f"chat_{self.room_name}"
 
             logger.info(f"[🔌 CONNECT] User connecting to room: {self.room_name}")
@@ -168,7 +178,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "type": "chat_message",
                     "username": username,
                     "message": message,
-                    "timestamp": datetime.now().strftime("%H:%M:%S")
+                    "timestamp": datetime.now().strftime("%H:%M:%S"),
+                    "room": self.room_name
                 }
             )
 
@@ -194,6 +205,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "username": sender,
             "message": message,
-            "timestamp": event.get("timestamp")
+            "timestamp": event.get("timestamp"),
+            "room": event.get("room")
         }))
 
