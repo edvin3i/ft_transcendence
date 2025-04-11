@@ -1,22 +1,28 @@
 #!/bin/sh
 
+VENV_PATH="/app/.venv"
+PYTHON="$VENV_PATH/bin/python"
+GUNICORN="$VENV_PATH/bin/gunicorn"
+DAPHNE="$VENV_PATH/bin/daphne"
+
+echo "⚙️ Using Python from: $PYTHON"
+echo "⚙️ Using Gunicorn from: $GUNICORN"
+echo "⚙️ Using Daphne from: $DAPHNE"
+
 echo "⚡️ Waiting for database..."
-until nc -z -v -w30 $DB_HOST $DB_PORT
+until nc -z -v -w30 "$DB_HOST" "$DB_PORT"
 do
   echo "Waiting for database connection..."
   sleep 1
 done
 echo "✅ Database is up!"
 
-echo "⚡️ Make migrations..."
-uv run python manage.py makemigrations uprofiles
-uv run python manage.py makemigrations
+echo "⚡️ Running migrations..."
+$PYTHON manage.py makemigrations uprofiles
+$PYTHON manage.py makemigrations
+$PYTHON manage.py migrate --noinput
 
-echo "⚡️ Applying migrations..."
-uv run python manage.py migrate --noinput
-
-# Check if migrations applied correctly
-MIGRATION_CHECK=$(uv run python manage.py showmigrations uprofiles | grep '\[ \]')
+MIGRATION_CHECK=$($PYTHON manage.py showmigrations uprofiles | grep '\[ \]')
 if [ ! -z "$MIGRATION_CHECK" ]; then
   echo "❌ Warning: Some uprofiles migrations may not have applied correctly"
   echo "$MIGRATION_CHECK"
@@ -25,7 +31,7 @@ else
 fi
 
 echo "⚡️ Creating Django SuperUser..."
-uv run python manage.py shell <<EOF
+$PYTHON manage.py shell <<EOF
 from django.contrib.auth import get_user_model
 User = get_user_model()
 if not User.objects.filter(username="$DJANGO_SUPERUSER_NAME").exists():
@@ -34,10 +40,15 @@ if not User.objects.filter(username="$DJANGO_SUPERUSER_NAME").exists():
 else:
     print("✅ Superuser already exists.")
 EOF
-# uv run python manage.py createsuperuser --no-input
 
-echo "  Collecting static files..."
-uv run python manage.py collectstatic --no-input
+echo "🧹 Collecting static files..."
+$PYTHON manage.py collectstatic --no-input
 
-echo "🚀 Starting Gunicorn..."
-exec "$@"
+echo "🚀 Starting Gunicorn and Daphne..."
+
+# Lance Gunicorn pour les requêtes HTTP (port 8000)
+$GUNICORN -b 0.0.0.0:8000 transa.wsgi:application &
+
+# Lance Daphne pour WebSockets (port 8001)
+exec $DAPHNE -b 0.0.0.0 -p 8001 transa.asgi:application
+
