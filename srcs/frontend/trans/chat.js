@@ -94,8 +94,13 @@ document.addEventListener("DOMContentLoaded", () => {
 		console.log("🔁 Room switch requested to:", room);
 
 		if (room) {
-			document.getElementById("chat-log").innerHTML = "";
-			openChat(room);
+			switchRoom(room);
+			document.getElementById("room-name").value = "";
+		}
+	});
+	document.getElementById("room-name").addEventListener("keypress", (e) => {
+		if (e.key === "Enter") {
+			document.getElementById("join-room").click(); // 👈 Simule le clic
 		}
 	});
 });
@@ -103,29 +108,62 @@ document.addEventListener("DOMContentLoaded", () => {
 function createChatTab(room) {
 	if (openRooms.has(room)) return;
 
-	const tab = document.createElement("button");
-	tab.textContent = `#${room}`;
-	tab.className = "nav-link";
+	const tab = document.createElement("div");
+	tab.className = "nav-link d-flex align-items-center";
 	tab.dataset.room = room;
 
-	tab.onclick = () => {
-		switchRoom(room);
-	};
+	const roomBtn = document.createElement("span");
+	roomBtn.textContent = `#${room}`;
+	roomBtn.className = "flex-grow-1";
+	roomBtn.style.cursor = "pointer";
+	roomBtn.onclick = () => switchRoom(room);
+
+	tab.appendChild(roomBtn);
+
+	// ❌ Ajouter le bouton "fermer" (sauf pour general)
+	if (room !== "general") {
+		const closeBtn = document.createElement("button");
+		closeBtn.innerHTML = "&times;";
+		closeBtn.className = "btn btn-sm btn-light ms-2";
+		closeBtn.style.padding = "0 6px";
+		closeBtn.onclick = (e) => {
+			e.stopPropagation(); // évite de switcher de room en même temps
+			closeChatTab(room);
+		};
+		tab.appendChild(closeBtn);
+	}
 
 	document.getElementById("chat-tabs").appendChild(tab);
 	openRooms.add(room);
+	if (room === currentRoom) {
+		tab.classList.add("active", "bg-primary", "text-white");
+	}	
 }
+
+function closeChatTab(room) {
+	// Supprimer visuellement l'onglet
+	const tab = document.querySelector(`#chat-tabs [data-room="${room}"]`);
+	if (tab) tab.remove();
+
+	openRooms.delete(room);
+
+	// Si on ferme la room active, switcher vers "general"
+	if (currentRoom === room) {
+		switchRoom("general");
+	}
+}
+
 
 function switchRoom(room) {
 	if (room === currentRoom) return;
 
-	document.querySelectorAll("#chat-tabs button").forEach((btn) => {
-		btn.classList.remove("active");
-		if (btn.dataset.room === room) {
-			btn.classList.add("active");
+	document.querySelectorAll("#chat-tabs .nav-link").forEach((tab) => {
+		tab.classList.remove("active", "bg-primary", "text-white");
+		if (tab.dataset.room === room) {
+			tab.classList.add("active", "bg-primary", "text-white");
 		}
 	});
-
+	
 	currentRoom = room;
 	openChat(room);
 }
