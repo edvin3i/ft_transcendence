@@ -1,4 +1,5 @@
-function openLogInPage() {
+function openLogInPage()
+{
 	renderPage(logInPage());
 
 	const logInWith42Button = document.getElementById("logInWith42Button");
