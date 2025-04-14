@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     "tournaments",
     # WebSockets applications
     "channels",
-    "chat",
+    "chat.apps.ChatConfig",
     # "remote",
 ]
 
