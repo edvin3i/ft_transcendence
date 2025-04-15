@@ -27,7 +27,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 user = await database_sync_to_async(get_user_model().objects.get)(id=user_id)
                 self.scope["user"] = user
                 if user.is_authenticated:
-                    redis_client.sadd("online_users", str(user.id))
+                    # redis_client.sadd("online_users", str(user.id))
+                    redis_client.set(f"user_online:{user.id}", "1", ex=30)
                 logger.info(f"[🔐 JWT AUTH] Connected user: {user.username}")
             except Exception as e:
                 logger.warning(f"[❌ JWT ERROR] {e}")
@@ -80,7 +81,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         user = self.scope["user"]
         if user.is_authenticated:
-            redis_client.srem("online_users", str(user.id))
+            # redis_client.srem("online_users", str(user.id))
+            redis_client.delete(f"user_online:{user.id}")
         logger.info(f"[👋 DISCONNECT] Leaving room: {self.room_group_name}")
         await self.channel_layer.group_discard(
             self.room_group_name,
@@ -89,19 +91,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         logger.debug(f"[📩 RECEIVE] Raw data: {text_data}")
+
         try:
             data = json.loads(text_data)
             message = data.get("message", "")
             user = self.scope["user"]
-            username = user.username if not user.is_anonymous else "Anonymous"
-
-            if user.is_anonymous and message.startswith("/"):
-                await self.send(text_data=json.dumps({
-                    "username": "SYSTEM",
-                    "message": "⚠️ You must be logged in to use commands."
-                }))
-                logger.warning(f"[⚠️ BLOCKED] Anonymous tried command: {message}")
+            username = user.username # if not user.is_anonymous else "Anonymous"
+            if data.get("type") == "ping":
+                if user.is_authenticated:
+                    redis_client.set(f"user_online:{user.id}", "1", ex=30)
                 return
+
+            # if user.is_anonymous and message.startswith("/"):
+            #     await self.send(text_data=json.dumps({
+            #         "username": "SYSTEM",
+            #         "message": "⚠️ You must be logged in to use commands."
+            #     }))
+            #     logger.warning(f"[⚠️ BLOCKED] Anonymous tried command: {message}")
+            #     return
 
             if message.startswith("/invite "):
                 target = message.split(" ", 1)[1]
