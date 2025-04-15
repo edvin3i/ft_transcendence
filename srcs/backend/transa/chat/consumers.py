@@ -1,17 +1,18 @@
 import json
 import logging
+import redis
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import ChatMessage, UserBlock
-from django.contrib.auth import get_user_model
 from urllib.parse import parse_qs
 from rest_framework_simplejwt.tokens import AccessToken
-from django.contrib.auth.models import AnonymousUser
+# from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth import get_user_model
 from datetime import datetime
 
 
 logger = logging.getLogger(__name__)
+redis_client = redis.Redis(host='redis', port=6379, db=0)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -25,14 +26,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 user_id = validated_token["user_id"]
                 user = await database_sync_to_async(get_user_model().objects.get)(id=user_id)
                 self.scope["user"] = user
+                if user.is_authenticated:
+                    redis_client.sadd("online_users", str(user.id))
                 logger.info(f"[🔐 JWT AUTH] Connected user: {user.username}")
             except Exception as e:
                 logger.warning(f"[❌ JWT ERROR] {e}")
                 await self.close()
                 return
-        else:
-            self.scope["user"] = AnonymousUser()
-            logger.info(f"[👤 ANONYMOUS] No token provided.")
+        # else:
+        #     self.scope["user"] = AnonymousUser()
+        #     logger.info(f"[👤 ANONYMOUS] No token provided.")
 
         try:
             self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
@@ -48,7 +51,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             logger.info(f"[✅ CONNECTED] Joined group: {self.room_group_name}")
 
-            # ⛑ Prépare les messages en dicts (plus aucun ORM dans le async)
+            # Prépare les messages en dicts (plus aucun ORM dans le async)
             def fetch_history(room_name):
                 messages = ChatMessage.objects.filter(room=room_name).order_by("-timestamp")[:50]
                 return [
@@ -75,6 +78,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 
     async def disconnect(self, close_code):
+        user = self.scope["user"]
+        if user.is_authenticated:
+            redis_client.srem("online_users", str(user.id))
         logger.info(f"[👋 DISCONNECT] Leaving room: {self.room_group_name}")
         await self.channel_layer.group_discard(
             self.room_group_name,
