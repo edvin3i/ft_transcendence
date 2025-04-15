@@ -5,83 +5,159 @@ const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 const radius = canvas.width / 2 - 10;
 
-document.addEventListener("keydown", movePaddles)
+const paddleSize = Math.PI / 12;
 
-function movePaddles(event)
+const ball =
 {
-	switch(event.key)
-	{
-		case "w":
-			paddles[0].direction = -1; // Player 1 va vers le haut
-			break;
-		case "s":
-			paddles[0].direction = 1;  // Player 1 va vers le bas
-			break;
-		case "ArrowUp":
-			paddles[1].direction = -1; // Player 2 va vers le haut
-			break;
-		case "ArrowDown":
-			paddles[1].direction = 1;  // Player 2 va vers le bas
-			break;
-		case "ArrowLeft":
-			paddles[2].direction = -1; // Player 3 va vers la gauche
-			break;
-		case "ArrowRight":
-			paddles[2].direction = 1;  // Player 3 va vers la droite
-			break;
-		case "a":
-			paddles[3].direction = -1; // Player 4 va vers la gauche
-			break;
-		case "d":
-			paddles[3].direction = 1;  // Player 4 va vers la droite
-			break;
-	}
+	y: centerY,
+	x: centerX,
+	angle: Math.random() * 2 * Math.PI,
+	speed: 2.5,
+	radius: 8,
 }
 
-document.addEventListener("keyup", (event) => {
-	switch(event.key) {
-		case "w":
-		case "s":
-			paddles[0].direction = 0;
-			break;
-		case "ArrowUp":
-		case "ArrowDown":
-			paddles[1].direction = 0;
-			break;
-		case "ArrowLeft":
-		case "ArrowRight":
-			paddles[2].direction = 0;
-			break;
-		case "a":
-		case "d":
-			paddles[3].direction = 0;
-			break;
-	}
-});
+const players = [
+{
+	// angle: Math.PI / 4, //for + position
+	angle: 0, //for x position
+	color: "#ff4d4d",      // Droite/red
+	keyLeft: "ArrowLeft",
+	keyRight: "ArrowRight",
+	direction: 0,
+	minAngle: -Math.PI / 4,
+	//-Math.PI / 4,
+	maxAngle: Math.PI / 4
+	// minAngle: 0, + position
+	// maxAngle: Math.PI / 2,
+},
+{
+	// angle: 3 * Math.PI / 4, //for + position
+	angle: Math.PI / 2, //for x position
+	color: "#4da6ff",      // Bas/blue
+	keyLeft: "ArrowDown",
+	keyRight: "ArrowUp",
+	direction: 0,
+	minAngle: Math.PI / 4,
+	maxAngle: 3 * Math.PI / 4
+	// minAngle: Math.PI / 2,for + position
+	// maxAngle: Math.PI,
+},
+{
+	// angle: -3 * Math.PI / 4,//for + position
+	angle: Math.PI,// for x position
+	color: "#4dff4d",      // Gauche.green
+	keyLeft: "a",
+	keyRight: "d",
+	direction: 0,
+	minAngle: 3 * Math.PI / 4,
+	maxAngle: 5 * Math.PI / 4
+	// minAngle: Math.PI,for + position
+	// maxAngle: -Math.PI / 2,
+},
+{
+	// angle: -Math.PI / 4,// for + position
+	angle: 3 * Math.PI / 2,// for x position
+	color: "#ffff4d",      // Haut/yellow
+	keyLeft: "q",
+	keyRight: "e",
+	direction: 0,
+	minAngle: 5 * Math.PI / 4,
+	maxAngle: 7 * Math.PI / 4
+	// minAngle: -Math.PI / 2,for + position
+	// maxAngle: 0,
+},
+];
 
-function drawCurvedPaddle(startAngle, endAngle, color) {
+document.addEventListener("keydown", event =>
+{
+	players.forEach(player => 
+	{
+		if (event.key === player.keyLeft)
+			player.direction = -1;
+		else if (event.key === player.keyRight)
+			player.direction = 1;
+	})
+})
+
+document.addEventListener("keyup", event =>
+{
+	players.forEach(player => 
+	{
+		if (event.key === player.keyLeft || event.key === player.keyRight)
+			player.direction = 0;
+	})
+})
+
+function updateBall()
+{
+	ball.x += Math.cos(ball.angle) * ball.speed;
+	ball.y += Math.sin(ball.angle) * ball.speed;
+}
+
+function drawBall()
+{
+	contexte.beginPath();
+	contexte.arc(ball.x, ball.y, ball.radius, 0, 2 * Math.PI);
+	contexte.fillStyle = "#ffffff";
+	contexte.fill();
+	contexte.closePath();
+}
+
+function drawCurvedPaddle(player)
+{
+	const startAngle = player.angle - paddleSize / 2;
+	const endAngle = player.angle + paddleSize / 2;
+
 	contexte.beginPath();
 	contexte.arc(centerX, centerY, radius, startAngle, endAngle);
 	contexte.lineWidth = 10; // épaisseur de la palette
-	contexte.strokeStyle = color;
+	contexte.strokeStyle = player.color;//"#000000";//black
 	contexte.stroke();
 	contexte.closePath();
 }
 
-function drawPaddles() {
-	const angleSize = Math.PI / 12; // palette de 15°
-	const offsets = [
-		Math.PI * 0,       // Joueur 1 : droite
-		Math.PI * 0.5,     // Joueur 2 : bas
-		Math.PI * 1,       // Joueur 3 : gauche
-		Math.PI * 1.5      // Joueur 4 : haut
-	];
-	const colors = ["#ff4d4d", "#4da6ff", "#4dff4d", "#ffff4d"];
+function drawAllPaddles()
+{
+	players.forEach(player => drawCurvedPaddle(player));
+}
 
-	for (let i = 0; i < 4; i++) {
-		const angle = offsets[i];
-		drawCurvedPaddle(angle - angleSize/2, angle + angleSize/2, colors[i]);
-	}
+function angularDistance(a, b)
+{
+	const diff = Math.abs(a - b) % (Math.PI * 2);
+	return Math.min(diff, Math.PI * 2 - diff);
+}
+
+function normalizeAngle(angle) {
+	angle = angle % (Math.PI * 2);
+	return angle < 0 ? angle + Math.PI * 2 : angle;
+}
+
+function updatePlayers()
+{
+	const speed = 0.05;
+	players.forEach(player =>
+	{
+		player.angle += player.direction * speed;
+		player.angle = normalizeAngle(player.angle);
+
+		const min = normalizeAngle(player.minAngle + paddleSize / 2);
+		const max = normalizeAngle(player.maxAngle - paddleSize / 2);
+
+		if (min > max)
+		{
+			const inZone = (player.angle >= min || player.angle <= max);
+			if (!inZone) {
+				const distToMin = angularDistance(player.angle, min);
+				const distToMax = angularDistance(player.angle, max);
+				player.angle = (distToMin < distToMax) ? min : max;
+			}
+		}
+		else
+		{
+			if (player.angle < min) player.angle = min;
+			if (player.angle > max) player.angle = max;
+		}
+	});
 }
 
 function drawPlayerSector(startAngle, endAngle, colors)
@@ -96,12 +172,14 @@ function drawPlayerSector(startAngle, endAngle, colors)
 
 function drawAllPlayerSector()
 {
-	const colors = ["#ff4d4d", "#4da6ff", "#4dff4d", "#ffff4d"];
+	const colors = ["#4da6ff", "#4dff4d", "#ffff4d", "#ff4d4d"];
 	const angleStep = Math.PI / 2;
+	const offset = Math.PI / 4;//uncoment for x position
 
-	for(let i=0; i < 4; i ++)
+	for (let i = 0; i < 4; i++)
 	{
-		const startAngle = angleStep * i;
+		// const startAngle = angleStep * i;//for + position
+		const startAngle = offset + angleStep * i;//this one is for x position
 		const endAngle = startAngle + angleStep;
 		drawPlayerSector(startAngle, endAngle, colors[i]);
 	}
@@ -111,13 +189,18 @@ function drawGameCircle()
 {
 	contexte.clearRect(0, 0, canvas.width, canvas.height);
 	drawAllPlayerSector();
-	drawPaddles();
-	updatePaddles();
+	updatePlayers();
+	updateBall();
+	drawBall();
+	drawAllPaddles();
+
 	contexte.beginPath();
 	contexte.arc(centerX, centerY, radius, 0, Math.PI * 2);
 	contexte.strokeStyle = "#fff";
 	contexte.lineWidth = 4;
 	contexte.stroke();
+
+	requestAnimationFrame(drawGameCircle);
 }
 
 drawGameCircle();
