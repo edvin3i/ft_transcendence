@@ -3,5 +3,3 @@ from .models import UserBlock, ChatMessage
 
 admin.site.register(ChatMessage)
 admin.site.register(UserBlock)
-
-
