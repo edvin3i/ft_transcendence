@@ -29,12 +29,12 @@ urlpatterns = [
     ),
     path(
         "requests/incoming/",
-        views.FriendRequestsIncomingListAPIView.as_view(),
+        views.FriendsRequestsIncomingListAPIView.as_view(),
         name="friends_requests_incoming",
     ),
     path(
         "requests/outgoing/",
-        views.FriendRequestsOutgoingListAPIView.as_view(),
+        views.FriendsRequestsOutgoingListAPIView.as_view(),
         name="friends_requests_outgoing",
     ),
     path(

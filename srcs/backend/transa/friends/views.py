@@ -18,7 +18,7 @@ class FriendsRequestRejectAPIView(generics.UpdateAPIView):
     pass
 
 
-class FriendRequestsIncomingListAPIView(generics.ListAPIView):
+class FriendsRequestsIncomingListAPIView(generics.ListAPIView):
     """
     incoming
     """
@@ -26,7 +26,7 @@ class FriendRequestsIncomingListAPIView(generics.ListAPIView):
     pass
 
 
-class FriendRequestsOutgoingListAPIView(generics.ListAPIView):
+class FriendsRequestsOutgoingListAPIView(generics.ListAPIView):
     """
     outgoing
     """
