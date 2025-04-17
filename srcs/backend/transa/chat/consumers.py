@@ -169,21 +169,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     logger.warning(f"[❓ USER NOT FOUND] {target_username}")
                 return
 
-            if user.is_anonymous:
-                # On utilise un user "Anonymous" générique pour stocker les messages anonymes
-                User = get_user_model()
-                anon_user, _ = await database_sync_to_async(User.objects.get_or_create)(
-                    username="Anonymous"
-                )
-                await database_sync_to_async(ChatMessage.objects.create)(
-                    user=anon_user, room=self.room_name, content=message
-                )
-                logger.info(f"[💾 SAVED AS ANON] Anonymous: {message}")
-            else:
-                await database_sync_to_async(ChatMessage.objects.create)(
-                    user=user, room=self.room_name, content=message
-                )
-                logger.info(f"[💾 SAVED] {username}: {message}")
+            # if user.is_anonymous:
+            #     # On utilise un user "Anonymous" générique pour stocker les messages anonymes
+            #     # User = get_user_model()
+            #     anon_user, _ = await database_sync_to_async(User.objects.get_or_create)(
+            #         username="Anonymous"
+            #     )
+            #     await database_sync_to_async(ChatMessage.objects.create)(
+            #         user=anon_user, room=self.room_name, content=message
+            #     )
+            #     logger.info(f"[💾 SAVED AS ANON] Anonymous: {message}")
+            # else:
+            await database_sync_to_async(ChatMessage.objects.create)(
+                user=user, room=self.room_name, content=message
+            )
+            logger.info(f"[💾 SAVED] {username}: {message}")
 
             await self.channel_layer.group_send(
                 self.room_group_name,
