@@ -3,8 +3,12 @@ from uprofiles.models import UserProfile, User
 
 
 class Friendship(models.Model):
-    from_user = models.ForeignKey(User, related_name="friendship_sent")
-    to_user = models.ForeignKey(User, related_name="friendship_received")
+    from_user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="friendship_sent"
+    )
+    to_user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="friendship_received"
+    )
     status = models.CharField(
         max_length=20,
         choices=[

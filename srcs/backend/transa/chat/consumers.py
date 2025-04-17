@@ -1,6 +1,7 @@
 import json
 import logging
 import redis
+from chat.utils import is_blocked, friendship_action
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import ChatMessage, UserBlock
@@ -122,52 +123,75 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 logger.info(f"[🎮 INVITE] {username} invited {target}")
                 return
 
-            if message.startswith("/block "):
-                target_username = message.split(" ", 1)[1]
-                User = get_user_model()
-
-                if target_username == user.username:
-                    await self.send(
-                        text_data=json.dumps(
-                            {
-                                "username": "SYSTEM",
-                                "message": "⚠️ You can't block yourself!",
-                            }
-                        )
-                    )
-                    logger.warning(
-                        f"[🙃 SELF-BLOCK] {user.username} tried to block themselves"
-                    )
-                    return
-
+            if message.startswith("/friend"):
                 try:
-                    target_user = await database_sync_to_async(User.objects.get)(
-                        username=target_username
-                    )
-                    await database_sync_to_async(UserBlock.objects.get_or_create)(
-                        user=user, blocked_user=target_user
-                    )
-
+                    _, action, target = message.split(maxsplit=2)
+                    await friendship_action(user, target, action)
                     await self.send(
                         text_data=json.dumps(
                             {
                                 "username": "SYSTEM",
-                                "message": f"You have blocked {target_username}",
+                                "message": f"{action} -> {target} is done",
                             }
                         )
                     )
-                    logger.info(f"[🛡️ BLOCK] {username} blocked {target_username}")
-                except User.DoesNotExist:
+                except Exception as e:
                     await self.send(
                         text_data=json.dumps(
                             {
                                 "username": "SYSTEM",
-                                "message": f"User '{target_username}' not found",
+                                "message": f"{e}",
                             }
                         )
                     )
-                    logger.warning(f"[❓ USER NOT FOUND] {target_username}")
                 return
+
+            # if message.startswith("/block "):
+            #     target_username = message.split(" ", 1)[1]
+            #     User = get_user_model()
+            #
+            #     if target_username == user.username:
+            #         await self.send(
+            #             text_data=json.dumps(
+            #                 {
+            #                     "username": "SYSTEM",
+            #                     "message": "⚠️ You can't block yourself!",
+            #                 }
+            #             )
+            #         )
+            #         logger.warning(
+            #             f"[🙃 SELF-BLOCK] {user.username} tried to block themselves"
+            #         )
+            #         return
+            #
+            #     try:
+            #         target_user = await database_sync_to_async(User.objects.get)(
+            #             username=target_username
+            #         )
+            #         await database_sync_to_async(UserBlock.objects.get_or_create)(
+            #             user=user, blocked_user=target_user
+            #         )
+            #
+            #         await self.send(
+            #             text_data=json.dumps(
+            #                 {
+            #                     "username": "SYSTEM",
+            #                     "message": f"You have blocked {target_username}",
+            #                 }
+            #             )
+            #         )
+            #         logger.info(f"[🛡️ BLOCK] {username} blocked {target_username}")
+            #     except User.DoesNotExist:
+            #         await self.send(
+            #             text_data=json.dumps(
+            #                 {
+            #                     "username": "SYSTEM",
+            #                     "message": f"User '{target_username}' not found",
+            #                 }
+            #             )
+            #         )
+            #         logger.warning(f"[❓ USER NOT FOUND] {target_username}")
+            #     return
 
             # if user.is_anonymous:
             #     # On utilise un user "Anonymous" générique pour stocker les messages anonymes
@@ -203,14 +227,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = event["message"]
         user = self.scope["user"]
 
-        if not user.is_anonymous:
-            # User = get_user_model()
-            is_blocked = await database_sync_to_async(
-                UserBlock.objects.filter(
-                    user=user, blocked_user__username=sender
-                ).exists
-            )()
-            if is_blocked and sender != "SYSTEM":
+        # if not user.is_anonymous:
+        #     # User = get_user_model()
+        #     is_blocked = await database_sync_to_async(
+        #         UserBlock.objects.filter(
+        #             user=user, blocked_user__username=sender
+        #         ).exists
+        #     )()
+        #     if is_blocked and sender != "SYSTEM":
+        #         logger.info(f"[🙈 BLOCKED MESSAGE] {sender} -> {user.username}")
+        #         return
+
+        if sender != "SYSTEM":
+            if await is_blocked(user, sender):
                 logger.info(f"[🙈 BLOCKED MESSAGE] {sender} -> {user.username}")
                 return
 
