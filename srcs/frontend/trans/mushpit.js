@@ -25,10 +25,8 @@ const players = [
 	keyRight: "ArrowRight",
 	direction: 0,
 	minAngle: -Math.PI / 4,
-	//-Math.PI / 4,
-	maxAngle: Math.PI / 4
-	// minAngle: 0, + position
-	// maxAngle: Math.PI / 2,
+	maxAngle: Math.PI / 4,
+	id: "red"
 },
 {
 	// angle: 3 * Math.PI / 4, //for + position
@@ -38,33 +36,30 @@ const players = [
 	keyRight: "ArrowUp",
 	direction: 0,
 	minAngle: Math.PI / 4,
-	maxAngle: 3 * Math.PI / 4
-	// minAngle: Math.PI / 2,for + position
-	// maxAngle: Math.PI,
+	maxAngle: 3 * Math.PI / 4,
+	id: "blue"
 },
 {
 	// angle: -3 * Math.PI / 4,//for + position
 	angle: Math.PI,// for x position
 	color: "#4dff4d",      // Gauche.green
 	keyLeft: "a",
-	keyRight: "d",
+	keyRight: "e",
 	direction: 0,
 	minAngle: 3 * Math.PI / 4,
-	maxAngle: 5 * Math.PI / 4
-	// minAngle: Math.PI,for + position
-	// maxAngle: -Math.PI / 2,
+	maxAngle: 5 * Math.PI / 4,
+	id: "green"
 },
 {
 	// angle: -Math.PI / 4,// for + position
 	angle: 3 * Math.PI / 2,// for x position
 	color: "#ffff4d",      // Haut/yellow
 	keyLeft: "q",
-	keyRight: "e",
+	keyRight: "d",
 	direction: 0,
 	minAngle: 5 * Math.PI / 4,
-	maxAngle: 7 * Math.PI / 4
-	// minAngle: -Math.PI / 2,for + position
-	// maxAngle: 0,
+	maxAngle: 7 * Math.PI / 4,
+	id: "yellow"
 },
 ];
 
@@ -87,6 +82,164 @@ document.addEventListener("keyup", event =>
 			player.direction = 0;
 	})
 })
+
+function isBallTouchingWall()
+{
+	const dx = ball.x - centerX;
+	const dy = ball.y - centerY;
+	const distance = Math.sqrt(dx * dx + dy * dy);
+	return distance >= radius - ball.radius;
+}
+
+function isPaddleAt(angle)
+{
+	angle = normalizeAngle(angle);
+
+	for (const player of players)
+	{
+		const start = normalizeAngle(player.angle - paddleSize / 2);
+		const end = normalizeAngle(player.angle + paddleSize / 2);
+		
+
+		if (start < end)
+		{
+			if (angle >= start && angle <= end)
+				return player;
+		}
+		else
+		{
+			if (angle >= start || angle <= end)
+				return player;
+		}
+	}
+	return null;
+}
+
+// function getExpectedPlayer(angle)
+// {
+// 	angle = normalizeAngle(angle);
+
+// 	for (const player of players)
+// 	{
+// 		const min = normalizeAngle(player.minAngle/* - angle*/);
+// 		const max = normalizeAngle(player.maxAngle/* - angle*/);
+
+// 		// angle = 0;
+// 		console.log(`Testing angle=${(angle * 180 / Math.PI).toFixed(1)}°`);
+// 		console.log(`Checking player ${player.id} -> shifted min=${(min * 180 / Math.PI).toFixed(1)}°, max=${(max * 180 / Math.PI).toFixed(1)}°`);
+
+// 		if (min < max)
+// 			if (angle >= min && angle <= max) return player;
+// 		else
+// 			if (angle >= min || angle <= max) return player;
+// 	}
+// 	// return null; //souldn't go here
+// }
+
+function getExpectedPlayer(angle)
+{
+	angle = normalizeAngle(angle);
+	// console.log(`Balle à l'angle: ${(angle * 180 / Math.PI).toFixed(1)}°`);
+
+	for (const player of players)
+	{
+		const min = normalizeAngle(player.minAngle);
+		const max = normalizeAngle(player.maxAngle);
+
+		// console.log(`Joueur ${player.id} : min=${(min * 180 / Math.PI).toFixed(1)}°, max=${(max * 180 / Math.PI).toFixed(1)}°`);
+
+		// let inside = false;
+		
+		// if (min <= max)
+		// 	inZone = angle >= min && angle <= max
+		const inside =
+			min < max
+					? angle >= min && angle <= max
+					: angle >= min || angle <= max;
+
+		if (inside) {
+			// console.log(`→ Balle dans la zone du joueur ${player.id}`);
+			return player;
+		}
+	}
+
+	console.log("→ Aucun joueur trouvé !");
+	return null;
+}
+
+
+function resetGame()
+{
+	const playerCount = players.length;
+	const angleStep = (2 * Math.PI) / playerCount;
+	const offset = Math.PI / 2;
+
+	for (let i = 0; i < playerCount; i++)
+	{
+		const angle = normalizeAngle(offset + i * angleStep);
+		const player = players[i];
+		player.angle = angle;
+		player.minAngle = normalizeAngle(angle - angleStep / 2);
+		player.maxAngle = normalizeAngle(angle + angleStep / 2);
+	}
+	ball.x = centerX;
+	ball.y = centerY;
+	ball.angle = Math.random() * 2 * Math.PI;
+}
+
+// function sleep(ms)
+// {
+// 	return new Promise(resolve => setTimeout(resolve, ms));
+// }
+
+async function handleMiss(angle)
+{
+	// console.log("MISS !!");
+	const missedPlayer = getExpectedPlayer(angle); // ou une variante pour identifier la *zone*
+	console.log(missedPlayer);
+	if (missedPlayer)
+	{
+		const index = players.indexOf(missedPlayer);
+		if (index !== -1) 
+		{
+			// await sleep(10000);
+			players.splice(index, 1); // retire le joueur
+			resetGame();
+		}
+	}
+}
+
+async function checkBallCollision()
+{
+	if (!isBallTouchingWall()) return;
+
+	const dx = ball.x - centerX;
+	const dy = ball.y - centerY;
+	const angle = normalizeAngle(Math.atan2(dy, dx));
+
+	const impactAngle = normalizeAngle(Math.atan2(dy, dx));
+	const player = isPaddleAt(impactAngle);
+
+	if (player)
+	{
+		const paddleCenter = normalizeAngle(player.angle);
+		let offset = impactAngle - paddleCenter;
+
+		if (offset > Math.PI) offset -= 2 * Math.PI;
+		if (offset < -Math.PI) offset += 2 * Math.PI;
+
+		const bounceStrength = 4;
+		ball.angle = normalizeAngle(Math.PI + ball.angle + offset * bounceStrength);
+
+		// console.log("Impact Angle: ", impactAngle);
+		// console.log("Paddle Center Angle: ", paddleCenter);
+		// console.log("Offset: ", offset);
+		// console.log("Incoming Angle: ", incomingAngle);
+		// console.log("Reflected Angle: ", reflectedAngle);
+	}
+	else
+		await handleMiss(normalizeAngle(Math.atan2(ball.y - centerY, ball.x - centerX)));//angle polaire
+}
 
 function updateBall()
 {
@@ -127,7 +280,8 @@ function angularDistance(a, b)
 	return Math.min(diff, Math.PI * 2 - diff);
 }
 
-function normalizeAngle(angle) {
+function normalizeAngle(angle)
+{
 	angle = angle % (Math.PI * 2);
 	return angle < 0 ? angle + Math.PI * 2 : angle;
 }
@@ -172,16 +326,19 @@ function drawPlayerSector(startAngle, endAngle, colors)
 
 function drawAllPlayerSector()
 {
-	const colors = ["#4da6ff", "#4dff4d", "#ffff4d", "#ff4d4d"];
-	const angleStep = Math.PI / 2;
-	const offset = Math.PI / 4;//uncoment for x position
+	// const colors = ["#4da6ff", "#4dff4d", "#ffff4d", "#ff4d4d"];
+	const playerCount = players.length;
+	const angleStep = Math.PI * 2 / playerCount;
+	const offset = angleStep / 2;//uncoment for x position
 
-	for (let i = 0; i < 4; i++)
+	for (let i = 0; i < playerCount; i++)
 	{
 		// const startAngle = angleStep * i;//for + position
-		const startAngle = offset + angleStep * i;//this one is for x position
-		const endAngle = startAngle + angleStep;
-		drawPlayerSector(startAngle, endAngle, colors[i]);
+		// const startAngle = offset + angleStep * i;//this one is for x position
+		// const endAngle = startAngle + angleStep;
+		const startAngle = normalizeAngle(players[i].minAngle);
+		const endAngle = normalizeAngle(players[i].maxAngle);
+		drawPlayerSector(startAngle, endAngle, players[i].color);
 	}
 }
 
@@ -193,6 +350,7 @@ function drawGameCircle()
 	updateBall();
 	drawBall();
 	drawAllPaddles();
+	checkBallCollision();
 
 	contexte.beginPath();
 	contexte.arc(centerX, centerY, radius, 0, Math.PI * 2);
