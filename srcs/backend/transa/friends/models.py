@@ -23,3 +23,6 @@ class Friendship(models.Model):
 
     class Meta:
         unique_together = ("from_user", "to_user")
+
+    def __str__(self):
+        return f"Friendship: from {self.from_user} to {self.to_user} in status {self.status}"
