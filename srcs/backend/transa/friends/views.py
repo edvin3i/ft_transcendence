@@ -2,6 +2,7 @@ from autobahn.wamp import serializer
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from friends.permissions import IsSender, IsReciever, IsParticipant
 from django.utils import timezone
 from friends.models import Friendship
 from friends.serializers import FriendshipSerializer, FriendsRequestCreateSerializer
@@ -30,12 +31,12 @@ class FriendsCreateRequestAPIView(generics.CreateAPIView):
 
 class FriendsDeleteAPIView(generics.DestroyAPIView):
     queryset = Friendship.objects.all()
-    permission_classes = [IsAuthenticated,]  # IsParticipant create later
+    permission_classes = [IsAuthenticated, IsParticipant,]
 
 
 class FriendsRequestAcceptAPIView(generics.UpdateAPIView):
     queryset = Friendship.objects.filter(status="pending")
-    permission_classes = [IsAuthenticated,]  # IsReciever need to create
+    permission_classes = [IsAuthenticated, IsReciever,]
     serializer_class = FriendshipSerializer
 
     def update(self, request, *args, **kwargs):
@@ -48,6 +49,10 @@ class FriendsRequestAcceptAPIView(generics.UpdateAPIView):
 
 
 class FriendsRequestRejectAPIView(generics.UpdateAPIView):
+    queryset = Friendship.objects.filter(status="pending")
+    permission_classes = [IsAuthenticated, IsReciever,]
+    serializer_class = FriendshipSerializer
+
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = "rejected"
@@ -85,7 +90,7 @@ class FriendsRequestsOutgoingListAPIView(generics.ListAPIView):
 
 class FriendsBlockAPIView(generics.UpdateAPIView):
     queryset = Friendship.objects.all()
-    permission_classes = [IsAuthenticated,]  # IsParticipant need to create
+    permission_classes = [IsAuthenticated, IsParticipant,]
     serializer_class = FriendshipSerializer
 
     def update(self, request, *args, **kwargs):
@@ -99,7 +104,7 @@ class FriendsBlockAPIView(generics.UpdateAPIView):
 
 class FriendsUnblockAPIView(generics.UpdateAPIView):
     queryset = Friendship.objects.all()
-    permission_classes = [IsAuthenticated,]  # IsParticipant need to create
+    permission_classes = [IsAuthenticated, IsParticipant]
     serializer_class = FriendshipSerializer
 
     def update(self, request, *args, **kwargs):
