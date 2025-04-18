@@ -11,7 +11,9 @@ from friends.serializers import FriendshipSerializer, FriendsRequestCreateSerial
 class FriendsCreateRequestAPIView(generics.CreateAPIView):
     queryset = Friendship.objects.all()
     serializer_class = FriendsRequestCreateSerializer
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -31,12 +33,18 @@ class FriendsCreateRequestAPIView(generics.CreateAPIView):
 
 class FriendsDeleteAPIView(generics.DestroyAPIView):
     queryset = Friendship.objects.all()
-    permission_classes = [IsAuthenticated, IsParticipant,]
+    permission_classes = [
+        IsAuthenticated,
+        IsParticipant,
+    ]
 
 
 class FriendsRequestAcceptAPIView(generics.UpdateAPIView):
     queryset = Friendship.objects.filter(status="pending")
-    permission_classes = [IsAuthenticated, IsReciever,]
+    permission_classes = [
+        IsAuthenticated,
+        IsReciever,
+    ]
     serializer_class = FriendshipSerializer
 
     def update(self, request, *args, **kwargs):
@@ -50,7 +58,10 @@ class FriendsRequestAcceptAPIView(generics.UpdateAPIView):
 
 class FriendsRequestRejectAPIView(generics.UpdateAPIView):
     queryset = Friendship.objects.filter(status="pending")
-    permission_classes = [IsAuthenticated, IsReciever,]
+    permission_classes = [
+        IsAuthenticated,
+        IsReciever,
+    ]
     serializer_class = FriendshipSerializer
 
     def update(self, request, *args, **kwargs):
@@ -79,7 +90,9 @@ class FriendsRequestsOutgoingListAPIView(generics.ListAPIView):
     """
 
     serializer_class = FriendshipSerializer
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
     def get_queryset(self):
         return Friendship.objects.filter(
@@ -87,10 +100,12 @@ class FriendsRequestsOutgoingListAPIView(generics.ListAPIView):
         ).select_related("to_user")
 
 
-
 class FriendsBlockAPIView(generics.UpdateAPIView):
     queryset = Friendship.objects.all()
-    permission_classes = [IsAuthenticated, IsParticipant,]
+    permission_classes = [
+        IsAuthenticated,
+        IsParticipant,
+    ]
     serializer_class = FriendshipSerializer
 
     def update(self, request, *args, **kwargs):
@@ -104,7 +119,7 @@ class FriendsBlockAPIView(generics.UpdateAPIView):
 
 class FriendsUnblockAPIView(generics.UpdateAPIView):
     queryset = Friendship.objects.all()
-    permission_classes = [IsAuthenticated, IsParticipant]
+    permission_classes = [IsAuthenticated, IsParticipant,]
     serializer_class = FriendshipSerializer
 
     def update(self, request, *args, **kwargs):
@@ -122,13 +137,14 @@ class FriendsAllListAPIView(generics.ListAPIView):
     """
 
     serializer_class = FriendshipSerializer
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
     def get_queryset(self):
         return Friendship.objects.filter(
             from_user=self.request.user, status="accepted"
         ).select_related("to_user")
-
 
 
 class FriendsOnlineListAPIView(generics.ListAPIView):
@@ -137,14 +153,18 @@ class FriendsOnlineListAPIView(generics.ListAPIView):
     """
 
     serrial_class = FriendshipSerializer
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
     def get_queryset(self):
-        friends =  Friendship.objects.filter(
+        friends = Friendship.objects.filter(
             from_user=self.request.user,
         ).select_related("to_user")
         users_ids = [f.to_user_id for f in friends]
-        online_ids = [uid for uid in users_ids if is_online(uid)] # need to implement is_online
+        online_ids = [
+            uid for uid in users_ids if is_online(uid)
+        ]  # need to implement is_online
         return friends.filter(to_user__in=online_ids)
 
 
@@ -154,7 +174,9 @@ class FriendsBlockedListAPIView(generics.ListAPIView):
     """
 
     serializer_class = FriendshipSerializer
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
     def get_queryset(self):
         return Friendship.objects.filter(

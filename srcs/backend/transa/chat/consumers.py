@@ -4,7 +4,7 @@ import redis
 from chat.utils import is_blocked, friendship_action
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import ChatMessage, UserBlock
+from .models import ChatMessage
 from urllib.parse import parse_qs
 from rest_framework_simplejwt.tokens import AccessToken
 
