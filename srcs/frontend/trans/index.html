@@ -1,67 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<meta charset="UTF-8"/>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>transCendenZ</title>
-		<link rel="icon" href="favicon.gif?v=2" type="image/gif"/>
-		<script src="profile.js" defer></script>
-		<script src="pong.js" defer></script>
-		<script src="pages.js" defer></script>
-		<script src="navigate.js" defer></script>
-
-		<!-- bootstrap -->
-		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
-		<!-- retro-futur -->
-		<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
-		<link rel="stylesheet" href="style.css">
-
+		<link rel="icon" href="favicon.gif" type="image/gif">
+		<script src="style.js" defer></script>
+		<script type="module" src="navigation.js"></script>
 	</head>
-	<body class="d-flex flex-column min-vh-100">
+	<body>
 		<header>
-			<h1>Pong Game</h1>
-			<p>Welcome to the game!</p>
-			<div id="user-info" class="text-end" style="display: none;">
-				<span id="logged-user" class="me-2 fw-bold text-success"></span>
-			</div>			
+			<div id="header">
+				<h1>transCendenZ</h1>
+			</div>
 		</header>
-		<hr>
-		<main class="flex-grow-1">
+		<main>
 			<noscript>
-			<p>Sorry, this website requires JavaScript to function. 
-			Please enable JavaScript in your browser settings to continue.</p>
+				<p>
+					Sorry, this website requires JavaScript to function. <br>
+					Please enable JavaScript in your browser settings
+					to continue.
+				</p>
 			</noscript>
 			<div id="app"></div>
+			<div id="chat"></div>
 		</main>
-		<hr>
-		<section id="chat">
-	<!--          chat            -->
-	<div id="chat-section" style="display: none;">
-		<section id="chat">
-			<h2>Live Chat</h2>
-
-
-			
-			<div class="mb-2">
-				<input id="room-name" type="text" placeholder="Enter room name" class="form-control d-inline w-auto" />
-				<button id="join-room" class="btn btn-primary btn-sm">Join Room</button>
-			</div>
-
-			<p id="current-room" class="fw-bold text-info">
-				🟢 Room: <span id="current-room-name">general</span>
-			</p>
-			<div id="chat-tabs" class="nav nav-tabs mb-3">
-				<!-- Onglets ajoutés dynamiquement ici -->
-			  </div>			  
-			<div id="chat-log" style="height: 200px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px;"></div>
-			<input id="chat-message-input" type="text" placeholder="Type a message...">
-			<button id="send">Send</button>
-		</section>
-	</div>	
-		<script src="chat.js"></script>
-		<footer class="mt-auto">
-			<p>© 2025 All rights reserved</p>
+		<footer>
+			<p>made by ajeannin, gbreana, glautumn, pkorsako and uboudigu</p>
 		</footer>
 	</body>
 </html>
