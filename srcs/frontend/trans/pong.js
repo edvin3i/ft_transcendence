@@ -1,12 +1,13 @@
+/*
+const canvas = document.getElementById("pongCanvas");
+canvas.width = 5000;
+canvas.height = 3000;
+const ctx = canvas.getContext("2d");
+ctx.strokeRect(0, 0, canvas.width, canvas.height);
+*/
 
-// const canvas = document.getElementById("pongCanvas");
-// canvas.width = 5000;
-// canvas.height = 3000;
-// const ctx = canvas.getContext("2d");
-// ctx.strokeRect(0, 0, canvas.width, canvas.height);
-
-function playGame() {
-
+export function playPong()
+{
   const canvas = document.getElementById("pongCanvas");
   const ctx = canvas.getContext("2d");
 
