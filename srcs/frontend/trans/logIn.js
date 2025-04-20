@@ -1,4 +1,5 @@
 import {openAccountCreationPage} from './accountCreation.js'
+import {setUserInformation} from './userInformation.js'
 import {showNavigationHeader, openPage} from './navigation.js'
 import {showChat} from './chat.js'
 
@@ -20,7 +21,7 @@ function logInPage()
 		<form id="logInForm" method="POST" class="container">
 			<div class="mb-3">
 				<label for="username" class="form-label">username:</label>
-				<input  type="username"
+				<input  type="text"
 						id="username"
 						class="form-control"
 						placeholder="username"
@@ -48,7 +49,7 @@ function logInPage()
 	`;
 }
 
-export function openLogInPage(push)
+export function openLogInPage(page, push)
 {
 	document.getElementById('header').innerHTML = authenticationHeader();
 	document.getElementById('app').innerHTML = logInPage();
@@ -58,11 +59,11 @@ export function openLogInPage(push)
 	logInWith42Button.addEventListener('click', logInWith42);
 
 	const logInForm = document.getElementById('logInForm');
-	logInForm.addEventListener('submit', () => handleLogIn(push));
+	logInForm.addEventListener('submit', () => handleLogIn(page, push));
 
 	const createAccountButton = document.getElementById('createAccountButton');
 	createAccountButton.addEventListener('click', 
-			() => openAccountCreationPage(push));
+			() => openAccountCreationPage(page, push));
 }
 
 async function logInWith42()
@@ -70,7 +71,7 @@ async function logInWith42()
 	// add 42auth
 }
 
-async function handleLogIn(push)
+async function handleLogIn(page, push)
 {
 	event.preventDefault();
 
@@ -91,12 +92,12 @@ async function handleLogIn(push)
 		localStorage.setItem('accessToken', data.access);
 		localStorage.setItem('refreshToken', data.refresh);
 
-		await setUserProfileInformation();
+		await setUserInformation();
 
 		showNavigationHeader();
 		showChat();
 
-		openPage('userProfilePage', push);
+		openPage(page, push);
 	}
 	else
 	{
@@ -107,24 +108,4 @@ async function handleLogIn(push)
 		document.getElementById('logInResult').innerHTML = 
 			"Wrong username or password";
 	}
-}
-
-async function setUserProfileInformation()
-{
-	const token = localStorage.getItem('accessToken');
-
-	const response = await fetch('https://localhost/api/users/profile/me', 
-	{
-		method: 'GET',
-		headers: 
-		{
-			'Authorization': `Bearer ${token}`,
-			'Content-Type': 'application/json'
-		}
-	});
-	
-	const data = await response.json();
-
-	localStorage.setItem('username', data.user.username);
-	localStorage.setItem('email', data.user.email);
 }

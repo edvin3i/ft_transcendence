@@ -10,7 +10,7 @@ function accountCreationPage()
 		<form class="text-center" id="accountCreationForm" method="POST">
 			<div>
 				<label for="username">username:</label>
-				<input  type="username"
+				<input  type="text"
 						id="username"
 						placeholder="username"
 						minlength="3"
@@ -24,7 +24,7 @@ function accountCreationPage()
 				<input type="email"
 						id="email"
 						placeholder="username@email.com"
-						pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
+						pattern="^[a-zA-Z0-9._%+\\-]+@([a-zA-Z0-9\\-]+\\.)+[a-zA-Z]{2,}$"
 						title="user@email.com"
 						required/>
 			</div>
@@ -39,7 +39,7 @@ function accountCreationPage()
 			</div>
 			<button type="submit">Create account</button>
 		</form>
-		<p id="accountCreationResult"></p>
+		<p id="accountCreationResult" class="mt-3 text-center"></p>
 		<div class="text-center">
 			<p style="display: inline;">Already have an account?</p>
 			<button style="display: inline;" id="logInButton">Log in</button>
@@ -47,7 +47,7 @@ function accountCreationPage()
 	`;
 }
 			
-export function openAccountCreationPage(push)
+export function openAccountCreationPage(page, push)
 {
 	document.getElementById('app').innerHTML = accountCreationPage();
 
@@ -58,7 +58,7 @@ export function openAccountCreationPage(push)
 	accountCreationForm.addEventListener('submit', handleAccountCreation);
 
 	const logInButton = document.getElementById('logInButton');
-	logInButton.addEventListener('click', () => openLogInPage(push));
+	logInButton.addEventListener('click', () => openLogInPage(page, push));
 }
 
 async function signUpWith42()
@@ -102,22 +102,21 @@ async function handleAccountCreation()
 		document.getElementById('email').blur();
 		document.getElementById('password').blur();
 		document.getElementById('accountCreationResult').innerHTML = 
-			`Account(s) with usename '${username}' and email '${email}' 
-			already exist(s)`;
+			`The usename '${username}' and email '${email}' are already in use`;
 	}
 	else if (data.user.username)
 	{
 		document.getElementById('password').value = '';
 		document.getElementById('username').focus();
 		document.getElementById('accountCreationResult').innerHTML = 
-			`Account with username '${username}' already exists`;
+			`The usename '${username}' is already in use`;
 	}
 	else if (data.user.email)
 	{
 		document.getElementById('password').value = '';
 		document.getElementById('email').focus();
 		document.getElementById('accountCreationResult').innerHTML = 
-			`Account with email '${email}' already exists`;
+			`The email '${email}' is already in use`;
 	}
 	else
 	{
@@ -126,6 +125,6 @@ async function handleAccountCreation()
 		document.getElementById('email').blur();
 		document.getElementById('password').blur();
 		document.getElementById('accountCreationResult').innerHTML = 
-			"An error occurred while creating the account";
+			"An error occurred while creating your account";
 	}
 }
