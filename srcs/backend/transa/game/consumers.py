@@ -64,6 +64,19 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(self.room_group_name, {
                 "type": "game_end"
             })
+        elif data["type"] == "reset":
+            self.reset_game(room)
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "update_state",
+                    "ball": room["ball"],
+                    "paddle1_y": room["paddle1_y"],
+                    "paddle2_y": room["paddle2_y"],
+                    "score": room["score"]
+                }
+            )
+
 
     async def game_loop(self, room):
         while room in GameConsumer.rooms.values() and room["started"]:
@@ -112,3 +125,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def game_end(self, event):
         await self.send(text_data=json.dumps({ "type": "end" }))
+
+    def reset_game(self, room):
+        room["ball"] = {"x": 250, "y": 150, "vx": 3, "vy": 3}
+        room["paddle1_y"] = 100
+        room["paddle2_y"] = 100
+        room["score"] = [0, 0]

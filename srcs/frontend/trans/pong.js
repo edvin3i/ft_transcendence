@@ -48,7 +48,15 @@ export function playPong({ remote = false, room = "myroom" } = {}) {
           socket.close();
         }
       };
-  
+
+      const resetBtn = document.getElementById("resetGameButton");
+      if (resetBtn) {
+        resetBtn.style.display = "inline-block";
+        resetBtn.onclick = () => {
+          socket.send(JSON.stringify({ type: "reset" }));
+        };
+      }
+
       document.addEventListener("keydown", (e) => {
         if (playerId === null) return;
   

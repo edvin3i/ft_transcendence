@@ -13,13 +13,12 @@ function gamePage() {
       </p>
 
       <p>
-        <button onclick="window.playPong({ remote: false })">🎮 Local</button>
-        <button onclick="
-          const room = document.getElementById('roomInput').value;
-          window.playPong({ remote: true, room: room });
-        ">🌐 Remote</button>
-        <button id="endGameButton" style="display:none;">❌ End Game</button>
-      </p>
+  		<button onclick="window.playPong({ remote: false })">🎮 Local</button>
+ 		<button onclick="const room = document.getElementById('roomInput').value; window.playPong({ remote: true, room: room });">🌐 Remote</button>
+  		<button id="endGameButton" style="display:none;">❌ End Game</button>
+  		<button id="resetGameButton" style="display:none;">🔄 Reset Game</button>
+	  </p>
+
 
       <p id="pongStatus" style="margin-top:10px; color: #fff;"></p>
     </div>
