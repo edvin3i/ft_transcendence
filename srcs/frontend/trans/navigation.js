@@ -1,17 +1,19 @@
 import {showChat, closeChat} from './chat.js'
 import {openLogInPage} from './logIn.js'
-import {openUserProfilePage} from './userProfile.js'
+import {openProfilePage} from './profile.js'
 import {openFriendsPage} from './friends.js'
 import {openGamePage} from './game.js'
 import { playPong } from './pong.js';
 
+
+const homePage = 'profilePage';
 window.playPong = playPong;
 window.onload = openApp();
 window.addEventListener('popstate', handleNavigation);
 
 function openApp()
 {
-	history.replaceState({page: 'userProfilePage'}, '', '');
+	history.replaceState({page: homePage}, '', '');
 
 	const token = localStorage.getItem('accessToken');
 
@@ -21,7 +23,7 @@ function openApp()
 		showChat();
 	}
 	
-	openPage('userProfilePage', 0);
+	openPage(homePage, 0);
 }
 
 function handleNavigation(event)
@@ -36,7 +38,7 @@ function navigationHeader()
 	return `
 		<h1>transCendenZ</h1>
 		<p>👤 Logged in as: <span id="loggedInAs"></span></p>
-		<div style="display: flex; gap: 10px;">
+		<div style="display: flex; justify-content: center; gap: 10px;">
 			<button id="profileButton">Profile</button>
 			<button id="friendsButton">Friends</button>
 			<button id="gameButton">Game</button>
@@ -53,7 +55,7 @@ export function showNavigationHeader()
 	document.getElementById("loggedInAs").innerHTML = username;
 
 	const profileButton = document.getElementById('profileButton');
-	profileButton.addEventListener('click', () => openPage('userProfilePage'));
+	profileButton.addEventListener('click', () => openPage('profilePage'));
 
 	const friendsButton = document.getElementById('friendsButton');
 	friendsButton.addEventListener('click', () => openPage('friendsPage'));
@@ -70,14 +72,14 @@ export function openPage(page, push = 1)
 	const token = localStorage.getItem('accessToken');
 
 	if (!token)
-		openLogInPage(push);
+		openLogInPage(page, push);
 	else
 	{
 		if (push)
 			history.pushState({page: page}, '', '');
 		
-		if (page === 'userProfilePage')
-			openUserProfilePage();
+		if (page === 'profilePage')
+			openProfilePage();
 		else if (page === 'friendsPage')
 			openFriendsPage();
 		else if (page === 'gamePage')
@@ -94,5 +96,5 @@ function logOut()
 
 	closeChat();
 
-	openPage('userProfilePage');
+	openPage(homePage);
 }
