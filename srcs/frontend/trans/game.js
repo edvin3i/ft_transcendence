@@ -7,6 +7,8 @@ function gamePage() {
 
       <p id="playerLabel" style="font-weight:bold; margin-bottom:10px;"></p>
       <canvas id="pongCanvas" width="500" height="300"></canvas>
+      <p id="playerNames" style="font-weight:bold;"></p>
+      <p id="gameTimer" style="font-size: 18px;"></p>
 
       <p style="margin-top:10px;">
         <input id="roomInput" placeholder="Enter room name" value="myroom" />
