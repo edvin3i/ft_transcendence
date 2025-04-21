@@ -1,3 +1,7 @@
+import json
+import html
+from django.http import HttpResponse
+
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -18,7 +22,27 @@ class FortyTwoOpenAuthCallbackView(GenericAPIView):
         serializer = self.get_serializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
         data = serializer.save()
-        return Response(data, status=status.HTTP_200_OK)
+        html_payload = f"""
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                          <script>
+                            (function() {{
+                              const data = JSON.parse("{html.escape(json.dumps(data))}");
+                              if (window.opener) {{
+                                window.opener.postMessage(data, "*");
+                                window.close();
+                              }}
+                            }})();
+                          </script>
+                        </head>
+                        <body>
+                            Auth is complete. Close the window.
+                        </body>
+                        </html>
+                        """
+        return HttpResponse(html_payload, content_type="text/html")
+        # return Response(data, status=status.HTTP_200_OK)
 
 
 class TwoFactorAuthSetupAPIView(GenericAPIView):
