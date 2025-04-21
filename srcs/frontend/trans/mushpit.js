@@ -184,32 +184,28 @@ function resetGame()
 	}
 	ball.x = centerX;
 	ball.y = centerY;
+	ball.speed = 2.5
 	ball.angle = Math.random() * 2 * Math.PI;
 }
 
-// function sleep(ms)
-// {
-// 	return new Promise(resolve => setTimeout(resolve, ms));
-// }
-
-async function handleMiss(angle)
+function handleMiss(angle)
 {
-	// console.log("MISS !!");
-	const missedPlayer = getExpectedPlayer(angle); // ou une variante pour identifier la *zone*
+	const missedPlayer = getExpectedPlayer(angle);
 	console.log(missedPlayer);
 	if (missedPlayer)
 	{
 		const index = players.indexOf(missedPlayer);
 		if (index !== -1) 
 		{
-			// await sleep(10000);
 			players.splice(index, 1); // retire le joueur
-			resetGame();
+			if (players.length === 1)
+				return winScreen();
+			setTimeout(resetGame, 3000);
 		}
 	}
 }
 
-async function checkBallCollision()
+function checkBallCollision()
 {
 	if (!isBallTouchingWall()) return;
 
@@ -230,15 +226,10 @@ async function checkBallCollision()
 
 		const bounceStrength = 4;
 		ball.angle = normalizeAngle(Math.PI + ball.angle + offset * bounceStrength);
-
-		// console.log("Impact Angle: ", impactAngle);
-		// console.log("Paddle Center Angle: ", paddleCenter);
-		// console.log("Offset: ", offset);
-		// console.log("Incoming Angle: ", incomingAngle);
-		// console.log("Reflected Angle: ", reflectedAngle);
+		ball.speed += 0.3//acceleration
 	}
 	else
-		await handleMiss(normalizeAngle(Math.atan2(ball.y - centerY, ball.x - centerX)));//angle polaire
+		handleMiss(normalizeAngle(Math.atan2(ball.y - centerY, ball.x - centerX)));//angle polaire
 }
 
 function updateBall()
@@ -288,7 +279,7 @@ function normalizeAngle(angle)
 
 function updatePlayers()
 {
-	const speed = 0.05;
+	const speed = 0.03;//player movement speed
 	players.forEach(player =>
 	{
 		player.angle += player.direction * speed;
