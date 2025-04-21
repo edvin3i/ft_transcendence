@@ -3,7 +3,9 @@ import {openLogInPage} from './logIn.js'
 import {openUserProfilePage} from './userProfile.js'
 import {openFriendsPage} from './friends.js'
 import {openGamePage} from './game.js'
+import { playPong } from './pong.js';
 
+window.playPong = playPong;
 window.onload = openApp();
 window.addEventListener('popstate', handleNavigation);
 
