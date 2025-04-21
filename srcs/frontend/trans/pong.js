@@ -1,5 +1,9 @@
-export function playPong({ remote = false } = {}) {
+export function playPong({ remote = false, room = "myroom" } = {}) {
     const canvas = document.getElementById("pongCanvas");
+    const status = document.getElementById("pongStatus");
+    const label = document.getElementById("playerLabel");
+    const endBtn = document.getElementById("endGameButton");
+  
     if (!canvas) {
       console.error("❌ Canvas introuvable !");
       return;
@@ -10,19 +14,27 @@ export function playPong({ remote = false } = {}) {
     const ctx = canvas.getContext("2d");
   
     if (remote) {
-      // --- Remote (Server-side Pong) ---
-      const socket = new WebSocket(`wss://${window.location.host}/ws/game/myroom/`);
+      const socket = new WebSocket(`wss://${window.location.host}/ws/game/${room}/`);
   
-      let playerId;
+      let playerId = null;
       let paddle1Y = 0, paddle2Y = 0;
       let ballX = 0, ballY = 0;
       let score1 = 0, score2 = 0;
   
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
+  
         if (data.type === "init") {
           playerId = data.playerId;
-        } else if (data.type === "state") {
+          if (label) label.innerText = `You are Player ${playerId + 1}`;
+          if (status) status.innerText = "";
+        }
+  
+        if (data.type === "waiting") {
+          if (status) status.innerText = "Waiting for opponent...";
+        }
+  
+        if (data.type === "state") {
           paddle1Y = data.paddle1_y;
           paddle2Y = data.paddle2_y;
           ballX = data.ball.x;
@@ -30,14 +42,34 @@ export function playPong({ remote = false } = {}) {
           score1 = data.score[0];
           score2 = data.score[1];
         }
+  
+        if (data.type === "end") {
+          if (status) status.innerText = "Game ended.";
+          socket.close();
+        }
       };
   
       document.addEventListener("keydown", (e) => {
-        if (e.key === "w" || e.key === "ArrowUp")
-          socket.send(JSON.stringify({ type: "move", direction: -1 }));
-        if (e.key === "s" || e.key === "ArrowDown")
-          socket.send(JSON.stringify({ type: "move", direction: 1 }));
+        if (playerId === null) return;
+  
+        if (playerId === 0 && (e.key === "w" || e.key === "s")) {
+          const dir = e.key === "w" ? -1 : 1;
+          socket.send(JSON.stringify({ type: "move", direction: dir, player: 0 }));
+        }
+  
+        if (playerId === 1 && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+          const dir = e.key === "ArrowUp" ? -1 : 1;
+          socket.send(JSON.stringify({ type: "move", direction: dir, player: 1 }));
+        }
       });
+  
+      if (endBtn) {
+        endBtn.style.display = "inline-block";
+        endBtn.onclick = () => {
+          socket.send(JSON.stringify({ type: "end" }));
+          if (status) status.innerText = "Game ended.";
+        };
+      }
   
       function drawRemote() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -53,7 +85,7 @@ export function playPong({ remote = false } = {}) {
       drawRemote();
   
     } else {
-      // --- Local Pong (offline) ---
+      // --- Local Pong ---
       let paddle1Y = 100, paddle2Y = 100;
       let ballX = 250, ballY = 150;
       let ballSpeedX = 2, ballSpeedY = 2;
@@ -82,35 +114,20 @@ export function playPong({ remote = false } = {}) {
         paddle1Y += player1Speed;
         paddle2Y += player2Speed;
   
-        // Boundaries
         paddle1Y = Math.max(0, Math.min(canvas.height - 60, paddle1Y));
         paddle2Y = Math.max(0, Math.min(canvas.height - 60, paddle2Y));
   
         ballX += ballSpeedX;
         ballY += ballSpeedY;
   
-        // Bounce
         if (ballY <= 0 || ballY + 8 >= canvas.height) ballSpeedY = -ballSpeedY;
   
-        // Left paddle
-        if (ballX <= 8 && ballY >= paddle1Y && ballY <= paddle1Y + 60) {
-          ballSpeedX = -ballSpeedX;
-        }
+        if (ballX <= 8 && ballY >= paddle1Y && ballY <= paddle1Y + 60) ballSpeedX = -ballSpeedX;
+        if (ballX + 8 >= canvas.width - 8 && ballY >= paddle2Y && ballY <= paddle2Y + 60) ballSpeedX = -ballSpeedX;
   
-        // Right paddle
-        if (ballX + 8 >= canvas.width - 8 && ballY >= paddle2Y && ballY <= paddle2Y + 60) {
-          ballSpeedX = -ballSpeedX;
-        }
+        if (ballX <= 0) { score2++; resetBall(); }
+        if (ballX + 8 >= canvas.width) { score1++; resetBall(); }
   
-        // Score
-        if (ballX <= 0) {
-          score2++; resetBall();
-        }
-        if (ballX + 8 >= canvas.width) {
-          score1++; resetBall();
-        }
-  
-        // Draw
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillRect(0, paddle1Y, 8, 60);
         ctx.fillRect(canvas.width - 8, paddle2Y, 8, 60);
