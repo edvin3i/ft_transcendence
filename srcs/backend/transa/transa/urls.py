@@ -29,5 +29,5 @@ urlpatterns = [
     path("api/tournaments/", include("tournaments.urls")),
     path("api/games/", include("game.urls")),
     path("api/auth/", include("trans_auth.urls")),
-
+    path("api/friends/", include("friends.urls")),
 ]

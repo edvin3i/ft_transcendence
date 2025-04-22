@@ -21,6 +21,7 @@ echo "⚡️ Running migrations..."
 $PYTHON manage.py makemigrations uprofiles
 $PYTHON manage.py makemigrations chat
 $PYTHON manage.py makemigrations game
+$PYTHON manage.py makemigrations friends
 $PYTHON manage.py makemigrations tournaments
 $PYTHON manage.py makemigrations
 $PYTHON manage.py migrate --noinput

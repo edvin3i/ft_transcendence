@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from .models import User, UserProfile
-import pyotp
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -56,7 +55,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def get_object(self):
         return self.request.user.userprofile
-
 
     # Add custom create() for nested JSON save
     def create(self, validated_data):

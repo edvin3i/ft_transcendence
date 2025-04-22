@@ -680,6 +680,7 @@ dependencies = [
     { name = "psycopg2-binary" },
     { name = "pyotp" },
     { name = "qrcode" },
+    { name = "redis" },
     { name = "requests" },
 ]
 
@@ -705,6 +706,7 @@ requires-dist = [
     { name = "psycopg2-binary", specifier = "==2.9.10" },
     { name = "pyotp", specifier = ">=2.9.0" },
     { name = "qrcode", specifier = ">=8.0" },
+    { name = "redis", specifier = ">=5.2.1" },
     { name = "requests", specifier = ">=2.32.3" },
 ]
 
