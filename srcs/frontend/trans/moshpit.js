@@ -1,4 +1,4 @@
-const canvas = document.getElementById("mushpitCanvas");
+const canvas = document.getElementById("moshpitCanvas");
 const contexte = canvas.getContext("2d");
 
 const centerX = canvas.width / 2;
@@ -18,9 +18,8 @@ const ball =
 
 const players = [
 {
-	// angle: Math.PI / 4, //for + position
-	angle: 0, //for x position
-	color: "#ff4d4d",      // Droite/red
+	angle: 0,
+	color: "#ff4d4d",
 	keyLeft: "ArrowLeft",
 	keyRight: "ArrowRight",
 	direction: 0,
@@ -29,9 +28,8 @@ const players = [
 	id: "red"
 },
 {
-	// angle: 3 * Math.PI / 4, //for + position
-	angle: Math.PI / 2, //for x position
-	color: "#4da6ff",      // Bas/blue
+	angle: Math.PI / 2,
+	color: "#4da6ff",
 	keyLeft: "ArrowDown",
 	keyRight: "ArrowUp",
 	direction: 0,
@@ -40,9 +38,8 @@ const players = [
 	id: "blue"
 },
 {
-	// angle: -3 * Math.PI / 4,//for + position
-	angle: Math.PI,// for x position
-	color: "#4dff4d",      // Gauche.green
+	angle: Math.PI,
+	color: "#4dff4d",
 	keyLeft: "a",
 	keyRight: "e",
 	direction: 0,
@@ -51,9 +48,8 @@ const players = [
 	id: "green"
 },
 {
-	// angle: -Math.PI / 4,// for + position
-	angle: 3 * Math.PI / 2,// for x position
-	color: "#ffff4d",      // Haut/yellow
+	angle: 3 * Math.PI / 2,
+	color: "#ffff4d",
 	keyLeft: "q",
 	keyRight: "d",
 	direction: 0,
@@ -62,6 +58,8 @@ const players = [
 	id: "yellow"
 },
 ];
+
+
 
 document.addEventListener("keydown", event =>
 {
@@ -82,6 +80,16 @@ document.addEventListener("keyup", event =>
 			player.direction = 0;
 	})
 })
+
+function winScreen(winner)
+{
+	// Stop le jeu, masque le canvas ou autre
+	contexte.clearRect(0, 0, canvas.width, canvas.height);
+	contexte.fillStyle = "white";
+	contexte.font = "40px Arial";
+	contexte.textAlign = "center";
+	contexte.fillText(`🏆 Joueur ${winner.id} gagne !`, canvas.width / 2, canvas.height / 2);
+}
 
 function isBallTouchingWall()
 {
@@ -115,58 +123,28 @@ function isPaddleAt(angle)
 	return null;
 }
 
-// function getExpectedPlayer(angle)
-// {
-// 	angle = normalizeAngle(angle);
-
-// 	for (const player of players)
-// 	{
-// 		const min = normalizeAngle(player.minAngle/* - angle*/);
-// 		const max = normalizeAngle(player.maxAngle/* - angle*/);
-
-// 		// angle = 0;
-// 		console.log(`Testing angle=${(angle * 180 / Math.PI).toFixed(1)}°`);
-// 		console.log(`Checking player ${player.id} -> shifted min=${(min * 180 / Math.PI).toFixed(1)}°, max=${(max * 180 / Math.PI).toFixed(1)}°`);
-
-// 		if (min < max)
-// 			if (angle >= min && angle <= max) return player;
-// 		else
-// 			if (angle >= min || angle <= max) return player;
-// 	}
-// 	// return null; //souldn't go here
-// }
-
 function getExpectedPlayer(angle)
 {
 	angle = normalizeAngle(angle);
-	// console.log(`Balle à l'angle: ${(angle * 180 / Math.PI).toFixed(1)}°`);
 
 	for (const player of players)
 	{
 		const min = normalizeAngle(player.minAngle);
 		const max = normalizeAngle(player.maxAngle);
+		let inside = false;
 
-		// console.log(`Joueur ${player.id} : min=${(min * 180 / Math.PI).toFixed(1)}°, max=${(max * 180 / Math.PI).toFixed(1)}°`);
+		if (min < max)
+			inside = angle >= min && angle <= max;
+		else
+			inside = angle >= min || angle <= max;
 
-		// let inside = false;
-		
-		// if (min <= max)
-		// 	inZone = angle >= min && angle <= max
-		const inside =
-			min < max
-					? angle >= min && angle <= max
-					: angle >= min || angle <= max;
-
-		if (inside) {
-			// console.log(`→ Balle dans la zone du joueur ${player.id}`);
+		if (inside)
 			return player;
-		}
 	}
 
 	console.log("→ Aucun joueur trouvé !");
 	return null;
 }
-
 
 function resetGame()
 {
@@ -199,7 +177,7 @@ function handleMiss(angle)
 		{
 			players.splice(index, 1); // retire le joueur
 			if (players.length === 1)
-				return winScreen();
+				return winScreen(players[0]);
 			setTimeout(resetGame, 3000);
 		}
 	}
@@ -229,7 +207,7 @@ function checkBallCollision()
 		ball.speed += 0.3//acceleration
 	}
 	else
-		handleMiss(normalizeAngle(Math.atan2(ball.y - centerY, ball.x - centerX)));//angle polaire
+		handleMiss(normalizeAngle(Math.atan2(ball.y - centerY, ball.x - centerX)));
 }
 
 function updateBall()
@@ -254,8 +232,8 @@ function drawCurvedPaddle(player)
 
 	contexte.beginPath();
 	contexte.arc(centerX, centerY, radius, startAngle, endAngle);
-	contexte.lineWidth = 10; // épaisseur de la palette
-	contexte.strokeStyle = player.color;//"#000000";//black
+	contexte.lineWidth = 10;// épaisseur de la palette
+	contexte.strokeStyle = player.color;
 	contexte.stroke();
 	contexte.closePath();
 }
@@ -317,16 +295,13 @@ function drawPlayerSector(startAngle, endAngle, colors)
 
 function drawAllPlayerSector()
 {
-	// const colors = ["#4da6ff", "#4dff4d", "#ffff4d", "#ff4d4d"];
 	const playerCount = players.length;
 	const angleStep = Math.PI * 2 / playerCount;
-	const offset = angleStep / 2;//uncoment for x position
+	const offset = angleStep / 2;
 
 	for (let i = 0; i < playerCount; i++)
 	{
-		// const startAngle = angleStep * i;//for + position
-		// const startAngle = offset + angleStep * i;//this one is for x position
-		// const endAngle = startAngle + angleStep;
+
 		const startAngle = normalizeAngle(players[i].minAngle);
 		const endAngle = normalizeAngle(players[i].maxAngle);
 		drawPlayerSector(startAngle, endAngle, players[i].color);
