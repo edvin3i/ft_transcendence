@@ -69,6 +69,10 @@ export function openPage(page, push = 1)
 {
 	const token = localStorage.getItem('accessToken');
 
+	console.log("--------------------------NAVIGATION LOG--------------------------------")
+	console.log(token);
+	console.log("----------------------NAVIGATION END OF LOG-----------------------------")
+
 	if (!token)
 		openLogInPage(page, push);
 	else

@@ -3,6 +3,36 @@ import {setUserInformation} from './userInformation.js'
 import {showNavigationHeader, openPage} from './navigation.js'
 import {showChat} from './chat.js'
 
+// I've added from here
+(function handleOAuthRedirect() {
+  const hash = window.location.hash; // for ex: "#callback?access_token=...&refresh_token=..."
+
+  if (hash.startsWith("#callback")) {
+    const queryString = hash.split("?")[1]; // get the part after "?"
+    const params = new URLSearchParams(queryString);
+
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    const username = params.get("username");
+
+    if (accessToken && refreshToken) {
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("username", username);
+
+      console.log("Tokens saved");
+    } else {
+      console.warn("Tokens doesn't found in hash");
+    }
+
+    // clear address line and go to the "/""
+    window.history.replaceState({}, document.title, "/");
+    window.location.href = "/";
+  }
+})();
+// to here
+
+
 function authenticationHeader()
 {
 	return `
@@ -68,7 +98,7 @@ export function openLogInPage(page, push)
 
 async function logInWith42()
 {
-	// add 42auth
+	window.location.href = "https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-42af5be9c50086986d493929592fbd7d5a7cd21427155bad5eb264883602b20a&redirect_uri=https://localhost/api/auth/ft/callback/&response_type=code";
 }
 
 async function handleLogIn(page, push)
