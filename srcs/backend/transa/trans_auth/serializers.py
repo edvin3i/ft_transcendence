@@ -7,7 +7,6 @@ from transa.settings import (
     OA_CLIENT_ID,
     OA_SECRET,
     OA_REDIR_URL,
-    OA_POST_LOUT_REDIR_URL,
     OA_TOKEN_URL,
 )
 
@@ -52,6 +51,7 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
         self.context["42_access_token"] = access_token
         self.context["42_user_data"] = user_data
 
+
     def create(self, validated_data):
         user_data = self.context["42_user_data"]
         ft_login = user_data.get("login")
@@ -82,6 +82,7 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
             "refresh_token": refresh_jwt,
             "uprofile_id": user_profile.id,
             "username": user_profile.user.username,
+            "email": user_profile.user.email,
             "user_avatar_url": user_profile.avatar_url,
             "user_avatar": user_profile.avatar.path,
         }

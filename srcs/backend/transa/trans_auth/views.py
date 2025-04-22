@@ -11,7 +11,6 @@ from .serializers import (
     TwoFactorAuthDisableSerializer,
 )
 
-
 class FortyTwoOpenAuthCallbackView(GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = FortyTwoOpenAuthSerializer
@@ -24,6 +23,7 @@ class FortyTwoOpenAuthCallbackView(GenericAPIView):
         query = urlencode(
             {
                 "username": data["username"],
+                "email": data["email"],
                 "access_token": data["access_token"],
                 "refresh_token": data["refresh_token"],
             }
