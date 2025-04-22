@@ -14,11 +14,13 @@ import {showChat} from './chat.js'
     const accessToken = params.get("access_token");
     const refreshToken = params.get("refresh_token");
     const username = params.get("username");
+    const email = params.get("email")
 
     if (accessToken && refreshToken) {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("username", username);
+      localStorage.setItem("email", email)
 
       console.log("Tokens saved");
     } else {
