@@ -88,14 +88,21 @@ async function endOAuth42()
 	if (!localStorage.getItem('data'))
 		return;
 
-	const data = JSON.parse(localStorage.getItem('data'));
+	const token = localStorage.getItem('accessToken');
 
-	localStorage.setItem('accessToken', data.access);
-	localStorage.setItem('refreshToken', data.refresh);
+	if (token)
+		alert("You are already logged in!");
+	else
+	{
+		const data = JSON.parse(localStorage.getItem('data'));
+
+		localStorage.setItem('accessToken', data.access);
+		localStorage.setItem('refreshToken', data.refresh);
+
+		await setUserInformation();
+	}
 	
 	localStorage.removeItem('data');
-
-	await setUserInformation();
 
 	showNavigationHeader();
 
@@ -123,10 +130,17 @@ async function handleLogIn(page, push)
 
 	if (response.ok)
 	{
-		localStorage.setItem('accessToken', data.access);
-		localStorage.setItem('refreshToken', data.refresh);
+		const token = localStorage.getItem('accessToken');
 
-		await setUserInformation();
+		if (token)
+			alert("You are already logged in!");
+		else
+		{
+			localStorage.setItem('accessToken', data.access);
+			localStorage.setItem('refreshToken', data.refresh);
+	
+			await setUserInformation();
+		}
 
 		showNavigationHeader();
 		showChat();
