@@ -1,7 +1,7 @@
 import {openAccountCreationPage} from './accountCreation.js'
 import {setUserInformation} from './userInformation.js'
 import {showNavigationHeader, openPage} from './navigation.js'
-import {showChat} from './chat.js'
+import {closeChat, showChat} from './chat.js'
 
 function authenticationHeader()
 {
@@ -15,7 +15,7 @@ function logInPage()
 {
 	return `
 		<div class="text-center">
-			<button id="logInWith42Button" class="btn btn-dark mb-3">Log in with 42</button>
+			<button id="oauth42Button" class="btn btn-dark mb-3">42</button>
 		</div>
 		<p class="text-center">---or---</p>
 		<form id="logInForm" method="POST" class="container">
@@ -55,8 +55,8 @@ export function openLogInPage(page, push)
 	document.getElementById('app').innerHTML = logInPage();
 	document.getElementById('chat').innerHTML = '';
 
-	const logInWith42Button = document.getElementById('logInWith42Button');
-	logInWith42Button.addEventListener('click', logInWith42);
+	const oauth42Button = document.getElementById('oauth42Button');
+	oauth42Button.addEventListener('click', startOAuth42);
 
 	const logInForm = document.getElementById('logInForm');
 	logInForm.addEventListener('submit', () => handleLogIn(page, push));
@@ -66,9 +66,43 @@ export function openLogInPage(page, push)
 			() => openAccountCreationPage(page, push));
 }
 
-async function logInWith42()
+export function startOAuth42()
 {
-	// add 42auth
+	const width = Math.min(800, window.innerWidth);
+	const height = Math.min(690, window.innerHeight);
+
+	const left = (window.innerWidth - width) / 2;
+	const top = (window.innerHeight - height) / 2;
+
+	const url = 'https://localhost/api/auth/ft/callback/';
+	const title = 'OAuth42';
+	const features = `width=${width},height=${height},top=${top},left=${left}`;
+	
+    const popup = window.open(url, title, features);
+
+	window.addEventListener('storage', endOAuth42);
+}
+
+async function endOAuth42()
+{
+	if (!localStorage.getItem('data'))
+		return;
+
+	const data = JSON.parse(localStorage.getItem('data'));
+
+	localStorage.setItem('accessToken', data.access);
+	localStorage.setItem('refreshToken', data.refresh);
+	
+	localStorage.removeItem('data');
+
+	await setUserInformation();
+
+	showNavigationHeader();
+
+	closeChat();
+	showChat();
+
+	openPage(history.state.page, 0);
 }
 
 async function handleLogIn(page, push)
@@ -96,7 +130,6 @@ async function handleLogIn(page, push)
 
 		showNavigationHeader();
 		showChat();
-
 		openPage(page, push);
 	}
 	else

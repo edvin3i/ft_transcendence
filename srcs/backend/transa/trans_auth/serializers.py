@@ -78,8 +78,8 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
         refresh_jwt = str(refresh)
 
         return {
-            "access_token": access_jwt,
-            "refresh_token": refresh_jwt,
+            "access": access_jwt,
+            "refresh": refresh_jwt,
             "uprofile_id": user_profile.id,
             "username": user_profile.user.username,
             "user_avatar_url": user_profile.avatar_url,
