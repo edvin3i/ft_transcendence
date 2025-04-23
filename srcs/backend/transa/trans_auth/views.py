@@ -12,6 +12,10 @@ from .serializers import (
     TwoFactorAuthConfirmSerializer,
     TwoFactorAuthDisableSerializer,
 )
+from transa.settings import (
+    OA_CLIENT_ID,
+    OA_REDIR_URL,
+)
 
 
 class FortyTwoOpenAuthCallbackView(GenericAPIView):
@@ -26,7 +30,7 @@ class FortyTwoOpenAuthCallbackView(GenericAPIView):
             <html>
             <head>
                 <script>
-                    window.location.href = "https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-42af5be9c50086986d493929592fbd7d5a7cd21427155bad5eb264883602b20a&redirect_uri=https://localhost/api/auth/ft/callback/&response_type=code";
+                    window.location.href = "https://api.intra.42.fr/oauth/authorize?client_id={OA_CLIENT_ID}&redirect_uri={OA_REDIR_URL}&response_type=code";
                 </script>
             </head>
             </html>
