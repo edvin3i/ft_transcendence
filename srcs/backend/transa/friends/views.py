@@ -52,7 +52,7 @@ class FriendsRequestAcceptAPIView(generics.UpdateAPIView):
         instance.status = "accepted"
         instance.updated_at = timezone.now()
         instance.save(update_fields=["status", "updated_at"])
-        serrializer = self.get_serializer(instance)
+        serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
 
