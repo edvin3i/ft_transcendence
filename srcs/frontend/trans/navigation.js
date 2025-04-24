@@ -22,7 +22,7 @@ function openApp()
 		showNavigationHeader();
 		showChat();
 	}
-	
+
 	openPage(homePage, 0);
 }
 
@@ -91,6 +91,7 @@ function logOut()
 {
 	localStorage.removeItem('accessToken');
 	localStorage.removeItem('refreshToken');
+	localStorage.removeItem('id');
 	localStorage.removeItem('username');
 	localStorage.removeItem('email');
 

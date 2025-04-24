@@ -1,17 +1,20 @@
 import json
 import logging
+import redis
+from chat.utils import is_blocked, friendship_action
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import ChatMessage, UserBlock
-from django.contrib.auth import get_user_model
+from .models import ChatMessage
 from urllib.parse import parse_qs
 from rest_framework_simplejwt.tokens import AccessToken
-from django.contrib.auth.models import AnonymousUser
+
+# from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth import get_user_model
 from datetime import datetime
 
 
 logger = logging.getLogger(__name__)
+redis_client = redis.Redis(host="redis", port=6379, db=0)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -23,16 +26,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
             try:
                 validated_token = AccessToken(token)
                 user_id = validated_token["user_id"]
-                user = await database_sync_to_async(get_user_model().objects.get)(id=user_id)
+                user = await database_sync_to_async(get_user_model().objects.get)(
+                    id=user_id
+                )
                 self.scope["user"] = user
+                if user.is_authenticated:
+                    # redis_client.sadd("online_users", str(user.id))
+                    redis_client.set(f"user_online:{user.id}", "1", ex=30)
                 logger.info(f"[🔐 JWT AUTH] Connected user: {user.username}")
             except Exception as e:
                 logger.warning(f"[❌ JWT ERROR] {e}")
                 await self.close()
                 return
-        else:
-            self.scope["user"] = AnonymousUser()
-            logger.info(f"[👤 ANONYMOUS] No token provided.")
+        # else:
+        #     self.scope["user"] = AnonymousUser()
+        #     logger.info(f"[👤 ANONYMOUS] No token provided.")
 
         try:
             self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
@@ -40,62 +48,67 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             logger.info(f"[🔌 CONNECT] User connecting to room: {self.room_name}")
 
-            await self.channel_layer.group_add(
-                self.room_group_name,
-                self.channel_name
-            )
+            await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             await self.accept()
 
             logger.info(f"[✅ CONNECTED] Joined group: {self.room_group_name}")
 
-            # ⛑ Prépare les messages en dicts (plus aucun ORM dans le async)
+            # Prépare les messages en dicts (plus aucun ORM dans le async)
             def fetch_history(room_name):
-                messages = ChatMessage.objects.filter(room=room_name).order_by("-timestamp")[:50]
+                messages = ChatMessage.objects.filter(room=room_name).order_by(
+                    "-timestamp"
+                )[:50]
                 return [
                     {
                         "username": m.user.username,
                         "message": m.content,
-                        "timestamp": m.timestamp.strftime("%H:%M:%S")
+                        "timestamp": m.timestamp.strftime("%H:%M:%S"),
                     }
                     for m in messages
                 ]
 
             history = await database_sync_to_async(fetch_history)(self.room_name)
-            logger.info(f"[📜 HISTORY] Found {len(history)} messages in {self.room_name}")
+            logger.info(
+                f"[📜 HISTORY] Found {len(history)} messages in {self.room_name}"
+            )
 
             for i, msg in enumerate(reversed(history)):
                 if i == len(history) - 1:
                     msg["history_end"] = True  # ✅ tag pour la fin
                 await self.send(text_data=json.dumps(msg))
 
-
         except Exception:
             logger.exception("[❌ ERROR] connect() failed")
             await self.close()
 
-
     async def disconnect(self, close_code):
+        user = self.scope["user"]
+        if user.is_authenticated:
+            # redis_client.srem("online_users", str(user.id))
+            redis_client.delete(f"user_online:{user.id}")
         logger.info(f"[👋 DISCONNECT] Leaving room: {self.room_group_name}")
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
         logger.debug(f"[📩 RECEIVE] Raw data: {text_data}")
+
         try:
             data = json.loads(text_data)
             message = data.get("message", "")
             user = self.scope["user"]
-            username = user.username if not user.is_anonymous else "Anonymous"
-
-            if user.is_anonymous and message.startswith("/"):
-                await self.send(text_data=json.dumps({
-                    "username": "SYSTEM",
-                    "message": "⚠️ You must be logged in to use commands."
-                }))
-                logger.warning(f"[⚠️ BLOCKED] Anonymous tried command: {message}")
+            username = user.username  # if not user.is_anonymous else "Anonymous"
+            if data.get("type") == "ping":
+                if user.is_authenticated:
+                    redis_client.set(f"user_online:{user.id}", "1", ex=30)
                 return
+
+            # if user.is_anonymous and message.startswith("/"):
+            #     await self.send(text_data=json.dumps({
+            #         "username": "SYSTEM",
+            #         "message": "⚠️ You must be logged in to use commands."
+            #     }))
+            #     logger.warning(f"[⚠️ BLOCKED] Anonymous tried command: {message}")
+            #     return
 
             if message.startswith("/invite "):
                 target = message.split(" ", 1)[1]
@@ -104,63 +117,97 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     {
                         "type": "chat_message",
                         "username": "SYSTEM",
-                        "message": f"{username} invited {target} to a game 🎮"
-                    }
+                        "message": f"{username} invited {target} to a game 🎮",
+                    },
                 )
                 logger.info(f"[🎮 INVITE] {username} invited {target}")
                 return
 
-            if message.startswith("/block "):
-                target_username = message.split(" ", 1)[1]
-                User = get_user_model()
-                
-                if target_username == user.username:
-                    await self.send(text_data=json.dumps({
-                        "username": "SYSTEM",
-                        "message": "⚠️ You can't block yourself!"
-                    }))
-                    logger.warning(f"[🙃 SELF-BLOCK] {user.username} tried to block themselves")
-                    return
-
+            if message.startswith("/friend"):
                 try:
-                    target_user = await database_sync_to_async(User.objects.get)(username=target_username)
-                    await database_sync_to_async(UserBlock.objects.get_or_create)(
-                        user=user,
-                        blocked_user=target_user
+                    _, action, target = message.split(maxsplit=2)
+                    await friendship_action(user, target, action)
+                    await self.send(
+                        text_data=json.dumps(
+                            {
+                                "username": "SYSTEM",
+                                "message": f"{action} -> {target} is done",
+                            }
+                        )
                     )
-
-                    await self.send(text_data=json.dumps({
-                        "username": "SYSTEM",
-                        "message": f"You have blocked {target_username}"
-                    }))
-                    logger.info(f"[🛡️ BLOCK] {username} blocked {target_username}")
-                except User.DoesNotExist:
-                    await self.send(text_data=json.dumps({
-                        "username": "SYSTEM",
-                        "message": f"User '{target_username}' not found"
-                    }))
-                    logger.warning(f"[❓ USER NOT FOUND] {target_username}")
+                except Exception as e:
+                    await self.send(
+                        text_data=json.dumps(
+                            {
+                                "username": "SYSTEM",
+                                "message": f"{e}",
+                            }
+                        )
+                    )
                 return
 
-            if user.is_anonymous:
-                # On utilise un user "Anonymous" générique pour stocker les messages anonymes
-                User = get_user_model()
-                anon_user, _ = await database_sync_to_async(User.objects.get_or_create)(
-                    username="Anonymous"
-                )
-                await database_sync_to_async(ChatMessage.objects.create)(
-                    user=anon_user,
-                    room=self.room_name,
-                    content=message
-                )
-                logger.info(f"[💾 SAVED AS ANON] Anonymous: {message}")
-            else:
-                await database_sync_to_async(ChatMessage.objects.create)(
-                    user=user,
-                    room=self.room_name,
-                    content=message
-                )
-                logger.info(f"[💾 SAVED] {username}: {message}")
+            # if message.startswith("/block "):
+            #     target_username = message.split(" ", 1)[1]
+            #     User = get_user_model()
+            #
+            #     if target_username == user.username:
+            #         await self.send(
+            #             text_data=json.dumps(
+            #                 {
+            #                     "username": "SYSTEM",
+            #                     "message": "⚠️ You can't block yourself!",
+            #                 }
+            #             )
+            #         )
+            #         logger.warning(
+            #             f"[🙃 SELF-BLOCK] {user.username} tried to block themselves"
+            #         )
+            #         return
+            #
+            #     try:
+            #         target_user = await database_sync_to_async(User.objects.get)(
+            #             username=target_username
+            #         )
+            #         await database_sync_to_async(UserBlock.objects.get_or_create)(
+            #             user=user, blocked_user=target_user
+            #         )
+            #
+            #         await self.send(
+            #             text_data=json.dumps(
+            #                 {
+            #                     "username": "SYSTEM",
+            #                     "message": f"You have blocked {target_username}",
+            #                 }
+            #             )
+            #         )
+            #         logger.info(f"[🛡️ BLOCK] {username} blocked {target_username}")
+            #     except User.DoesNotExist:
+            #         await self.send(
+            #             text_data=json.dumps(
+            #                 {
+            #                     "username": "SYSTEM",
+            #                     "message": f"User '{target_username}' not found",
+            #                 }
+            #             )
+            #         )
+            #         logger.warning(f"[❓ USER NOT FOUND] {target_username}")
+            #     return
+
+            # if user.is_anonymous:
+            #     # On utilise un user "Anonymous" générique pour stocker les messages anonymes
+            #     # User = get_user_model()
+            #     anon_user, _ = await database_sync_to_async(User.objects.get_or_create)(
+            #         username="Anonymous"
+            #     )
+            #     await database_sync_to_async(ChatMessage.objects.create)(
+            #         user=anon_user, room=self.room_name, content=message
+            #     )
+            #     logger.info(f"[💾 SAVED AS ANON] Anonymous: {message}")
+            # else:
+            await database_sync_to_async(ChatMessage.objects.create)(
+                user=user, room=self.room_name, content=message
+            )
+            logger.info(f"[💾 SAVED] {username}: {message}")
 
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -168,10 +215,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "type": "chat_message",
                     "username": username,
                     "message": message,
-                    "timestamp": datetime.now().strftime("%H:%M:%S")
-                }
+                    "timestamp": datetime.now().strftime("%H:%M:%S"),
+                },
             )
-
 
         except Exception as e:
             logger.error(f"[❌ ERROR] receive() failed: {e}")
@@ -181,19 +227,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = event["message"]
         user = self.scope["user"]
 
-        if not user.is_anonymous:
-            User = get_user_model()
-            is_blocked = await database_sync_to_async(
-                UserBlock.objects.filter(user=user, blocked_user__username=sender).exists
-            )()
-            if is_blocked and sender != "SYSTEM":
+        # if not user.is_anonymous:
+        #     # User = get_user_model()
+        #     is_blocked = await database_sync_to_async(
+        #         UserBlock.objects.filter(
+        #             user=user, blocked_user__username=sender
+        #         ).exists
+        #     )()
+        #     if is_blocked and sender != "SYSTEM":
+        #         logger.info(f"[🙈 BLOCKED MESSAGE] {sender} -> {user.username}")
+        #         return
+
+        if sender != "SYSTEM":
+            if await is_blocked(user, sender):
                 logger.info(f"[🙈 BLOCKED MESSAGE] {sender} -> {user.username}")
                 return
 
         logger.debug(f"[📡 BROADCAST] {sender}: {message}")
-        await self.send(text_data=json.dumps({
-            "username": sender,
-            "message": message,
-            "timestamp": event.get("timestamp")
-        }))
-
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "username": sender,
+                    "message": message,
+                    "timestamp": event.get("timestamp"),
+                }
+            )
+        )
