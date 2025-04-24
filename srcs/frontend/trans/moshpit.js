@@ -7,6 +7,8 @@ const radius = canvas.width / 2 - 10;
 
 const paddleSize = Math.PI / 12;
 
+let isGameOver = false;
+
 const ball =
 {
 	y: centerY,
@@ -59,6 +61,8 @@ const players = [
 },
 ];
 
+const eliminatedPlayers = [];//for a proper reset ?
+
 
 
 document.addEventListener("keydown", event =>
@@ -84,6 +88,7 @@ document.addEventListener("keyup", event =>
 function winScreen(winner)
 {
 	// Stop le jeu, masque le canvas ou autre
+	isGameOver = true;
 	contexte.clearRect(0, 0, canvas.width, canvas.height);
 	contexte.fillStyle = "white";
 	contexte.font = "40px Arial";
@@ -146,7 +151,7 @@ function getExpectedPlayer(angle)
 	return null;
 }
 
-function resetGame()
+function continueGame()
 {
 	const playerCount = players.length;
 	const angleStep = (2 * Math.PI) / playerCount;
@@ -175,10 +180,11 @@ function handleMiss(angle)
 		const index = players.indexOf(missedPlayer);
 		if (index !== -1) 
 		{
+			eliminatedPlayers.push(missedPlayer);//for proper reset
 			players.splice(index, 1); // retire le joueur
 			if (players.length === 1)
 				return winScreen(players[0]);
-			setTimeout(resetGame, 3000);
+			setTimeout(continueGame, 3000);
 		}
 	}
 }
@@ -324,7 +330,8 @@ function drawGameCircle()
 	contexte.lineWidth = 4;
 	contexte.stroke();
 
-	requestAnimationFrame(drawGameCircle);
+	if (isGameOver === false)
+		requestAnimationFrame(drawGameCircle);
 }
 
 drawGameCircle();
