@@ -41,7 +41,7 @@ function localGamePage()
 	`;
 }
 
-export function openLocalGamePage()
+function openLocalGamePage()
 {
 	document.getElementById('app').innerHTML = localGamePage();
 	
@@ -63,7 +63,7 @@ function enterRoomPage()
 	`;
 }
 
-export function openRemoteGamePage()
+function openRemoteGamePage()
 {
 	document.getElementById('app').innerHTML = enterRoomPage();
 	
@@ -109,7 +109,7 @@ function tournamentPage()
 	`;
 }
 
-export function openTournamentPage()
+function openTournamentPage()
 {
 	document.getElementById('app').innerHTML = tournamentPage();
 }
