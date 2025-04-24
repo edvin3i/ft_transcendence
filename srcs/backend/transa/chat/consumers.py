@@ -1,20 +1,18 @@
 import json
 import logging
-import redis
+import redis.asyncio as redis
 from chat.utils import is_blocked, friendship_action
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import ChatMessage
 from urllib.parse import parse_qs
 from rest_framework_simplejwt.tokens import AccessToken
-
-# from django.contrib.auth.models import AnonymousUser
+from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from datetime import datetime
 
 
 logger = logging.getLogger(__name__)
-redis_client = redis.Redis(host="redis", port=6379, db=0)
+redis_client = redis.Redis(host="redis", port=6379, db=0, decode_responses=True)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -27,20 +25,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 validated_token = AccessToken(token)
                 user_id = validated_token["user_id"]
                 user = await database_sync_to_async(get_user_model().objects.get)(
-                    id=user_id
+                    id=user_id,
                 )
                 self.scope["user"] = user
-                if user.is_authenticated:
-                    # redis_client.sadd("online_users", str(user.id))
-                    redis_client.set(f"user_online:{user.id}", "1", ex=30)
+                await redis_client.set(f"user_online:{user.id}", "1", ex=30)
                 logger.info(f"[🔐 JWT AUTH] Connected user: {user.username}")
             except Exception as e:
                 logger.warning(f"[❌ JWT ERROR] {e}")
                 await self.close()
                 return
-        # else:
-        #     self.scope["user"] = AnonymousUser()
-        #     logger.info(f"[👤 ANONYMOUS] No token provided.")
 
         try:
             self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
@@ -53,29 +46,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             logger.info(f"[✅ CONNECTED] Joined group: {self.room_group_name}")
 
-            # Prépare les messages en dicts (plus aucun ORM dans le async)
-            def fetch_history(room_name):
-                messages = ChatMessage.objects.filter(room=room_name).order_by(
-                    "-timestamp"
-                )[:50]
-                return [
-                    {
-                        "username": m.user.username,
-                        "message": m.content,
-                        "timestamp": m.timestamp.strftime("%H:%M:%S"),
-                    }
-                    for m in messages
-                ]
+            history_raw = await redis_client.lrange(
+                f"chat_room:{self.room_name}", 0, -1
+            )
+            history = [json.loads(m) for m in history_raw]
 
-            history = await database_sync_to_async(fetch_history)(self.room_name)
+            for i, msg in enumerate(history):
+                if i == len(history) - 1:
+                    msg["history_end"] = True
+                await self.send(text_data=json.dumps(msg))
+
             logger.info(
                 f"[📜 HISTORY] Found {len(history)} messages in {self.room_name}"
             )
-
-            for i, msg in enumerate(reversed(history)):
-                if i == len(history) - 1:
-                    msg["history_end"] = True  # ✅ tag pour la fin
-                await self.send(text_data=json.dumps(msg))
 
         except Exception:
             logger.exception("[❌ ERROR] connect() failed")
@@ -83,9 +66,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         user = self.scope["user"]
-        if user.is_authenticated:
-            # redis_client.srem("online_users", str(user.id))
-            redis_client.delete(f"user_online:{user.id}")
+        await redis_client.delete(f"user_online:{user.id}")
         logger.info(f"[👋 DISCONNECT] Leaving room: {self.room_group_name}")
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
@@ -96,20 +77,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
             data = json.loads(text_data)
             message = data.get("message", "")
             user = self.scope["user"]
-            username = user.username  # if not user.is_anonymous else "Anonymous"
+            username = user.username
             if data.get("type") == "ping":
-                if user.is_authenticated:
-                    redis_client.set(f"user_online:{user.id}", "1", ex=30)
+                await redis_client.set(f"user_online:{user.id}", "1", ex=30)
                 return
 
-            # if user.is_anonymous and message.startswith("/"):
-            #     await self.send(text_data=json.dumps({
-            #         "username": "SYSTEM",
-            #         "message": "⚠️ You must be logged in to use commands."
-            #     }))
-            #     logger.warning(f"[⚠️ BLOCKED] Anonymous tried command: {message}")
-            #     return
-
+            await redis_client.rpush(
+                f"chat_room:{self.room_name}",
+                json.dumps(
+                    {
+                        "username": username,
+                        "message": message,
+                        "timestamp": datetime.now().strftime("%H:%M:%S"),
+                    }
+                ),
+            )
+            await redis_client.ltrim(f"chat_room:{self.room_name}", -50, -1)
             if message.startswith("/invite "):
                 target = message.split(" ", 1)[1]
                 await self.channel_layer.group_send(
@@ -126,6 +109,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if message.startswith("/friend"):
                 try:
                     _, action, target = message.split(maxsplit=2)
+                    if action not in {"add", "accept", "reject", "block", "unblock"}:
+                        logger.info("Wrong friend command")
+                        raise ValidationError("Wrong command")
                     await friendship_action(user, target, action)
                     await self.send(
                         text_data=json.dumps(
@@ -146,69 +132,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     )
                 return
 
-            # if message.startswith("/block "):
-            #     target_username = message.split(" ", 1)[1]
-            #     User = get_user_model()
-            #
-            #     if target_username == user.username:
-            #         await self.send(
-            #             text_data=json.dumps(
-            #                 {
-            #                     "username": "SYSTEM",
-            #                     "message": "⚠️ You can't block yourself!",
-            #                 }
-            #             )
-            #         )
-            #         logger.warning(
-            #             f"[🙃 SELF-BLOCK] {user.username} tried to block themselves"
-            #         )
-            #         return
-            #
-            #     try:
-            #         target_user = await database_sync_to_async(User.objects.get)(
-            #             username=target_username
-            #         )
-            #         await database_sync_to_async(UserBlock.objects.get_or_create)(
-            #             user=user, blocked_user=target_user
-            #         )
-            #
-            #         await self.send(
-            #             text_data=json.dumps(
-            #                 {
-            #                     "username": "SYSTEM",
-            #                     "message": f"You have blocked {target_username}",
-            #                 }
-            #             )
-            #         )
-            #         logger.info(f"[🛡️ BLOCK] {username} blocked {target_username}")
-            #     except User.DoesNotExist:
-            #         await self.send(
-            #             text_data=json.dumps(
-            #                 {
-            #                     "username": "SYSTEM",
-            #                     "message": f"User '{target_username}' not found",
-            #                 }
-            #             )
-            #         )
-            #         logger.warning(f"[❓ USER NOT FOUND] {target_username}")
-            #     return
-
-            # if user.is_anonymous:
-            #     # On utilise un user "Anonymous" générique pour stocker les messages anonymes
-            #     # User = get_user_model()
-            #     anon_user, _ = await database_sync_to_async(User.objects.get_or_create)(
-            #         username="Anonymous"
-            #     )
-            #     await database_sync_to_async(ChatMessage.objects.create)(
-            #         user=anon_user, room=self.room_name, content=message
-            #     )
-            #     logger.info(f"[💾 SAVED AS ANON] Anonymous: {message}")
-            # else:
-            await database_sync_to_async(ChatMessage.objects.create)(
-                user=user, room=self.room_name, content=message
-            )
-            logger.info(f"[💾 SAVED] {username}: {message}")
-
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -226,17 +149,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         sender = event["username"]
         message = event["message"]
         user = self.scope["user"]
-
-        # if not user.is_anonymous:
-        #     # User = get_user_model()
-        #     is_blocked = await database_sync_to_async(
-        #         UserBlock.objects.filter(
-        #             user=user, blocked_user__username=sender
-        #         ).exists
-        #     )()
-        #     if is_blocked and sender != "SYSTEM":
-        #         logger.info(f"[🙈 BLOCKED MESSAGE] {sender} -> {user.username}")
-        #         return
 
         if sender != "SYSTEM":
             if await is_blocked(user, sender):
