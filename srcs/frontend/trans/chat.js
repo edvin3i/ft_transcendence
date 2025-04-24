@@ -1,5 +1,4 @@
 let socket = null;
-let receivedHistory = false;
 let openRooms = new Set();
 let currentRoom = "general"; // par défaut
 
@@ -70,6 +69,7 @@ function openChat(room = "general") {
 
 //	console.log(openRooms);
 // different on first and second log in, may be the reason of the bug, also check global variables
+	let receivedHistory = false;
 
 	const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 	const token = localStorage.getItem("accessToken");
@@ -180,9 +180,10 @@ function addChatEventListeners()
 function createChatTab(room) {
 	if (openRooms.has(room)) return;
 
-	const tab = document.createElement("div");
+	const tab = document.createElement("button");
 	tab.className = "nav-link d-flex align-items-center";
 	tab.dataset.room = room;
+	tab.setAttribute("type", "button");
 
 	const roomBtn = document.createElement("span");
 	roomBtn.textContent = `#${room}`;

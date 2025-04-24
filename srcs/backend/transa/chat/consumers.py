@@ -16,6 +16,10 @@ redis_client = redis.Redis(host="redis", port=6379, db=0, decode_responses=True)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
+    async def setup(self):
+        self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
+        self.room_group_name = f"chat_{self.room_name}"
+
     async def connect(self):
         query_string = self.scope["query_string"].decode()
         token = parse_qs(query_string).get("token", [None])[0]
@@ -36,8 +40,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 return
 
         try:
-            self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-            self.room_group_name = f"chat_{self.room_name}"
+            await self.setup()
 
             logger.info(f"[🔌 CONNECT] User connecting to room: {self.room_name}")
 
@@ -65,14 +68,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close()
 
     async def disconnect(self, close_code):
+        await self.setup()
         user = self.scope["user"]
         await redis_client.delete(f"user_online:{user.id}")
+
+        if hasattr(self, "roo_group_name"):
+            await self.channel_layer.group_discard(
+                self.room_group_name, self.channel_name
+            )
         logger.info(f"[👋 DISCONNECT] Leaving room: {self.room_group_name}")
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
-        logger.debug(f"[📩 RECEIVE] Raw data: {text_data}")
 
+        logger.debug(f"[📩 RECEIVE] Raw data: {text_data}")
         try:
             data = json.loads(text_data)
             message = data.get("message", "")
