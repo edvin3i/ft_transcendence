@@ -4,7 +4,6 @@ import redis.asyncio as redis
 from chat.utils import is_blocked, friendship_action
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import ChatMessage
 from urllib.parse import parse_qs
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.exceptions import ValidationError
@@ -13,7 +12,7 @@ from datetime import datetime
 
 
 logger = logging.getLogger(__name__)
-redis_client = redis.Redis(host="redis", port=6379, db=0,  decode_responses=True)
+redis_client = redis.Redis(host="redis", port=6379, db=0, decode_responses=True)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -47,19 +46,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             logger.info(f"[✅ CONNECTED] Joined group: {self.room_group_name}")
 
-            history_raw = await redis_client.lrange(f"chat_room:{self.room_name}", 0, -1)
-            # history = [json.loads(m) for m in history_raw]
+            history_raw = await redis_client.lrange(
+                f"chat_room:{self.room_name}", 0, -1
+            )
+            history = [json.loads(m) for m in history_raw]
 
-            for i, raw in enumerate(history_raw):
-                msg = json.load(raw)
-                if i == len(history_raw) - 1:
+            for i, msg in enumerate(history):
+                if i == len(history) - 1:
                     msg["history_end"] = True
                 await self.send(text_data=json.dumps(msg))
 
             logger.info(
                 f"[📜 HISTORY] Found {len(history)} messages in {self.room_name}"
             )
-
 
         except Exception:
             logger.exception("[❌ ERROR] connect() failed")
