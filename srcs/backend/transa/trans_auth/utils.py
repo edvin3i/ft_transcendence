@@ -1,5 +1,6 @@
 from uprofiles.models import User
 
+
 def get_unique_name(base_name):
     username = base_name
     count = 1

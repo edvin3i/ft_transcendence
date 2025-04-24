@@ -8,7 +8,9 @@ from django.db import IntegrityError
 class FriendsRequestCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Friendship
-        fields = [ "to_user",]
+        fields = [
+            "to_user",
+        ]
 
     def validate_to_user(self, to_user):
         request = self.context["request"]
@@ -22,10 +24,11 @@ class FriendsRequestCreateSerializer(serializers.ModelSerializer):
                 | Q(from_user=to_user, to_user=request.user)
             )
             & ~Q(status="rejected")
-        ).exist()
+        ).exists()
         if friendship_exists:
             raise ValidationError("You are friends already!")
         return to_user
+
     def create(self, validated_data):
         request = self.context["request"]
         try:
@@ -49,7 +52,8 @@ class FriendshipSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "from_user",
-            "from_user_username" "to_user",
+            "from_user_username",
+            "to_user",
             "to_user_username",
             "status",
             "created_at",
