@@ -119,7 +119,10 @@ class FriendsBlockAPIView(generics.UpdateAPIView):
 
 class FriendsUnblockAPIView(generics.UpdateAPIView):
     queryset = Friendship.objects.all()
-    permission_classes = [IsAuthenticated, IsParticipant,]
+    permission_classes = [
+        IsAuthenticated,
+        IsParticipant,
+    ]
     serializer_class = FriendshipSerializer
 
     def update(self, request, *args, **kwargs):

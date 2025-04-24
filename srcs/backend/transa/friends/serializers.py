@@ -8,7 +8,7 @@ from django.db import IntegrityError
 class FriendsRequestCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Friendship
-        fields = ("to_user",)
+        fields = ["from_user", "to_user", "status", "created_at", "updated_at"]
 
         def validate_to_user(self, to_user):
             request = self.context["request"]
