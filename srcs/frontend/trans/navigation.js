@@ -3,9 +3,11 @@ import {openLogInPage} from './logIn.js'
 import {openProfilePage} from './profile.js'
 import {openFriendsPage} from './friends.js'
 import {openGamePage} from './game.js'
+import { playPong } from './pong.js';
+
 
 const homePage = 'profilePage';
-
+window.playPong = playPong;
 window.onload = openApp();
 window.addEventListener('popstate', handleNavigation);
 
