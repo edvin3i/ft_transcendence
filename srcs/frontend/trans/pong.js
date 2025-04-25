@@ -35,7 +35,8 @@ export function playPong({ remote = false, room = "myroom" } = {}) {
 
       if (data.type === "init") {
         playerId = data.playerId;
-        if (label) label.innerText = `You are Player ${playerId + 1}`;
+        if (label && playerId === 0) label.innerText = `${playerId + 1} (left)`;
+        if (label && playerId === 1) label.innerText = `${playerId + 1} (right)`;
         if (status) status.innerText = "";
       }
 
