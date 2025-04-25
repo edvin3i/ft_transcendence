@@ -5,49 +5,32 @@ let currentRoom = "general"; // par défaut
 function chatPage()
 {
 	return `
-		<div class="text-center">
-			<div class="d-flex justify-content-between align-items-center px-4" style="min-height: 100px;">
-				<!-- Chat Button à gauche -->
-				<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#chatBox" aria-expanded="false" aria-controls="chatBox">Chat 💬</button>
-			</div>
-			<div class="collapse" id="chatBox">
-				<div class="card bg-dark text-light shadow">
-					<div class="card-header">
-						Chat Room
+		<div class="d-flex justify-content-between align-items-center px-4" style="min-height: 100px;">
+			<!-- Chat Button à gauche -->
+			<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#chatBox" aria-expanded="false" aria-controls="chatBox">Chat 💬</button>
+		</div>
+		<div class="collapse" id="chatBox">
+			<div class="card bg-dark text-light shadow" id="chat-section" style="display: block;">
+				<section id="chat">
+					<h2>Live Chat</h2>
+					<div class="mb-2">
+						<input id="room-name" type="text" placeholder="Enter room name" class="form-control d-inline w-auto" />
+						<button id="join-room" class="btn btn-primary btn-sm">Join Room</button>
 					</div>
-					<div class="card-body" style="max-height: 300px; overflow-y: auto;" id="chatMessages">
-						<!-- Messages appear here -->
+					<p id="current-room" class="fw-bold text-info">
+						🟢 Room: <span id="current-room-name">general</span>
+					</p>
+					<div id="chat-tabs" class="nav nav-tabs mb-3">
+						<!-- Onglets ajoutés dynamiquement ici -->
+					</div>			  
+					<div id="chat-log" style="height: 200px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px;">
 					</div>
-					<div class="card-footer p-2">
-						<div class="input-group">
-							<input type="text" class="form-control" placeholder="Type a message..." id="chatInput">
-							<button class="btn btn-success" id="sendMessageButton">Send</button>
-						</div>
-					</div>
-				</div>
+					<input id="chat-message-input" type="text" placeholder="Type a message...">
+					<button id="send">Send</button>
+				</section>
 			</div>
 		</div>
-
-		<div id="chat-section" style="display: block;">
-			<section id="chat">
-				<h2>Live Chat</h2>
-
-				<div class="mb-2">
-					<input id="room-name" type="text" placeholder="Enter room name" class="form-control d-inline w-auto" />
-					<button id="join-room" class="btn btn-primary btn-sm">Join Room</button>
-				</div>
-	
-				<p id="current-room" class="fw-bold text-info">
-					🟢 Room: <span id="current-room-name">general</span>
-				</p>
-				<div id="chat-tabs" class="nav nav-tabs mb-3">
-					<!-- Onglets ajoutés dynamiquement ici -->
-				</div>			  
-				<div id="chat-log" style="height: 200px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px;"></div>
-				<input id="chat-message-input" type="text" placeholder="Type a message...">
-				<button id="send">Send</button>
-			</section>
-		</div>`;
+	`;
 }
 
 export function showChat()
