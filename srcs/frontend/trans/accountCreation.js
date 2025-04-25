@@ -1,4 +1,4 @@
-import {startOAuth42, openLogInPage} from './logIn.js'
+import {startOAuth42, openLogInPage, logIn} from './logIn.js'
 
 function accountCreationPage()
 {
@@ -55,13 +55,14 @@ export function openAccountCreationPage(page, push)
 	oauth42Button.addEventListener('click', startOAuth42);
 
 	const accountCreationForm = document.getElementById('accountCreationForm');
-	accountCreationForm.addEventListener('submit', handleAccountCreation);
+	accountCreationForm.addEventListener('submit', 
+			() => handleAccountCreation(page, push));
 
 	const logInButton = document.getElementById('logInButton');
 	logInButton.addEventListener('click', () => openLogInPage(page, push));
 }
 
-async function handleAccountCreation()
+async function handleAccountCreation(page, push)
 {
 	event.preventDefault();
 
@@ -85,10 +86,16 @@ async function handleAccountCreation()
 
 	if (response.ok)
 	{
-		document.getElementById('accountCreationHeader').hidden = true;
-		document.getElementById('accountCreationForm').hidden = true;
-		document.getElementById('accountCreationResult').innerHTML = 
-			"Your account has been successfully created";
+		const response = await fetch('https://localhost/api/auth/token/',
+		{
+			method: 'POST',
+			headers: {'Content-Type': 'application/json'},
+			body: JSON.stringify({username: username, password: password})
+		});
+
+		const data = await response.json();
+
+		logIn(data, page, push);
 	}
 	else if (data.user.username && data.user.email)
 	{

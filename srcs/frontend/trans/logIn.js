@@ -88,28 +88,11 @@ async function endOAuth42()
 	if (!localStorage.getItem('data'))
 		return;
 
-	const token = localStorage.getItem('accessToken');
+	const data = JSON.parse(localStorage.getItem('data'));
 
-	if (token)
-		alert("You are already logged in!");
-	else
-	{
-		const data = JSON.parse(localStorage.getItem('data'));
+	logIn(data, history.state.page, 0); // think about it later
 
-		localStorage.setItem('accessToken', data.access);
-		localStorage.setItem('refreshToken', data.refresh);
-
-		await setUserInformation();
-	}
-	
 	localStorage.removeItem('data');
-
-	showNavigationHeader();
-
-	closeChat();
-	showChat();
-
-	openPage(history.state.page, 0);
 }
 
 async function handleLogIn(page, push)
@@ -129,23 +112,7 @@ async function handleLogIn(page, push)
 	const data = await response.json();
 
 	if (response.ok)
-	{
-		const token = localStorage.getItem('accessToken');
-
-		if (token)
-			alert("You are already logged in!");
-		else
-		{
-			localStorage.setItem('accessToken', data.access);
-			localStorage.setItem('refreshToken', data.refresh);
-	
-			await setUserInformation();
-		}
-
-		showNavigationHeader();
-		showChat();
-		openPage(page, push);
-	}
+		logIn(data, page, push)
 	else
 	{
 		document.getElementById('username').value = '';
@@ -155,4 +122,23 @@ async function handleLogIn(page, push)
 		document.getElementById('logInResult').innerHTML = 
 			"Wrong username or password";
 	}
+}
+
+export async function logIn(data, page, push)
+{
+	const token = localStorage.getItem('accessToken');
+
+	if (token)
+		alert("You are already logged in!");
+	else
+	{
+		localStorage.setItem('accessToken', data.access);
+		localStorage.setItem('refreshToken', data.refresh);
+
+		await setUserInformation();
+	}
+
+	showNavigationHeader();
+	showChat();
+	openPage(page, push);
 }
