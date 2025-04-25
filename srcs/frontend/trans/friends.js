@@ -55,7 +55,8 @@ async function addFriend()
 		{
 			'Authorization': `Bearer ${token}`,
 			'Content-Type': 'application/json'
-		}
+		}, 
+		body: {}
 	});
 
 	if (response.ok)
