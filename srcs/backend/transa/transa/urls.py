@@ -29,8 +29,5 @@ urlpatterns = [
     path("api/tournaments/", include("tournaments.urls")),
     path("api/games/", include("game.urls")),
     path("api/auth/", include("trans_auth.urls")),
-
-    # ✅ JWT endpoints
-    path("api/auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/friends/", include("friends.urls")),
 ]

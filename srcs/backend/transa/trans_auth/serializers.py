@@ -1,5 +1,6 @@
 import requests
 import io, pyotp, qrcode, base64
+from trans_auth.utils import get_unique_name
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from uprofiles.models import User, UserProfile
@@ -7,7 +8,6 @@ from transa.settings import (
     OA_CLIENT_ID,
     OA_SECRET,
     OA_REDIR_URL,
-    OA_POST_LOUT_REDIR_URL,
     OA_TOKEN_URL,
 )
 
@@ -54,22 +54,48 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         user_data = self.context["42_user_data"]
+        ft_id = str(user_data.get("id"))
         ft_login = user_data.get("login")
         ft_email = user_data.get("email")
         ft_fname = user_data.get("first_name")
         ft_lname = user_data.get("last_name")
         ft_avatar_url = user_data.get("image").get("link")
-
-        user, _created = User.objects.get_or_create(
-            username=ft_login,
-            email=ft_email,
-            first_name=ft_fname,
-            last_name=ft_lname,
-        )
+        #
+        # user, _created = User.objects.get_or_create(
+        #     username=ft_login,
+        #     email=ft_email,
+        #     first_name=ft_fname,
+        #     last_name=ft_lname,
+        # )
 
         # If user profile exist - just get it
-        user_profile, _created = UserProfile.objects.get_or_create(user=user)
-        user_profile.bio = ""
+        # user_profile, _created = UserProfile.objects.get_or_create(user=user)
+        # user_profile.bio = ""
+        # user_profile.avatar_url = ft_avatar_url
+        # user_profile.save()
+
+        try:
+            user_profile = UserProfile.objects.select_related("user").get(ft_id=ft_id)
+            user = user_profile.user
+        except UserProfile.DoesNotExist:
+            user = User.objects.create_user(
+                username=get_unique_name(ft_login),
+                email=ft_email,
+                first_name=ft_fname,
+                last_name=ft_lname,
+            )
+            user_profile = UserProfile.objects.create(
+                user=user,
+                ft_id=ft_id,
+                avatar_url=ft_avatar_url,
+                bio="",
+            )
+
+        user.email = ft_email
+        user.first_name = ft_fname
+        user.last_name = ft_lname
+        user.save()
+
         user_profile.avatar_url = ft_avatar_url
         user_profile.save()
 
@@ -78,12 +104,12 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
         refresh_jwt = str(refresh)
 
         return {
-            "access_token": access_jwt,
-            "refresh_token": refresh_jwt,
+            "access": access_jwt,
+            "refresh": refresh_jwt,
             "uprofile_id": user_profile.id,
             "username": user_profile.user.username,
             "user_avatar_url": user_profile.avatar_url,
-            "user_avatar": user_profile.avatar.path,
+            "user_avatar": user_profile.avatar.path if user_profile.avatar else None,
         }
 
 

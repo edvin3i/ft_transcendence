@@ -37,6 +37,11 @@
   </style>
 </head>
 <body>
+  
+  <div style="position: absolute; top: 10px; left: 10px;">
+    <button id="backToNavBtn">← Back to main menu.</button>
+  </div>
+
   <div id="controls">
     <button id="startBtn">Start / Restart</button>
     <span id="timer">00:00</span>
@@ -61,6 +66,16 @@
     let player1Speed, player2Speed;
     let player1Score, player2Score;
 
+/////////////////////// PAUSE VARIABLES /////////////////////
+    let pauseOverlay = null;
+    let isPaused = false;
+    let pauseTimestamp = null;
+    let timerStartTimestamp = null;
+    let resumeBtn = null;
+    let isResuming = false;
+    let isResizing = false;
+/////////////////////////////////////////////////////////////
+
     const paddle1 = { x: 0, y: 0, width: paddleWidth, height: paddleHeight };
     const paddle2 = { x: 0, y: 0, width: paddleWidth, height: paddleHeight };
 
@@ -70,14 +85,27 @@
       return `${mins}:${secs}`;
     }
 
-    function startTimer() {
-      secondsElapsed = 0;
-      document.getElementById("timer").textContent = formatTime(secondsElapsed);
-      timerInterval = setInterval(() => {
-        secondsElapsed++;
-        document.getElementById("timer").textContent = formatTime(secondsElapsed);
-      }, 1000);
-    }
+    function startTimer(reset = true) {
+  if (reset) {
+    secondsElapsed = 0;
+    timerStartTimestamp = Date.now();
+  } else {
+    const pauseDuration = Date.now() - pauseTimestamp;
+    timerStartTimestamp += pauseDuration;
+  }
+
+  document.getElementById("timer").textContent = formatTime(secondsElapsed);
+
+  clearInterval(timerInterval);
+  const tick = () => {
+    const now = Date.now();
+    secondsElapsed = Math.floor((now - timerStartTimestamp) / 1000);
+    document.getElementById("timer").textContent = formatTime(secondsElapsed);
+  };
+  timerInterval = setInterval(tick, 200); // Tick every 200ms for better responsiveness
+}
+
+
 
     function stopTimer() {
       clearInterval(timerInterval);
@@ -91,17 +119,181 @@
       paddle2.height = paddleHeight;
     }
 
+////////////////////////////// PAUSE FUNCTIONS //////////////////////////////////////
+    
+    function pauseGame(reason = '') {
+      if (!isPaused && !isResuming) {
+        cancelAnimationFrame(gameInterval);
+        stopTimer();
+        pauseTimestamp = Date.now();
+        isPaused = true;
+        showPauseOverlay(reason);
+      }
+    }
+    
+    function resumeGame() {
+      if (isResuming) return; //Prevent overlapping resumes
+      isResuming = true;
+    
+      let countdown = 3;
+      showPauseOverlay(`Resuming in ${countdown}...`);
+    
+      const countdownInterval = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+          showPauseOverlay(`Resuming in ${countdown}...`);
+        } else {
+          clearInterval(countdownInterval);
+          hidePauseOverlay();
+          isPaused = false;
+          isResuming = false; // Reset flag
+          startTimer(false); // Resume timer without resetting
+          gameLoop();
+        }
+      }, 1000);
+    }
+    
+    
+    
+    function showPauseOverlay(message) {
+      if (!pauseOverlay) {
+        pauseOverlay = document.createElement("div");
+        pauseOverlay.style.position = "absolute";
+        pauseOverlay.style.top = "50%";
+        pauseOverlay.style.left = "50%";
+        pauseOverlay.style.transform = "translate(-50%, -50%)";
+        pauseOverlay.style.fontSize = "32px";
+        pauseOverlay.style.fontWeight = "bold";
+        pauseOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+        pauseOverlay.style.color = "white";
+        pauseOverlay.style.padding = "30px 50px";
+        pauseOverlay.style.borderRadius = "12px";
+        pauseOverlay.style.zIndex = "10";
+        pauseOverlay.style.textAlign = "center";
+    
+        const text = document.createElement("div");
+        text.id = "pauseText";
+    
+        resumeBtn = document.createElement("button");
+        resumeBtn.textContent = "Resume";
+        resumeBtn.style.marginTop = "20px";
+        resumeBtn.style.padding = "10px 20px";
+        resumeBtn.style.fontSize = "20px";
+        resumeBtn.style.cursor = "pointer";
+        resumeBtn.addEventListener("click", () => {
+          if (isResuming) return;
+          hidePauseOverlay();
+          resumeGame();
+        });
+    
+        pauseOverlay.appendChild(text);
+        pauseOverlay.appendChild(resumeBtn);
+        document.body.appendChild(pauseOverlay);
+      }
+    
+      document.getElementById("pauseText").textContent = message;
+    
+      // Only show resume button if not in countdown
+      if (isResuming) {
+        resumeBtn.style.display = "none";
+      } else {
+        resumeBtn.style.display = "block";
+      }
+    
+      pauseOverlay.style.display = "block";
+    }
+    
+    
+    
+    function hidePauseOverlay() {
+      if (pauseOverlay) {
+        pauseOverlay.style.display = "none";
+      }
+    }
+    
+///////////////////////////////////////////////////
+    
     window.addEventListener("resize", () => {
       resizeCanvas();
-      resetBall();
     });
 
-    function resetBall() {
-      ballX = canvas.width / 2 - ballSize / 2;
-      ballY = canvas.height / 2 - ballSize / 2;
-      ballSpeedX = -ballSpeedX || 4;
-      ballSpeedY = 4;
-    }
+function resetBall() {
+  ballX = canvas.width / 2 - ballSize / 2;
+  ballY = canvas.height / 2 - ballSize / 2;
+  ballSpeedX = ballSpeedX > 0 ? 4 : -4; // preserve direction if already set
+  ballSpeedY = 4;
+}
+
+function movePaddles() {
+  player1Y += player1Speed;
+  player2Y += player2Speed;
+
+  if (player1Y < 0) player1Y = 0;
+  if (player1Y + paddleHeight > canvas.height) player1Y = canvas.height - paddleHeight;
+  if (player2Y < 0) player2Y = 0;
+  if (player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
+
+  paddle1.y = player1Y;
+  paddle2.y = player2Y;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  paddle2.x = canvas.width - paddleWidth;
+
+  ctx.fillStyle = "#000";
+  ctx.fillRect(paddle1.x, paddle1.y, paddle1.width, paddle1.height);
+  ctx.fillRect(paddle2.x, paddle2.y, paddle2.width, paddle2.height);
+
+  ctx.fillRect(ballX, ballY, ballSize, ballSize);
+
+  ctx.font = "30px Arial";
+  ctx.fillText(player1Score, canvas.width / 4, 30);
+  ctx.fillText(player2Score, 3 * canvas.width / 4, 30);
+}
+
+function moveBall() {
+  ballX += ballSpeedX;
+  ballY += ballSpeedY;
+
+  if (ballY <= 0 || ballY + ballSize >= canvas.height) {
+    ballSpeedY = -ballSpeedY;
+  }
+
+  if (
+    ballX <= paddle1.x + paddleWidth &&
+    ballY + ballSize >= paddle1.y &&
+    ballY <= paddle1.y + paddleHeight
+  ) {
+    ballSpeedX = -ballSpeedX;
+  }
+
+  if (
+    ballX + ballSize >= paddle2.x &&
+    ballY + ballSize >= paddle2.y &&
+    ballY <= paddle2.y + paddleHeight
+  ) {
+    ballSpeedX = -ballSpeedX;
+  }
+
+  if (ballX <= 0) {
+    player2Score++;
+    resetBall();
+  }
+
+  if (ballX + ballSize >= canvas.width) {
+    player1Score++;
+    resetBall();
+  }
+}
+
+function gameLoop() {
+  if (isPaused) return;
+  movePaddles();
+  moveBall();
+  draw();
+  gameInterval = requestAnimationFrame(gameLoop);
+}
 
     function startGame() {
       resizeCanvas();
@@ -116,91 +308,48 @@
       player2Speed = 0;
       player1Score = 0;
       player2Score = 0;
-
-      function movePaddles() {
-        player1Y += player1Speed;
-        player2Y += player2Speed;
-
-        if (player1Y < 0) player1Y = 0;
-        if (player1Y + paddleHeight > canvas.height) player1Y = canvas.height - paddleHeight;
-        if (player2Y < 0) player2Y = 0;
-        if (player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
-
-        paddle1.y = player1Y;
-        paddle2.y = player2Y;
-      }
-
-      function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        paddle2.x = canvas.width - paddleWidth;
-
-        ctx.fillStyle = "#000";
-        ctx.fillRect(paddle1.x, paddle1.y, paddle1.width, paddle1.height);
-        ctx.fillRect(paddle2.x, paddle2.y, paddle2.width, paddle2.height);
-
-        ctx.fillRect(ballX, ballY, ballSize, ballSize);
-
-        ctx.font = "30px Arial";
-        ctx.fillText(player1Score, canvas.width / 4, 30);
-        ctx.fillText(player2Score, 3 * canvas.width / 4, 30);
-      }
-
-      function moveBall() {
-        ballX += ballSpeedX;
-        ballY += ballSpeedY;
-
-        if (ballY <= 0 || ballY + ballSize >= canvas.height) {
-          ballSpeedY = -ballSpeedY;
-        }
-
-        if (
-          ballX <= paddle1.x + paddleWidth &&
-          ballY + ballSize >= paddle1.y &&
-          ballY <= paddle1.y + paddleHeight
-        ) {
-          ballSpeedX = -ballSpeedX;
-        }
-
-        if (
-          ballX + ballSize >= paddle2.x &&
-          ballY + ballSize >= paddle2.y &&
-          ballY <= paddle2.y + paddleHeight
-        ) {
-          ballSpeedX = -ballSpeedX;
-        }
-
-        if (ballX <= 0) {
-          player2Score++;
-          resetBall();
-        }
-
-        if (ballX + ballSize >= canvas.width) {
-          player1Score++;
-          resetBall();
-        }
-      }
-
-      function gameLoop() {
-        movePaddles();
-        moveBall();
-        draw();
-        gameInterval = requestAnimationFrame(gameLoop);
-      }
-
+      
+      gameLoop();
+    }
+      
       document.addEventListener("keydown", function (event) {
         if (event.key === "w") player1Speed = -5;
         if (event.key === "s") player1Speed = 5;
         if (event.key === "ArrowUp") player2Speed = -5;
         if (event.key === "ArrowDown") player2Speed = 5;
       });
-
+      
       document.addEventListener("keyup", function (event) {
         if (event.key === "w" || event.key === "s") player1Speed = 0;
         if (event.key === "ArrowUp" || event.key === "ArrowDown") player2Speed = 0;
       });
-
-      gameLoop();
-    }
+      
+    /////////////////////////PAUSE KEY AND RESIZE ////////////////////////////////////////
+    
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        if (isResuming) return; // Don't interrupt countdown
+        if (isPaused) {
+          hidePauseOverlay();
+          resumeGame();
+        } else {
+          pauseGame("Paused");
+        }
+      }
+    });
+    
+    let resizeTimeout;
+    window.addEventListener("resize", () => {
+      pauseGame("Paused due to resize");
+    
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        resizeCanvas();
+        resetBall();
+        draw(); // ✅ Re-render paddles + ball immediately
+      }, 300);
+    });
+    ///////////////////////////////////////////////////////////////////////////////
 
     document.getElementById("startBtn").addEventListener("click", () => {
       stopTimer();
@@ -208,6 +357,20 @@
       startGame();
       startTimer();
     });
+
+///////////////////////// BACK TO MAIN MENU EVENT LISTENNER /////////////////////////////////////////    
+
+    document.getElementById("backToNavBtn").addEventListener("click", () => {
+      if (history.pushState) {
+        history.pushState({page: 'gamePage'}, '', '');
+        window.dispatchEvent(new PopStateEvent('popstate', { state: { page: 'gamePage' } }));
+      } else {
+        window.location.href = '/'; // fallback
+      }
+    });
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
   </script>
 </body>
 </html>

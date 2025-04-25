@@ -40,10 +40,11 @@ INSTALLED_APPS = [
     "uprofiles",
     "trans_auth",
     "game",
+    "friends",
     "tournaments",
     # WebSockets applications
     "channels",
-    "chat",
+    "chat.apps.ChatConfig",
     # "remote",
 ]
 
