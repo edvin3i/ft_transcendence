@@ -17,7 +17,9 @@ export function playPong({ remote = false, room = "myroom" } = {}) {
   const ctx = canvas.getContext("2d");
 
   if (remote) {
-    const socket = new WebSocket(`wss://${window.location.host}/ws/game/${room}/`);
+    // const socket = new WebSocket(`wss://${window.location.host}/ws/game/${room}/`);
+    const token = localStorage.getItem("accessToken");
+    const socket = new WebSocket(`wss://${window.location.host}/ws/game/${room}/?token=${token}`);
     let playerId = null;
     let paddle1Y = 0, paddle2Y = 0;
     let ballX = 0, ballY = 0;
@@ -35,8 +37,7 @@ export function playPong({ remote = false, room = "myroom" } = {}) {
 
       if (data.type === "init") {
         playerId = data.playerId;
-        if (label && playerId === 0) label.innerText = `${playerId + 1} (left)`;
-        if (label && playerId === 1) label.innerText = `${playerId + 1} (right)`;
+        if (label) label.innerText = `You are Player ${playerId + 1}`;
         if (status) status.innerText = "";
       }
 

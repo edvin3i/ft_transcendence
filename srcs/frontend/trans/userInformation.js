@@ -79,7 +79,7 @@ async function changeUserInformation()
 			},
 			body: JSON.stringify({user: 
 			{
-				email: email
+				email: email,
 			}})
 		});
 	
@@ -121,7 +121,7 @@ async function changeUserInformation()
 			},
 			body: JSON.stringify({user: 
 			{
-				username: username
+				username: username,
 			}})
 		});
 
@@ -163,7 +163,7 @@ async function changeUserInformation()
 		body: JSON.stringify({user: 
 		{
 			username: username,
-			email: email
+			email: email,
 		}})
 	});
 	

@@ -1,17 +1,44 @@
-import asyncio
-import json
+import asyncio, json
+from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from game.utils import get_user_profile, create_match, finish_match
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class GameConsumer(AsyncWebsocketConsumer):
     rooms = {}
+    profiles = {}
 
-    async def connect(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(args, kwargs)
+        self.user_profile = None
+
+    async def setup(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = f"pong_{self.room_name}"
 
+    async def connect(self):
+        await self.setup()
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
+
+        user = self.scope["user"]
+        if not user or not user.is_authenticated:
+            logger.warning(
+                "[❌ CONNECT BLOCKED] Unauthenticated user tried to connect."
+            )
+            await self.close()
+            return
+        logger.info(
+            f"[🔌 CONNECT] USER IN WEBSOCKET CONNECT: {user} {user.id} {user.is_authenticated}"
+        )
+
+        self.user_profile = await get_user_profile(user.id)
+        username = await sync_to_async(lambda: self.user_profile.user.username)()
+        GameConsumer.profiles[self.channel_name] = self.user_profile
 
         room = GameConsumer.rooms.setdefault(
             self.room_name,
@@ -29,6 +56,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "loop_task": None,
             },
         )
+        room["names"][self.channel_name] = username
 
         if self.channel_name not in room["players"]:
             if len(room["players"]) >= 2:
@@ -45,7 +73,20 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         if len(room["players"]) == 2 and not room["started"]:
             room["started"] = True
-            self.start_game_loop(room)
+
+            p1 = self.user_profile
+            p2 = None
+            for ch, pid in room["players"].items():
+                if pid != self.player_id:
+                    p2 = GameConsumer.profiles.get(ch)
+            if self.player_id == 1:
+                p1, p2 = p2, p1
+
+            if p1 and p2:
+                match = await create_match(p1, p2)
+                room["match"] = match
+                await self.start_game_loop(room)
+
         else:
             await self.send(text_data=json.dumps({"type": "waiting"}))
 
@@ -58,7 +99,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                 task = room.get("loop_task")
                 if task and not task.done():
                     task.cancel()
-                GameConsumer.rooms.pop(self.room_name)
+                GameConsumer.profiles.pop(self.channel_name, None)
+                GameConsumer.rooms.pop(self.room_name, None)
 
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
@@ -79,8 +121,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             )
 
         elif data["type"] == "reset":
-            self.reset_game(room)
-            self.start_game_loop(room)
+            await self.reset_game(room)
+            await self.start_game_loop(room)
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -93,7 +135,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             )
 
         elif data["type"] == "set_name":
-            room["names"][self.channel_name] = data["name"]
+            name = data.get("name") or self.user_profile.user.username
+            room["names"][self.channel_name] = name
             ordered = [None, None]
             for ch, pid in room["players"].items():
                 ordered[pid] = room["names"].get(ch, f"Player {pid + 1}")
@@ -101,7 +144,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.room_group_name, {"type": "player_names", "names": ordered}
             )
 
-    def start_game_loop(self, room):
+    async def start_game_loop(self, room):
         # Cancel previous loop if still running
         task = room.get("loop_task")
         if task and not task.done():
@@ -137,6 +180,19 @@ class GameConsumer(AsyncWebsocketConsumer):
         room = GameConsumer.rooms.get(self.room_name)
         if room:
             room["started"] = False
+            score = room["score"]
+
+            if "match" not in room or room["match"] is None:
+                await self.send(text_data=json.dumps({"type": "end"}))
+                return
+            if score[0] > score[1]:
+                winner = room["match"].player1_id
+            elif score[1] > score[0]:
+                winner = room["match"].player2_id
+            else:
+                winner = None
+            await finish_match(room["match"], score[0], score[1], winner)
+
         await self.send(text_data=json.dumps({"type": "end"}))
 
     async def game_loop(self, room):
@@ -166,10 +222,10 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             if ball["x"] <= 0:
                 room["score"][1] += 1
-                self.reset_ball(room)
+                await self.reset_ball(room)
             elif ball["x"] >= 500:
                 room["score"][0] += 1
-                self.reset_ball(room)
+                await self.reset_ball(room)
 
             room["timer"] -= 1 / 60
             if int(room["timer"]) != int(room["_last_timer"]):
@@ -199,7 +255,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             await asyncio.sleep(1 / 60)
 
-    def reset_game(self, room):
+    async def reset_game(self, room):
         room["ball"] = {"x": 250, "y": 150, "vx": 3, "vy": 3}
         room["paddle1_y"] = 100
         room["paddle2_y"] = 100
@@ -209,5 +265,5 @@ class GameConsumer(AsyncWebsocketConsumer):
         room["_last_timer"] = 60
         room["started"] = True
 
-    def reset_ball(self, room):
+    async def reset_ball(self, room):
         room["ball"] = {"x": 250, "y": 150, "vx": -room["ball"]["vx"], "vy": 3}
