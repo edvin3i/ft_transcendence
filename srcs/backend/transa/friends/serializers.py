@@ -2,42 +2,40 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from friends.models import Friendship
 from django.db.models import Q
-from django.db import IntegrityError
 
 
 class FriendsRequestCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Friendship
-        fields = ["from_user", "to_user", "status", "created_at", "updated_at"]
+        fields = [
+            "to_user",
+        ]
 
-        def validate_to_user(self, to_user):
-            request = self.context["request"]
-            if to_user == request.user:
-                raise ValidationError(
-                    "You are can't add yourself to friends"
-                )  # ty sam sebe pizdaty drug already
+    def validate_to_user(self, to_user):
+        request = self.context["request"]
+        if to_user == request.user:
+            raise ValidationError(
+                "You are can't add yourself to friends"
+            )  # ty sam sebe pizdaty drug already
+        friendship_exists = (
+            Friendship.objects.filter(
+                Q(from_user=request.user, to_user=to_user)
+                | Q(from_user=to_user, to_user=request.user)
+            )
+            .exclude(status="rejected")
+            .exists()
+        )
+        if friendship_exists:
+            raise ValidationError("You are friends already!")
+        return to_user
 
-            friendship_exists = Friendship.objects.filter(
-                (
-                    Q(from_user=request.user, to_user=to_user)
-                    | Q(from_user=to_user, to_user=request.user)
-                )
-                & ~Q(status="rejected")
-            ).exist()
-            if friendship_exists:
-                raise ValidationError("You are friends already!")
-            return to_user
-
-        def create(self, validated_data):
-            request = self.context["request"]
-            try:
-                return Friendship.objects.create(
-                    from_user=request.user,
-                    to_user=validated_data["to_user"],
-                    status="pending",
-                )
-            except IntegrityError:
-                raise ValidationError("Request is present already")
+    def create(self, validated_data):
+        request = self.context["request"]
+        return Friendship.objects.create(
+            from_user=request.user,
+            to_user=validated_data["to_user"],
+            status="pending",
+        )
 
 
 class FriendshipSerializer(serializers.ModelSerializer):

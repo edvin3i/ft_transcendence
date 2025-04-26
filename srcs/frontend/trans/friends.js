@@ -1,16 +1,16 @@
-function friendsPage()
-{
+function friendsPage() {
 	return `
 		<div class="text-center">
 			<h2>Your friends:<br></h2>
 			<p id="friendsList"></p>
+			<input type="text" id="friendIdInput" placeholder="Enter friend ID" />
 			<button id="addFriendButton">Add friend</button>
+			<p id="addFriendResponse" style="margin-top: 10px;"></p>
 		</div>
 	`;
 }
 
-export function openFriendsPage()
-{
+export function openFriendsPage() {
 	document.getElementById('app').innerHTML = friendsPage();
 
 	getFriendsList();
@@ -19,15 +19,12 @@ export function openFriendsPage()
 	addFriendButton.addEventListener('click', addFriend);
 }
 
-async function getFriendsList()
-{
+async function getFriendsList() {
 	const token = localStorage.getItem('accessToken');
 
-	const response = await fetch('https://localhost/api/friends/all', 
-	{
-		method: 'GET', 
-		headers: 
-		{
+	const response = await fetch('https://localhost/api/friends/all', {
+		method: 'GET',
+		headers: {
 			'Authorization': `Bearer ${token}`,
 			'Content-Type': 'application/json'
 		}
@@ -35,32 +32,45 @@ async function getFriendsList()
 
 	const data = await response.json();
 
-	if (data.length === 0)
+	if (data.length === 0) {
 		document.getElementById('friendsList').innerHTML = 
 			"You haven't added any friends yet";
-	else
+	} else {
 		console.log(data);
+	}
 }
 
-async function addFriend()
-{
-	const id = localStorage.getItem('id');
-
+async function addFriend() {
 	const token = localStorage.getItem('accessToken');
+	const friendId = document.getElementById('friendIdInput').value.trim();
+	const responseElement = document.getElementById('addFriendResponse');
 
-	const response = await fetch('https://localhost/api/friends/request/4/', 
-	{
-		method: 'POST', 
-		headers: 
-		{
-			'Authorization': `Bearer ${token}`,
-			'Content-Type': 'application/json'
-		}, 
-		body: {}
-	});
+	if (!friendId) {
+		responseElement.textContent = "Please enter a valid friend ID.";
+		return;
+	}
 
-	if (response.ok)
-		console.log("OK");
-	else
-		console.log("NOT OK");
+	try {
+		const response = await fetch('https://localhost/api/friends/request/', {
+    			method: 'POST',
+   				headers: {
+        			'Authorization': `Bearer ${token}`,
+        			'Content-Type': 'application/json'
+			    },
+    			body: JSON.stringify({
+        		"to_user": friendId
+    			})
+		});
+
+		const result = await response.json();
+
+		if (response.ok) {
+			responseElement.textContent = result.message || "Friend request sent successfully.";
+		} else {
+			responseElement.textContent = result.message || "Failed to send friend request.";
+		}
+	} catch (error) {
+		console.error(error);
+		responseElement.textContent = "An error occurred while sending request.";
+	}
 }

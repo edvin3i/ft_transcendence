@@ -4,7 +4,7 @@ from . import views
 
 urlpatterns = [
     path(
-        "request/<int:pk>/",
+        "request/",
         views.FriendsCreateRequestAPIView.as_view(),
         name="friends_request",
     ),

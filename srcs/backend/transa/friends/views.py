@@ -1,4 +1,3 @@
-from autobahn.wamp import serializer
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -6,6 +5,11 @@ from friends.permissions import IsSender, IsReciever, IsParticipant
 from django.utils import timezone
 from friends.models import Friendship
 from friends.serializers import FriendshipSerializer, FriendsRequestCreateSerializer
+
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class FriendsCreateRequestAPIView(generics.CreateAPIView):
@@ -17,18 +21,23 @@ class FriendsCreateRequestAPIView(generics.CreateAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context["to_user_id"] = self.kwargs["pk"]
+        context["to_user_id"] = self.request.data.get("to_user_id")
+        logger.info(f"VIEW: Context['to_user_id'] = {context["to_user_id"]}")
         return context
 
-    def create(self, request, *args, **kwargs):
-        data = request.data.copy()
-        data["to_user"] = self.kwargs["pk"]
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-        out = FriendshipSerializer(instance, context=self.get_serializer_context())
-        headers = self.get_success_headers(out.data)
-        return Response(out.data, status=status.HTTP_201_CREATED, headers=headers)
+    def perform_create(self, serializer):
+        serializer.save()
+
+    # def create(self, request, *args, **kwargs):
+    #     data = request.data.copy()
+    #     data["to_user"] = self.request.data.get("to_user_id")
+    #     logger.info(f"VIEW: Data['to_user'] = {data["to_user"]}")
+    #     serializer = self.get_serializer(data=data)
+    #     serializer.is_valid(raise_exception=True)
+    #     instance = serializer.save()
+    #     out = FriendshipSerializer(instance, context=self.get_serializer_context())
+    #     headers = self.get_success_headers(out.data)
+    #     return Response(out.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class FriendsDeleteAPIView(generics.DestroyAPIView):
