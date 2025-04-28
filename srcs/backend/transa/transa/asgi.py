@@ -22,12 +22,14 @@ from channels.auth import AuthMiddlewareStack
 # ⚠️ Ces imports ne doivent arriver qu'après le django.setup()
 import chat.routing
 import game.routing
+import moshpit.routing#paul added
+
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(
         URLRouter(
-            chat.routing.websocket_urlpatterns + game.routing.websocket_urlpatterns
+            chat.routing.websocket_urlpatterns + game.routing.websocket_urlpatterns + moshpit.routing.websocket_urlpatterns
         )
     ),
 })

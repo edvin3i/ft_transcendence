@@ -1,4 +1,164 @@
-const canvas = document.getElementById("moshpitRemoteCanvas");
+// moshpitRemote.js
+
+class MoshpitRemote {
+	constructor(matchId, playerId) {
+		this.matchId = matchId;
+		this.playerId = playerId;
+		this.socket = null;
+		this.gameState = null;
+	}
+  
+	connect() {
+		this.socket = new WebSocket(`ws://${window.location.host}/ws/match/${this.matchId}/`);
+  
+		this.socket.onopen = () => {
+			console.log("✅ Connexion WebSocket établie pour le match", this.matchId);
+			this.sendGameStateRequest();
+		};
+  
+		this.socket.onmessage = (event) => {
+			const data = JSON.parse(event.data);
+			console.log("📨 Message reçu : ", data);
+			if (data.type === 'game_update') {
+				this.updateGameState(data.game_state);
+			}
+		};
+  
+		this.socket.onclose = (event) => {
+			console.log("⚠️ Connexion WebSocket fermée.", event);
+		};
+  
+		this.socket.onerror = (error) => {
+			console.error("❌ Erreur WebSocket : ", error);
+		};
+	}
+  
+	sendAction(action, params = {}) {
+		const message = {
+			action: action,
+			player_id: this.playerId,
+			...params,
+		};
+		this.socket.send(JSON.stringify(message));
+	}
+  
+	sendGameStateRequest() {
+		this.sendAction('request_game_state');
+	}
+  
+	updateGameState(state) {
+		this.gameState = state;
+		this.updateDisplay();
+	}
+  
+	updateDisplay() {
+		if (this.gameState) {
+			drawGameCircle(this.gameState);
+		}
+	}
+  
+	movePlayer(direction) {
+		this.sendAction('move', { direction });
+	}
+  
+	endGame() {
+		this.sendAction('end_game');
+	}
+}
+
+// --- DESSIN ---
+
+const canvas = document.getElementById('gameCanvas');
+const context = canvas.getContext('2d');
+const centerX = canvas.width / 2;
+const centerY = canvas.height / 2;
+const radius = 200; // à adapter selon ton besoin
+const paddleSize = Math.PI / 6; // exemple : 30° d'arc
+
+function drawBall(ball) {
+	context.beginPath();
+	context.arc(ball.x, ball.y, ball.radius, 0, 2 * Math.PI);
+	context.fillStyle = "#ffffff";
+	context.fill();
+	context.closePath();
+}
+
+function drawCurvedPaddle(player) {
+	const startAngle = player.angle - paddleSize / 2;
+	const endAngle = player.angle + paddleSize / 2;
+
+	context.beginPath();
+	context.arc(centerX, centerY, radius, startAngle, endAngle);
+	context.lineWidth = 10;
+	context.strokeStyle = player.color;
+	context.stroke();
+	context.closePath();
+}
+
+function drawAllPaddles(players) {
+	players.forEach(player => drawCurvedPaddle(player));
+}
+
+function drawPlayerSector(startAngle, endAngle, color) {
+	context.beginPath();
+	context.moveTo(centerX, centerY);
+	context.arc(centerX, centerY, radius, startAngle, endAngle);
+	context.closePath();
+	context.fillStyle = color;
+	context.fill();
+}
+
+function drawAllPlayerSectors(players) {
+	players.forEach(player => {
+		drawPlayerSector(player.min_angle, player.max_angle, player.color);
+	});
+}
+
+function drawGameCircle(gameState) {
+	context.clearRect(0, 0, canvas.width, canvas.height);
+
+	drawAllPlayerSectors(gameState.players);
+	drawBall(gameState.ball);
+	drawAllPaddles(gameState.players);
+
+	context.beginPath();
+	context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+	context.strokeStyle = "#fff";
+	context.lineWidth = 4;
+	context.stroke();
+}
+
+// --- Exemple d'utilisation ---
+
+const matchId = 1;
+const playerId = 123;
+
+const moshpitRemote = new MoshpitRemote(matchId, playerId);
+moshpitRemote.connect();
+
+// document.getElementById("leftButton").addEventListener("click", () => {
+// 	moshpitRemote.movePlayer('left');
+// });
+  
+// document.getElementById("rightButton").addEventListener("click", () => {
+// 	moshpitRemote.movePlayer('right');
+// });
+
+document.getElementById("endGameButton").addEventListener("click", () => {
+	moshpitRemote.endGame();
+});
+
+document.addEventListener("keydown", event =>
+{
+	if (event.key === "ArrowRight")
+		moshpitRemote.movePlayer('right');
+	if (event.key === "ArrowLeft")
+		moshpitRemote.movePlayer('left');
+})
+  
+
+
+/*const canvas = document.getElementById("moshpitRemoteCanvas");
 const contexte = canvas.getContext("2d");
 
 const centerX = canvas.width / 2;
@@ -409,4 +569,4 @@ function drawGameCircle()
 window.onload = () => {
 	connectToWebSocket();
 	drawGameCircle();
-  };
+  };*/
