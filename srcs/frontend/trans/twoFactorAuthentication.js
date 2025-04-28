@@ -53,12 +53,14 @@ export function confirmationPage()
 	return `
 		<div class="text-center">
 			<h2><span id="change"></span>Two-Factor Authentication</h2>
-			<div>
-				<label for="confirmationCode">Enter the 6-digit code:</label><br>
-				<input type="text" id="confirmationCode">
-			</div>
-			<p id="confirmationResult" class="text-danger mt-3 text-center"></p>
-			<button id="confirmButton">Confirm</button>
+			<form id="confirmationForm" method="POST">
+				<div>
+					<label for="confirmationCode">Enter the 6-digit code:</label><br>
+					<input type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6" title="Please enter a valid 6-digit code" required id="confirmationCode">
+				</div>
+				<p id="confirmationResult" class="text-danger mt-3 text-center"></p>
+				<button type="submit">Confirm</button>
+			</form>
 		</div>
 	`;
 }
@@ -69,8 +71,8 @@ function openEnable2FAPage()
 	
 	document.getElementById('change').innerHTML = "Enable ";
 	
-	const confirmButton = document.getElementById('confirmButton');
-	confirmButton.addEventListener('click', () => 
+	const confirmationForm = document.getElementById('confirmationForm');
+	confirmationForm.addEventListener('submit', () => 
 			checkConfirmationCode('https://localhost/api/auth/2fa/confirm/'));
 }
 
@@ -80,13 +82,15 @@ function openDisable2FAPage()
 	
 	document.getElementById('change').innerHTML = "Disable ";
 	
-	const confirmButton = document.getElementById('confirmButton');
-	confirmButton.addEventListener('click', () => 
+	const confirmationForm = document.getElementById('confirmationForm');
+	confirmationForm.addEventListener('submit', () => 
 			checkConfirmationCode('https://localhost/api/auth/2fa/disable/'));
 }
 
 async function checkConfirmationCode(url)
 {
+	event.preventDefault();
+
 	const code = document.getElementById('confirmationCode').value;
 
 	const token = localStorage.getItem('accessToken');

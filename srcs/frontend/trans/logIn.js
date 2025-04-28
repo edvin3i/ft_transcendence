@@ -151,12 +151,14 @@ function start2FA(data, page, push)
 {
 	document.getElementById('app').innerHTML = confirmationPage();
 
-	const confirmButton = document.getElementById('confirmButton');
-	confirmButton.addEventListener('click', () => end2FA(data, page, push));
+	const confirmationForm = document.getElementById('confirmationForm');
+	confirmationForm.addEventListener('submit', () => end2FA(data, page, push));
 }
 
 async function end2FA(data, page, push)
 {
+	event.preventDefault();
+
 	const code = document.getElementById('confirmationCode').value;
 
 	const token = data.access;
