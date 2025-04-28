@@ -1,12 +1,16 @@
 import {openUserInformationChangePage} from './userInformation.js'
+import {open2FAStatusChangePage} from './twoFactorAuthentication.js'
 
 function profilePage()
 {
 	return `
 		<div class="text-center">
-			<h2>Your information:<br></h2>
-			<p id="userInformation"></p>
+			<h2>Your information:</h2>
+			<p id="userInformation">username: <span id="username"></span><br>email: <span id="email"></span></p>
 			<button id="changeButton">Change</button>
+			<h2>Security:</h2>
+			<p>2FA: <span id="status"></span></p>
+			<button id="enableOrDisableButton"></button>
 		</div>
 	`;
 }
@@ -17,11 +21,26 @@ export function openProfilePage()
 	
 	const username = localStorage.getItem('username');
 	const email = localStorage.getItem('email');
-	
-	document.getElementById('userInformation').innerHTML = 
-		`username: ${username} <br>
-		email: ${email}`;
+
+	document.getElementById('username').innerHTML = username;
+	document.getElementById('email').innerHTML = email;
 	
 	const changeButton = document.getElementById('changeButton');
 	changeButton.addEventListener('click', openUserInformationChangePage);
+	
+	
+	if (localStorage.getItem('2FA') === 'false')
+	{
+		document.getElementById('status').innerHTML = 'disabled';
+		document.getElementById('enableOrDisableButton').innerHTML = 'Enable';
+	}
+	else
+	{
+		document.getElementById('status').innerHTML = 'enabled';
+		document.getElementById('enableOrDisableButton').innerHTML = 'Disable';
+	}
+	
+	const enableOrDisableButton = 
+		document.getElementById('enableOrDisableButton');
+	enableOrDisableButton.addEventListener('click', open2FAStatusChangePage);
 }

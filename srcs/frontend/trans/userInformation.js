@@ -221,4 +221,5 @@ export async function setUserInformation()
 	localStorage.setItem('id', data.user.id);
 	localStorage.setItem('username', data.user.username);
 	localStorage.setItem('email', data.user.email);
+	localStorage.setItem('2FA', data.is_2fa_enabled);
 }

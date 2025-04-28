@@ -1,4 +1,5 @@
 import {openAccountCreationPage} from './accountCreation.js'
+import {confirmationPage} from './twoFactorAuthentication.js'
 import {setUserInformation} from './userInformation.js'
 import {showNavigationHeader, openPage} from './navigation.js'
 import {closeChat, showChat} from './chat.js'
@@ -90,7 +91,7 @@ async function endOAuth42()
 
 	const data = JSON.parse(localStorage.getItem('data'));
 
-	logIn(data, history.state.page, 0); // think about it later
+	check2FAStatus(data, history.state.page, 0);
 
 	localStorage.removeItem('data');
 }
@@ -112,7 +113,7 @@ async function handleLogIn(page, push)
 	const data = await response.json();
 
 	if (response.ok)
-		logIn(data, page, push)
+		check2FAStatus(data, page, push)
 	else
 	{
 		document.getElementById('username').value = '';
@@ -122,6 +123,59 @@ async function handleLogIn(page, push)
 		document.getElementById('logInResult').innerHTML = 
 			"Wrong username or password";
 	}
+}
+
+async function check2FAStatus(data, page, push)
+{
+	const token = data.access;
+
+	const response = await fetch('https://localhost/api/users/profile/me', 
+	{
+		method: 'GET', 
+		headers: 
+		{
+			'Authorization': `Bearer ${token}`, 
+			'Content-Type': 'application/json'
+		}
+	});
+
+	const userInformation = await response.json();
+
+	if (userInformation.is_2fa_enabled)
+		start2FA(data, page, push);
+	else
+		logIn(data, page, push);
+}
+
+function start2FA(data, page, push)
+{
+	document.getElementById('app').innerHTML = confirmationPage();
+
+	const confirmButton = document.getElementById('confirmButton');
+	confirmButton.addEventListener('click', () => end2FA(data, page, push));
+}
+
+async function end2FA(data, page, push)
+{
+	const code = document.getElementById('confirmationCode').value;
+
+	const token = data.access;
+
+	const response = await fetch('https://localhost/api/auth/2fa/confirm/',  
+	{
+		method: 'POST', 
+		headers: 
+		{
+			'Authorization': `Bearer ${token}`, 
+			'Content-Type': 'application/json'
+		}, 
+		body: JSON.stringify({'totp_code': code})
+	});
+
+	if (response.ok)
+		logIn(data, page, push)
+	else
+		document.getElementById('confirmationResult').innerHTML = "Wrong code!";
 }
 
 export async function logIn(data, page, push)

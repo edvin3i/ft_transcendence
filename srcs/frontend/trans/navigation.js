@@ -92,6 +92,7 @@ function logOut()
 	localStorage.removeItem('id');
 	localStorage.removeItem('username');
 	localStorage.removeItem('email');
+	localStorage.removeItem('2FA');
 
 	closeChat();
 
