@@ -1,76 +1,123 @@
-function friendsPage() {
+import {checkToken} from './token.js'
+
+function friendsPage()
+{
 	return `
 		<div class="text-center">
 			<h2>Your friends:<br></h2>
 			<p id="friendsList"></p>
-			<input type="text" id="friendIdInput" placeholder="Enter friend ID" />
+			<h2>Incoming friend requests:<br></h2>
+			<p id="incomingRequestsList"></p>
+			<h2>Outgoing friend requests:<br></h2>
+			<p id="outgoingRequestsList"></p>
+			<input type="text" id="friendId" placeholder="Enter friend ID" />
 			<button id="addFriendButton">Add friend</button>
 			<p id="addFriendResponse" style="margin-top: 10px;"></p>
 		</div>
 	`;
 }
 
-export function openFriendsPage() {
+export function openFriendsPage()
+{
 	document.getElementById('app').innerHTML = friendsPage();
 
 	getFriendsList();
+	getIncomingRequestsList();
+	getOutgoingRequestsList();
 
 	const addFriendButton = document.getElementById('addFriendButton');
 	addFriendButton.addEventListener('click', addFriend);
 }
 
-async function getFriendsList() {
-	const token = localStorage.getItem('accessToken');
+async function getFriendsList()
+{
+	const token = await checkToken();
 
-	const response = await fetch('https://localhost/api/friends/all', {
-		method: 'GET',
-		headers: {
-			'Authorization': `Bearer ${token}`,
+	const response = await fetch('https://localhost/api/friends/all', 
+	{
+		method: 'GET', 
+		headers: 
+		{
+			'Authorization': `Bearer ${token}`, 
 			'Content-Type': 'application/json'
 		}
 	});
 
 	const data = await response.json();
 
-	if (data.length === 0) {
+	if (data.length === 0)
 		document.getElementById('friendsList').innerHTML = 
 			"You haven't added any friends yet";
-	} else {
+	else
 		console.log(data);
-	}
 }
 
-async function addFriend() {
-	const token = localStorage.getItem('accessToken');
-	const friendId = document.getElementById('friendIdInput').value.trim();
-	const responseElement = document.getElementById('addFriendResponse');
+async function getIncomingRequestsList()
+{
+	const token = await checkToken();
 
-	if (!friendId) {
-		responseElement.textContent = "Please enter a valid friend ID.";
-		return;
-	}
-
-	try {
-		const response = await fetch('https://localhost/api/friends/request/', {
-    			method: 'POST',
-   				headers: {
-        			'Authorization': `Bearer ${token}`,
-        			'Content-Type': 'application/json'
-			    },
-    			body: JSON.stringify({
-        		"to_user": friendId
-    			})
-		});
-
-		const result = await response.json();
-
-		if (response.ok) {
-			responseElement.textContent = result.message || "Friend request sent successfully.";
-		} else {
-			responseElement.textContent = result.message || "Failed to send friend request.";
+	const response = await fetch('https://localhost/api/friends/requests/incoming/', 
+	{
+		method: 'GET', 
+		headers: 
+		{
+			'Authorization': `Bearer ${token}`, 
+			'Content-Type': 'application/json'
 		}
-	} catch (error) {
-		console.error(error);
-		responseElement.textContent = "An error occurred while sending request.";
-	}
+	});
+
+	const data = await response.json();
+
+	if (data.length === 0)
+		document.getElementById('incomingRequestsList').innerHTML = 
+			"You don't have any incoming friend requests";
+	else
+		console.log(data);
+}
+
+async function getOutgoingRequestsList()
+{
+	const token = await checkToken();
+
+	const response = await fetch('https://localhost/api/friends/requests/outgoing/', 
+	{
+		method: 'GET', 
+		headers: 
+		{
+			'Authorization': `Bearer ${token}`, 
+			'Content-Type': 'application/json'
+		}
+	});
+
+	const data = await response.json();
+
+	if (data.length === 0)
+		document.getElementById('outgoingRequestsList').innerHTML = 
+			"You don't have any outgoing friend requests";
+	else
+		console.log(data);
+}
+
+async function addFriend()
+{
+	const friendId = document.getElementById('friendId').value;
+
+	const token = await checkToken();
+
+	const response = await fetch('https://localhost/api/friends/request/', 
+	{
+		method: 'POST', 
+		headers: 
+		{
+			'Authorization': `Bearer ${token}`, 
+			'Content-Type': 'application/json'
+	    }, 
+		body: JSON.stringify({to_user: friendId})
+	});
+
+	const data = await response.json();
+
+	console.log(data);
+
+	document.getElementById('addFriendResponse').innerHtml = data.message;
 }
