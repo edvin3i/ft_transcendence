@@ -27,7 +27,7 @@ async function openSetup2FAPage()
 {
 	document.getElementById('app').innerHTML = setup2FAPage();
 
-	const token = checkToken();
+	const token = await checkToken();
 
 	const response = await fetch('https://localhost/api/auth/2fa/setup/', 
 	{
@@ -94,7 +94,7 @@ async function checkConfirmationCode(url)
 
 	const code = document.getElementById('confirmationCode').value;
 
-	const token = checkToken();
+	const token = await checkToken();
 
 	const response = await fetch(url, 
 	{

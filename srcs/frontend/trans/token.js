@@ -14,7 +14,7 @@ export async function checkToken()
 	});
 
 	if (!response.ok)
-		return refreshToken();
+		return await refreshToken();
 	else
 		return token;
 }

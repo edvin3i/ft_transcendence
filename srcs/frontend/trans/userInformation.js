@@ -68,7 +68,7 @@ async function changeUserInformation()
 	{
 		const id = localStorage.getItem('id');
 
-		const token = checkToken();
+		const token = await checkToken();
 
 		const response = await 
 			fetch(`https://localhost/api/users/update/${id}/`, 
@@ -111,7 +111,7 @@ async function changeUserInformation()
 	{
 		const id = localStorage.getItem('id');
 
-		const token = checkToken();
+		const token = await checkToken();
 
 		const response = await 
 			fetch(`https://localhost/api/users/update/${id}/`, 
@@ -154,7 +154,7 @@ async function changeUserInformation()
 
 	const id = localStorage.getItem('id');
 
-	const token = checkToken();
+	const token = await checkToken();
 
 	const response = await fetch(`https://localhost/api/users/update/${id}/`, 
 	{
@@ -208,7 +208,7 @@ async function changeUserInformation()
 
 export async function setUserInformation()
 {
-	const token = checkToken();
+	const token = await checkToken();
 
 	const response = await fetch('https://localhost/api/users/profile/me', 
 	{

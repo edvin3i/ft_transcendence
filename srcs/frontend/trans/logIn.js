@@ -127,7 +127,7 @@ async function handleLogIn(page, push)
 
 async function check2FAStatus(data, page, push)
 {
-	const token = checkToken(data);
+	const token = await checkToken(data);
 
 	const response = await fetch('https://localhost/api/users/profile/me', 
 	{
@@ -163,7 +163,7 @@ export async function checkToken(data)
 	});
 
 	if (!response.ok)
-		return refreshToken(data.refresh);
+		return await refreshToken(data.refresh);
 	else
 		return data.access;
 }
@@ -196,7 +196,7 @@ async function end2FA(data, page, push)
 
 	const code = document.getElementById('confirmationCode').value;
 
-	const token = checkToken(data);
+	const token = await checkToken(data);
 
 	const response = await fetch('https://localhost/api/auth/2fa/confirm/',  
 	{
