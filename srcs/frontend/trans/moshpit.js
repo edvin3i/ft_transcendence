@@ -42,7 +42,7 @@ const players = [
 {
 	angle: Math.PI,
 	color: "#4dff4d",
-	keyLeft: "a",
+	keyLeft: "q",
 	keyRight: "e",
 	direction: 0,
 	minAngle: 3 * Math.PI / 4,
@@ -52,7 +52,7 @@ const players = [
 {
 	angle: 3 * Math.PI / 2,
 	color: "#ffff4d",
-	keyLeft: "q",
+	keyLeft: "a",
 	keyRight: "d",
 	direction: 0,
 	minAngle: 5 * Math.PI / 4,
