@@ -1,119 +1,197 @@
-/*
-const canvas = document.getElementById("pongCanvas");
-canvas.width = 5000;
-canvas.height = 3000;
-const ctx = canvas.getContext("2d");
-ctx.strokeRect(0, 0, canvas.width, canvas.height);
-*/
-
-export function playPong()
-{
+export function playPong({ remote = false, room = "myroom" } = {}) {
   const canvas = document.getElementById("pongCanvas");
+  const status = document.getElementById("pongStatus");
+  const label = document.getElementById("playerLabel");
+  const nameLabel = document.getElementById("playerNames");
+  const timerDisplay = document.getElementById("gameTimer");
+  const endBtn = document.getElementById("endGameButton");
+  const resetBtn = document.getElementById("resetGameButton");
+
+  if (!canvas) {
+    console.error("❌ Canvas not found!");
+    return;
+  }
+
+  canvas.width = 500;
+  canvas.height = 300;
   const ctx = canvas.getContext("2d");
 
-  const paddleWidth = 8, paddleHeight = 60, ballSize = 8;
-  let player1Y = 100, player2Y = 150, ballX = 300, ballY = 200;
-  let ballSpeedX = 1, ballSpeedY = 1;
-  let player1Speed = 0, player2Speed = 0;
-  let player1Score = 0, player2Score = 0;
+  if (remote) {
+    const socket = new WebSocket(`wss://${window.location.host}/ws/game/${room}/`);
+    let playerId = null;
+    let paddle1Y = 0, paddle2Y = 0;
+    let ballX = 0, ballY = 0;
+    let score1 = 0, score2 = 0;
+    let keyState = 0;
 
-  // Paddle objects
-  const paddle1 = { x: 0, y: player1Y, width: paddleWidth, height: paddleHeight };
-  const paddle2 = { x: canvas.width - paddleWidth, y: player2Y, width: paddleWidth, height: paddleHeight };
-  
-  // Update paddle positions
-  function movePaddles() {
-      player1Y += player1Speed;
-      player2Y += player2Speed;
+    // On successful connection, send player name
+    const username = localStorage.getItem("username") || "Anonymous";
+    socket.onopen = () => {
+      socket.send(JSON.stringify({ type: "set_name", name: username }));
+    };
 
-      if (player1Y < 0) player1Y = 0;
-      if (player1Y + paddleHeight > canvas.height) player1Y = canvas.height - paddleHeight;
-      if (player2Y < 0) player2Y = 0;
-      if (player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
 
-      paddle1.y = player1Y;
-      paddle2.y = player2Y;
-  }
+      if (data.type === "init") {
+        playerId = data.playerId;
+        if (label) label.innerText = `You are Player ${playerId + 1}`;
+        if (status) status.innerText = "";
+      }
 
-  // Draw everything
-  function draw() {
-      // Clear canvas
+      if (data.type === "waiting") {
+        if (status) status.innerText = "Waiting for opponent...";
+      }
+
+      if (data.type === "state") {
+        paddle1Y = data.paddle1_y;
+        paddle2Y = data.paddle2_y;
+        ballX = data.ball.x;
+        ballY = data.ball.y;
+        score1 = data.score[0];
+        score2 = data.score[1];
+      }
+
+      if (data.type === "end") {
+        if (status) status.innerText = "Game ended.";
+        socket.close();
+      }
+
+      if (data.type === "timer") {
+        if (timerDisplay) timerDisplay.innerText = `⏱️ Time left: ${data.value}s`;
+      }
+
+      if (data.type === "names") {
+        if (nameLabel) nameLabel.innerText = `🟦 ${data.names[0]} vs 🟥 ${data.names[1]}`;
+      }
+    };
+
+    const sendDirection = (direction) => {
+      if (playerId !== null) {
+        socket.send(JSON.stringify({ type: "move", direction, player: playerId }));
+      }
+    };
+
+    document.addEventListener("keydown", (e) => {
+      if (playerId === null) return;
+
+      if (playerId === 0 && (e.key === "w" || e.key === "s")) {
+        const dir = e.key === "w" ? -1 : 1;
+        if (keyState !== dir) {
+          keyState = dir;
+          sendDirection(dir);
+        }
+      }
+
+      if (playerId === 1 && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+        const dir = e.key === "ArrowUp" ? -1 : 1;
+        if (keyState !== dir) {
+          keyState = dir;
+          sendDirection(dir);
+        }
+      }
+    });
+
+    document.addEventListener("keyup", (e) => {
+      if (
+        (playerId === 0 && (e.key === "w" || e.key === "s")) ||
+        (playerId === 1 && (e.key === "ArrowUp" || e.key === "ArrowDown"))
+      ) {
+        if (keyState !== 0) {
+          keyState = 0;
+          sendDirection(0);
+        }
+      }
+    });
+
+    // End Game button
+    if (endBtn) {
+      endBtn.style.display = "inline-block";
+      endBtn.onclick = () => {
+        socket.send(JSON.stringify({ type: "end" }));
+        if (status) status.innerText = "Game ended.";
+      };
+    }
+
+    // Reset Game button
+    if (resetBtn) {
+      resetBtn.style.display = "inline-block";
+      resetBtn.onclick = () => {
+        socket.send(JSON.stringify({ type: "reset" }));
+        if (status) status.innerText = "Game restarted.";
+      };
+    }
+
+    function drawRemote() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw paddles
-      ctx.fillStyle = "#000";
-      ctx.fillRect(paddle1.x, paddle1.y, paddle1.width, paddle1.height);
-      ctx.fillRect(paddle2.x, paddle2.y, paddle2.width, paddle2.height);
-
-      // Draw ball
-      ctx.fillRect(ballX, ballY, ballSize, ballSize);
-
-      // Draw scores
+      ctx.fillRect(0, paddle1Y, 8, 60);
+      ctx.fillRect(canvas.width - 8, paddle2Y, 8, 60);
+      ctx.fillRect(ballX, ballY, 8, 8);
       ctx.font = "30px Arial";
-      ctx.fillText(player1Score, canvas.width / 4, 30);
-      ctx.fillText(player2Score, 3 * canvas.width / 4, 30);
-  }
+      ctx.fillText(score1, canvas.width / 4, 30);
+      ctx.fillText(score2, 3 * canvas.width / 4, 30);
+      requestAnimationFrame(drawRemote);
+    }
 
-  // Ball movement
-  function moveBall() {
+    drawRemote();
+
+  } else {
+    // -------------------------
+    // LOCAL MODE
+    // -------------------------
+    let paddle1Y = 100, paddle2Y = 100;
+    let ballX = 250, ballY = 150;
+    let ballSpeedX = 2, ballSpeedY = 2;
+    let player1Speed = 0, player2Speed = 0;
+    let score1 = 0, score2 = 0;
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "w") player1Speed = -5;
+      if (event.key === "s") player1Speed = 5;
+      if (event.key === "ArrowUp") player2Speed = -5;
+      if (event.key === "ArrowDown") player2Speed = 5;
+    });
+
+    document.addEventListener("keyup", (event) => {
+      if (event.key === "w" || event.key === "s") player1Speed = 0;
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") player2Speed = 0;
+    });
+
+    function resetBall() {
+      ballX = canvas.width / 2;
+      ballY = canvas.height / 2;
+      ballSpeedX = -ballSpeedX;
+    }
+
+    function gameLoop() {
+      paddle1Y += player1Speed;
+      paddle2Y += player2Speed;
+
+      paddle1Y = Math.max(0, Math.min(canvas.height - 60, paddle1Y));
+      paddle2Y = Math.max(0, Math.min(canvas.height - 60, paddle2Y));
+
       ballX += ballSpeedX;
       ballY += ballSpeedY;
 
-      // Ball bouncing off top and bottom
-      if (ballY <= 0 || ballY + ballSize >= canvas.height) {
-          ballSpeedY = -ballSpeedY;
-      }
+      if (ballY <= 0 || ballY + 8 >= canvas.height) ballSpeedY = -ballSpeedY;
 
-      // Ball hitting left paddle
-      if (ballX <= paddle1.x + paddleWidth && ballY + ballSize >= paddle1.y && ballY <= paddle1.y + paddleHeight) {
-          ballSpeedX = -ballSpeedX;
-      }
+      if (ballX <= 8 && ballY >= paddle1Y && ballY <= paddle1Y + 60) ballSpeedX = -ballSpeedX;
+      if (ballX + 8 >= canvas.width - 8 && ballY >= paddle2Y && ballY <= paddle2Y + 60) ballSpeedX = -ballSpeedX;
 
-      // Ball hitting right paddle
-      if (ballX + ballSize >= paddle2.x && ballY + ballSize >= paddle2.y && ballY <= paddle2.y + paddleHeight) {
-          ballSpeedX = -ballSpeedX;
-      }
+      if (ballX <= 0) { score2++; resetBall(); }
+      if (ballX + 8 >= canvas.width) { score1++; resetBall(); }
 
-      // Ball goes out of bounds (score point)
-      if (ballX <= 0) {
-          player2Score++;
-          resetBall();
-      }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, paddle1Y, 8, 60);
+      ctx.fillRect(canvas.width - 8, paddle2Y, 8, 60);
+      ctx.fillRect(ballX, ballY, 8, 8);
+      ctx.font = "30px Arial";
+      ctx.fillText(score1, canvas.width / 4, 30);
+      ctx.fillText(score2, 3 * canvas.width / 4, 30);
 
-      if (ballX + ballSize >= canvas.width) {
-          player1Score++;
-          resetBall();
-      }
-  }
-
-  // Reset ball to center
-  function resetBall() {
-      ballX = canvas.width / 2 - ballSize / 2;
-      ballY = canvas.height / 2 - ballSize / 2;
-      ballSpeedX = -ballSpeedX; // Change direction
-  }
-
-  // Game loop
-  function gameLoop() {
-      movePaddles();
-      moveBall();
-      draw();
       requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
   }
-
-  // Keyboard controls
-  document.addEventListener("keydown", function (event) {
-      if (event.key === "w") player1Speed = -5; // Player 1 up
-      if (event.key === "s") player1Speed = 5;  // Player 1 down
-      if (event.key === "ArrowUp") player2Speed = -5; // Player 2 up
-      if (event.key === "ArrowDown") player2Speed = 5; // Player 2 down
-  });
-
-  document.addEventListener("keyup", function (event) {
-      if (event.key === "w" || event.key === "s") player1Speed = 0; // Player 1 stop
-      if (event.key === "ArrowUp" || event.key === "ArrowDown") player2Speed = 0; // Player 2 stop
-  });
-
-  // Start the game
-  gameLoop();
 }

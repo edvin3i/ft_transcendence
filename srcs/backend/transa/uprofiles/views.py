@@ -8,6 +8,7 @@ from .serializers import UserProfileSerializer
 # but for now, the code is still duplicated.
 # I know it's not ideal, but it's clearer for novice teammates.
 
+
 class UsersProfilesListAPIView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
@@ -47,10 +48,10 @@ class UserProfileDetailAPIView(generics.RetrieveAPIView):
     serializer_class = UserProfileSerializer
     lookup_field = "user_id"
 
+
 class UserProfileSelfAPIView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
 
     def get_object(self):
         return UserProfile.objects.get(user=self.request.user)
-

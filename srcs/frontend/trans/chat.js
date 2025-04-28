@@ -45,7 +45,8 @@ export function showChat()
 
 export function closeChat()
 {
-	socket.close();
+	if (socket)
+		socket.close();
 }
 
 function openChat(room = "general") {

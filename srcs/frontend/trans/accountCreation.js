@@ -1,10 +1,10 @@
-import {openLogInPage} from './logIn.js'
+import {startOAuth42, openLogInPage} from './logIn.js'
 
 function accountCreationPage()
 {
 	return `
 		<div class="text-center" id="accountCreationHeader">
-			<button id="signUpWith42Button">Sign up with 42</button>
+			<button id="oauth42Button">42</button>
 			<p>---or---</p>
 		</div>
 		<form class="text-center" id="accountCreationForm" method="POST">
@@ -51,19 +51,14 @@ export function openAccountCreationPage(page, push)
 {
 	document.getElementById('app').innerHTML = accountCreationPage();
 
-	const signUpWith42Button = document.getElementById('signUpWith42Button');
-	signUpWith42Button.addEventListener('click', signUpWith42);
+	const oauth42Button = document.getElementById('oauth42Button');
+	oauth42Button.addEventListener('click', startOAuth42);
 
 	const accountCreationForm = document.getElementById('accountCreationForm');
 	accountCreationForm.addEventListener('submit', handleAccountCreation);
 
 	const logInButton = document.getElementById('logInButton');
 	logInButton.addEventListener('click', () => openLogInPage(page, push));
-}
-
-async function signUpWith42()
-{
-	// add 42auth
 }
 
 async function handleAccountCreation()
