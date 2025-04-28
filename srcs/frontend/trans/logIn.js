@@ -127,7 +127,7 @@ async function handleLogIn(page, push)
 
 async function check2FAStatus(data, page, push)
 {
-	const token = data.access;
+	const token = checkToken(data);
 
 	const response = await fetch('https://localhost/api/users/profile/me', 
 	{
@@ -147,6 +147,41 @@ async function check2FAStatus(data, page, push)
 		logIn(data, page, push);
 }
 
+export async function checkToken(data)
+{
+	const token = data.access;
+
+	const response = await fetch('https://localhost/api/auth/token/verify/', 
+	{
+		method: 'POST', 
+		headers: 
+		{
+			'Authorization': `Bearer ${token}`, 
+			'Content-Type': 'application/json'
+		}, 
+		body: JSON.stringify({token: token})
+	});
+
+	if (!response.ok)
+		return refreshToken(data.refresh);
+	else
+		return data.access;
+}
+
+async function refreshToken(token)
+{
+	const response = await fetch('https://localhost/api/auth/token/refresh/', 
+	{
+		method: 'POST', 
+		headers: {'Content-Type': 'application/json'}, 
+		body: JSON.stringify({refresh: token})
+	});
+
+	const data = await response.json();
+
+	return data.access;
+}
+
 function start2FA(data, page, push)
 {
 	document.getElementById('app').innerHTML = confirmationPage();
@@ -161,7 +196,7 @@ async function end2FA(data, page, push)
 
 	const code = document.getElementById('confirmationCode').value;
 
-	const token = data.access;
+	const token = checkToken(data);
 
 	const response = await fetch('https://localhost/api/auth/2fa/confirm/',  
 	{

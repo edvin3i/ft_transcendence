@@ -1,3 +1,4 @@
+import {checkToken} from './token.js'
 import {setUserInformation} from './userInformation.js'
 import {openProfilePage} from './profile.js'
 
@@ -26,7 +27,7 @@ async function openSetup2FAPage()
 {
 	document.getElementById('app').innerHTML = setup2FAPage();
 
-	const token = localStorage.getItem('accessToken');
+	const token = checkToken();
 
 	const response = await fetch('https://localhost/api/auth/2fa/setup/', 
 	{
@@ -93,7 +94,7 @@ async function checkConfirmationCode(url)
 
 	const code = document.getElementById('confirmationCode').value;
 
-	const token = localStorage.getItem('accessToken');
+	const token = checkToken();
 
 	const response = await fetch(url, 
 	{

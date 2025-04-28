@@ -1,3 +1,4 @@
+import {checkToken} from './token.js'
 import {openProfilePage} from './profile.js'
 
 function userInformationChangePage()
@@ -66,7 +67,8 @@ async function changeUserInformation()
 	else if (username === localStorage.getItem('username'))
 	{
 		const id = localStorage.getItem('id');
-		const token = localStorage.getItem('accessToken');
+
+		const token = checkToken();
 
 		const response = await 
 			fetch(`https://localhost/api/users/update/${id}/`, 
@@ -108,7 +110,8 @@ async function changeUserInformation()
 	else if (email === localStorage.getItem('email'))
 	{
 		const id = localStorage.getItem('id');
-		const token = localStorage.getItem('accessToken');
+
+		const token = checkToken();
 
 		const response = await 
 			fetch(`https://localhost/api/users/update/${id}/`, 
@@ -150,7 +153,8 @@ async function changeUserInformation()
 	// waiting for Vanya's backend change END
 
 	const id = localStorage.getItem('id');
-	const token = localStorage.getItem('accessToken');
+
+	const token = checkToken();
 
 	const response = await fetch(`https://localhost/api/users/update/${id}/`, 
 	{
@@ -204,7 +208,7 @@ async function changeUserInformation()
 
 export async function setUserInformation()
 {
-	const token = localStorage.getItem('accessToken');
+	const token = checkToken();
 
 	const response = await fetch('https://localhost/api/users/profile/me', 
 	{
