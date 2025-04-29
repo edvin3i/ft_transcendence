@@ -29,7 +29,7 @@ async function openSetup2FAPage()
 
 	const token = await checkToken();
 
-	const response = await fetch('https://localhost/api/auth/2fa/setup/', 
+	const response = await fetch('api/auth/2fa/setup/', 
 	{
 		method: 'POST',
 		headers: 
@@ -74,7 +74,7 @@ function openEnable2FAPage()
 	
 	const confirmationForm = document.getElementById('confirmationForm');
 	confirmationForm.addEventListener('submit', () => 
-			checkConfirmationCode('https://localhost/api/auth/2fa/confirm/'));
+			checkConfirmationCode('api/auth/2fa/confirm/'));
 }
 
 function openDisable2FAPage()
@@ -85,7 +85,7 @@ function openDisable2FAPage()
 	
 	const confirmationForm = document.getElementById('confirmationForm');
 	confirmationForm.addEventListener('submit', () => 
-			checkConfirmationCode('https://localhost/api/auth/2fa/disable/'));
+			checkConfirmationCode('api/auth/2fa/disable/'));
 }
 
 async function checkConfirmationCode(url)

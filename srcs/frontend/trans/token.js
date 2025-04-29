@@ -2,7 +2,7 @@ export async function checkToken()
 {
 	const token = localStorage.getItem('accessToken');
 
-	const response = await fetch('https://localhost/api/auth/token/verify/', 
+	const response = await fetch('api/auth/token/verify/', 
 	{
 		method: 'POST', 
 		headers: 
@@ -23,7 +23,7 @@ async function refreshToken()
 {
 	const token = localStorage.getItem('refreshToken');
 
-	const response = await fetch('https://localhost/api/auth/token/refresh/', 
+	const response = await fetch('api/auth/token/refresh/', 
 	{
 		method: 'POST', 
 		headers: {'Content-Type': 'application/json'}, 

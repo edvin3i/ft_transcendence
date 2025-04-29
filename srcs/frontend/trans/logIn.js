@@ -75,7 +75,7 @@ export function startOAuth42()
 	const left = (window.innerWidth - width) / 2;
 	const top = (window.innerHeight - height) / 2;
 
-	const url = 'https://localhost/api/auth/ft/callback/';
+	const url = 'api/auth/ft/callback/';
 	const title = 'OAuth42';
 	const features = `width=${width},height=${height},top=${top},left=${left}`;
 	
@@ -103,7 +103,7 @@ async function handleLogIn(page, push)
 	const username = document.getElementById('username').value;
 	const password = document.getElementById('password').value;
 	
-	const response = await fetch('https://localhost/api/auth/token/',
+	const response = await fetch('api/auth/token/', 
 	{
 		method: 'POST',
 		headers: {'Content-Type': 'application/json'},
@@ -129,7 +129,7 @@ async function check2FAStatus(data, page, push)
 {
 	const token = await checkToken(data);
 
-	const response = await fetch('https://localhost/api/users/profile/me', 
+	const response = await fetch('api/users/profile/me', 
 	{
 		method: 'GET', 
 		headers: 
@@ -151,7 +151,7 @@ export async function checkToken(data)
 {
 	const token = data.access;
 
-	const response = await fetch('https://localhost/api/auth/token/verify/', 
+	const response = await fetch('api/auth/token/verify/', 
 	{
 		method: 'POST', 
 		headers: 
@@ -170,7 +170,7 @@ export async function checkToken(data)
 
 async function refreshToken(token)
 {
-	const response = await fetch('https://localhost/api/auth/token/refresh/', 
+	const response = await fetch('api/auth/token/refresh/', 
 	{
 		method: 'POST', 
 		headers: {'Content-Type': 'application/json'}, 
@@ -198,7 +198,7 @@ async function end2FA(data, page, push)
 
 	const token = await checkToken(data);
 
-	const response = await fetch('https://localhost/api/auth/2fa/confirm/',  
+	const response = await fetch('api/auth/2fa/confirm/', 
 	{
 		method: 'POST', 
 		headers: 

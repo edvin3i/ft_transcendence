@@ -33,7 +33,7 @@ async function getFriendsList()
 {
 	const token = await checkToken();
 
-	const response = await fetch('https://localhost/api/friends/all', 
+	const response = await fetch('api/friends/all', 
 	{
 		method: 'GET', 
 		headers: 
@@ -56,7 +56,7 @@ async function getIncomingRequestsList()
 {
 	const token = await checkToken();
 
-	const response = await fetch('https://localhost/api/friends/requests/incoming/', 
+	const response = await fetch('api/friends/requests/incoming/', 
 	{
 		method: 'GET', 
 		headers: 
@@ -79,7 +79,7 @@ async function getOutgoingRequestsList()
 {
 	const token = await checkToken();
 
-	const response = await fetch('https://localhost/api/friends/requests/outgoing/', 
+	const response = await fetch('api/friends/requests/outgoing/', 
 	{
 		method: 'GET', 
 		headers: 
@@ -104,15 +104,14 @@ async function addFriend()
 
 	const token = await checkToken();
 
-	const response = await fetch(`https://localhost/api/friends/request/${friendId}/`, 
+	const response = await fetch(`api/friends/request/${friendIdi}/`, 
 	{
 		method: 'POST', 
 		headers: 
 		{
 			'Authorization': `Bearer ${token}`, 
 			'Content-Type': 'application/json'
-	    }, 
-		//body: JSON.stringify({}) //({to_user: friendId})
+	    }
 	});
 
 	const data = await response.json();
