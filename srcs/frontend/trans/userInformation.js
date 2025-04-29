@@ -71,7 +71,7 @@ async function changeUserInformation()
 		const token = await checkToken();
 
 		const response = await 
-			fetch(`https://localhost/api/users/update/${id}/`, 
+			fetch(`api/users/update/${id}/`, 
 		{
 			method: 'PATCH',
 			headers: 
@@ -114,7 +114,7 @@ async function changeUserInformation()
 		const token = await checkToken();
 
 		const response = await 
-			fetch(`https://localhost/api/users/update/${id}/`, 
+			fetch(`api/users/update/${id}/`, 
 		{
 			method: 'PATCH',
 			headers: 
@@ -156,7 +156,7 @@ async function changeUserInformation()
 
 	const token = await checkToken();
 
-	const response = await fetch(`https://localhost/api/users/update/${id}/`, 
+	const response = await fetch(`api/users/update/${id}/`, 
 	{
 		method: 'PATCH',
 		headers: 
@@ -210,7 +210,7 @@ export async function setUserInformation()
 {
 	const token = await checkToken();
 
-	const response = await fetch('https://localhost/api/users/profile/me', 
+	const response = await fetch('api/users/profile/me', 
 	{
 		method: 'GET',
 		headers: 

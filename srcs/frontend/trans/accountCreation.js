@@ -70,7 +70,7 @@ async function handleAccountCreation(page, push)
 	const email = document.getElementById('email').value;
 	const password = document.getElementById('password').value;
 
-	const response = await fetch('https://localhost/api/users/create/', 
+	const response = await fetch('api/users/create/', 
 	{
 		method: 'POST',
 		headers: {'Content-Type': 'application/json'},
@@ -86,7 +86,7 @@ async function handleAccountCreation(page, push)
 
 	if (response.ok)
 	{
-		const response = await fetch('https://localhost/api/auth/token/',
+		const response = await fetch('api/auth/token/',
 		{
 			method: 'POST',
 			headers: {'Content-Type': 'application/json'},
