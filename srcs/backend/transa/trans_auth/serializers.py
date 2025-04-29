@@ -129,7 +129,7 @@ class TwoFactorAuthSetupSerializer(serializers.Serializer):
 
         # Generate QR-code and transfer in response in base64
         qrcode_secret = qrcode.make(
-            f"otpauth://totp/email:{profile.user.email}?secret={new_secret}",
+            f"otpauth://totp/transCendenZ:{profile.user.username}?secret={new_secret}",
         )
         buffer = io.BytesIO()
         qrcode_secret.save(buffer, format="PNG")
