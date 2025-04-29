@@ -1,4 +1,5 @@
 import {checkToken} from './token.js'
+import {showNavigationHeader} from './navigation.js'
 import {openProfilePage} from './profile.js'
 
 function userInformationChangePage()
@@ -133,6 +134,7 @@ async function changeUserInformation()
 		if (response.ok)
 		{
 			await setUserInformation();
+			showNavigationHeader();
 			openProfilePage();
 		}
 		else if (data.user.username)
@@ -176,6 +178,7 @@ async function changeUserInformation()
 	if (response.ok)
 	{
 		await setUserInformation();
+		showNavigationHeader();
 		openProfilePage();
 	}
 	else if (data.user.username && data.user.email)
