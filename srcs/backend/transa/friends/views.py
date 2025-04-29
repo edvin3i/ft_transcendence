@@ -91,6 +91,7 @@ class FriendsRequestsIncomingListAPIView(generics.ListAPIView):
     permission_classes = [
         IsAuthenticated,
     ]
+
     def get_queryset(self):
         return Friendship.objects.filter(
             to_user=self.request.user, status="pending"
