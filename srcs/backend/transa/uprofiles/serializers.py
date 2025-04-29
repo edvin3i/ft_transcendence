@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from .models import User, UserProfile
@@ -57,6 +58,20 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return self.request.user.userprofile
 
     # Add custom create() for nested JSON save
+
+    def get_avatar_url(self, obj):
+        request = self.context['request']
+        if not obj.avatar:
+            return None
+
+        avatar_url = obj.avatar_url
+        parsed_url = urlparse(avatar_url)
+
+        if parsed_url.scheme in ('http', 'https'):
+            return avatar_url
+
+        return request.build_absolute_uri(avatar_url)
+
     def create(self, validated_data):
         """
         Custom create method to handle nested User data when creating a UserProfile.
