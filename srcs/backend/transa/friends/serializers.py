@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from friends.models import Friendship
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.db.models import Q
 
 
@@ -31,11 +33,35 @@ class FriendsRequestCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request = self.context["request"]
-        return Friendship.objects.create(
-            from_user=request.user,
-            to_user=validated_data["to_user"],
-            status="pending",
-        )
+        from_user=request.user
+        to_user=validated_data["to_user"]
+        with transaction.atomic():
+            try:
+                mirror = Friendship.objects.select_for_update().get(
+                    from_user=to_user,
+                    to_user=from_user,
+                    status="pending",
+                )
+            except ObjectDoesNotExist:
+                return Friendship.objects.create(
+                    from_user=from_user,
+                    to_user=to_user,
+                    status = "pending",
+                )
+
+            mirror.status = "accepted"
+            mirror.save(update_fields=["status", "updated_at"])
+
+            friendship, _ = Friendship.objects.get_or_create(
+                from_user=from_user,
+                to_user=to_user,
+                defaults={"status": "accepted"},
+            )
+            if friendship.status != "accepted":
+                friendship.status = "accepted"
+                friendship.save(update_fields=["status", "updated_at"])
+
+            return friendship
 
 
 class FriendshipSerializer(serializers.ModelSerializer):

@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ObjectDoesNotExist
 from uprofiles.models import UserProfile, User
 
 
@@ -20,6 +21,8 @@ class Friendship(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects: models.Manager = models.Manager() # just for IDE
 
     class Meta:
         unique_together = ("from_user", "to_user")
