@@ -13,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
     """
 
     email = serializers.EmailField(
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        # validators=[UniqueValidator(queryset=User.objects.all())]
     )  # check the email field for unique
 
     class Meta:
