@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
 from rest_framework import serializers
+from rest_framework.serializers import ValidationError
 from rest_framework.validators import UniqueValidator
 from .models import User, UserProfile
 
@@ -21,6 +22,12 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "first_name", "last_name", "email", "password"]
         extra_kwargs = {"password": {"write_only": True}}
+
+    def validate_email(self, value):
+        user = self.instance
+
+        if User.objects.exclude(pk=user.pk).filter(username=value).exists():
+            raise ValidationError(f"The username '{user.username}' is already in use.")
 
     # Add custom create() for pass hashing
     def create(self, validated_data):
@@ -57,20 +64,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_object(self):
         return self.request.user.userprofile
 
-
     def get_avatar_url(self, obj):
-        request = self.context['request']
+        request = self.context["request"]
         if not obj.avatar:
             return None
 
         avatar_url = obj.avatar_url
         parsed_url = urlparse(avatar_url)
 
-        if parsed_url.scheme in ('http', 'https'):
+        if parsed_url.scheme in ("http", "https"):
             return avatar_url
 
         return request.build_absolute_uri(avatar_url)
-    
+
     # Add custom create() for nested JSON save
     def create(self, validated_data):
         """

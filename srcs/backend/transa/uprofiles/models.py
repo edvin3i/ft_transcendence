@@ -23,11 +23,10 @@ class UserProfile(models.Model):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE
     )  # Delete profile when user is deleted
-    ft_id = models.CharField(max_length=255, unique=True, null=True,  blank=True)
+    ft_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
     avatar = models.ImageField(default="default.jpg", upload_to="avatars")
     avatar_url = models.URLField(null=True, blank=True)
     bio = models.CharField(max_length=300, blank=True)
-
 
     # TOTP support
     is_2fa_enabled = models.BooleanField(default=False)
