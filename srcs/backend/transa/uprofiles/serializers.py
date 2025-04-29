@@ -22,12 +22,12 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "first_name", "last_name", "email", "password"]
         extra_kwargs = {"password": {"write_only": True}}
-
-    def validate_email(self, value):
-        user = self.instance
-
-        if User.objects.exclude(pk=user.pk).filter(username=value).exists():
-            raise ValidationError(f"The username '{user.username}' is already in use.")
+    #
+    # def validate_username(self, value):
+    #     user = self.instance
+    #
+    #     if User.objects.exclude(pk=user.pk).filter(username=value).exists():
+    #         raise ValidationError(f"The username '{user.username}' is already in use.")
 
     # Add custom create() for pass hashing
     def create(self, validated_data):
