@@ -6,7 +6,6 @@ function chatPage()
 {
 	return `
 		<div class="d-flex justify-content-between align-items-center px-4" style="min-height: 100px;">
-			<!-- Chat Button à gauche -->
 			<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#chatBox" aria-expanded="false" aria-controls="chatBox">Chat 💬</button>
 		</div>
 		<div class="collapse" id="chatBox">
@@ -20,11 +19,8 @@ function chatPage()
 					<p id="current-room" class="fw-bold text-info">
 						🟢 Room: <span id="current-room-name">general</span>
 					</p>
-					<div id="chat-tabs" class="nav nav-tabs mb-3">
-						<!-- Onglets ajoutés dynamiquement ici -->
-					</div>			  
-					<div id="chat-log" style="height: 200px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px;">
-					</div>
+					<div id="chat-tabs" class="nav nav-tabs mb-3"></div>		  
+					<div id="chat-log" style="height: 200px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px;"></div>
 					<input id="chat-message-input" type="text" placeholder="Type a message...">
 					<button id="send">Send</button>
 				</section>
@@ -35,12 +31,11 @@ function chatPage()
 
 export function showChat()
 {
+	openRooms.clear(); // ✅ état vierge à chaque appel
 	document.getElementById('chat').innerHTML = chatPage();
-
 	addChatEventListeners();
-
-	openChat();
 }
+
 
 export function closeChat()
 {
@@ -48,18 +43,35 @@ export function closeChat()
 		socket.close();
 }
 
+function addChatEventListeners()
+{
+	document.getElementById("join-room").addEventListener("click", () => {
+		const roomInput = document.getElementById("room-name");
+		const room = roomInput.value.trim();
+		if (room) {
+			switchRoom(room);
+			roomInput.value = "";
+		}
+	});
+
+	document.getElementById("room-name").addEventListener("keypress", (e) => {
+		if (e.key === "Enter") {
+			document.getElementById("join-room").click();
+		}
+	});
+
+	openChat(); // 👈 Lancement ici, une fois que tout est prêt
+}
+
 function openChat(room = "general") {
-
-//	console.log(openRooms);
-// different on first and second log in, may be the reason of the bug, also check global variables
 	let receivedHistory = false;
-
 	const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 	const token = localStorage.getItem("accessToken");
-
 	const wsUrl = `${protocol}://${window.location.host}/ws/chat/${room}/?token=${token}`;
 
-	createChatTab(room);
+	if (!openRooms.has(room)) {
+		createChatTab(room);
+	}	
 	document.querySelectorAll("#chat-tabs button").forEach((btn) => {
 		btn.classList.remove("active");
 		if (btn.dataset.room === room) {
@@ -67,7 +79,7 @@ function openChat(room = "general") {
 		}
 	});
 	currentRoom = room;
-	
+
 	if (socket) {
 		socket.onopen = null;
 		socket.onmessage = null;
@@ -76,11 +88,10 @@ function openChat(room = "general") {
 	}
 
 	document.getElementById("current-room-name").textContent = room;
-	document.getElementById("chat-log").innerHTML = ""; // reset
+	document.getElementById("chat-log").innerHTML = "";
 
 	console.log("💬 Connecting to:", wsUrl);
 	socket = new WebSocket(wsUrl);
-	receivedHistory = false;
 
 	socket.onopen = () => {
 		console.log("✅ WebSocket connected:", wsUrl);
@@ -89,36 +100,30 @@ function openChat(room = "general") {
 	socket.onmessage = function (e) {
 		const data = JSON.parse(e.data);
 		const chatLog = document.getElementById("chat-log");
-	
-		// Detect first normal message (non-historique)
+
 		if (!receivedHistory) {
 			receivedHistory = true;
-	
-			// ✅ Affiche "connected" après les messages historiques
 			const connectedP = document.createElement("p");
 			connectedP.classList.add("fw-bold", "text-success", "mt-2");
 			connectedP.style.fontStyle = "italic";
 			connectedP.textContent = "✅ You are connected to the chat.";
 			chatLog.appendChild(connectedP);
 		}
-	
+
 		const timestamp = data.timestamp ? `<span class="text-info">[${data.timestamp}]</span>` : "";
 		const sender = data.username || "Anonymous";
 		const message = data.message;
-	
+
 		const p = document.createElement("p");
 		p.innerHTML = `${timestamp} <strong>${sender}</strong> : ${message}`;
 		chatLog.appendChild(p);
 		chatLog.scrollTop = chatLog.scrollHeight;
 	};
-	
 
 	socket.onclose = function (event) {
 		console.warn("❌ WebSocket closed:", event);
-
 		if (!event.wasClean && event.code === 1006) {
 			console.warn("🛑 Likely invalid/expired token");
-		//	handleLogout(); // was it a function from profile.js?
 		}
 	};
 
@@ -133,29 +138,6 @@ function openChat(room = "general") {
 	document.getElementById("chat-message-input").addEventListener("keypress", (e) => {
 		if (e.key === "Enter") {
 			document.getElementById("send").click();
-		}
-	});
-}
-
-//document.addEventListener("DOMContentLoaded", addChatEventListeners);
-		
-function addChatEventListeners()
-{
-//	updateUIWithUser();
-
-	document.getElementById("join-room").addEventListener("click", () => {
-		const roomInput = document.getElementById("room-name");
-		const room = roomInput.value.trim();
-		console.log("🔁 Room switch requested to:", room);
-
-		if (room) {
-			switchRoom(room);
-			document.getElementById("room-name").value = "";
-		}
-	});
-	document.getElementById("room-name").addEventListener("keypress", (e) => {
-		if (e.key === "Enter") {
-			document.getElementById("join-room").click(); // 👈 Simule le clic
 		}
 	});
 }
@@ -176,14 +158,13 @@ function createChatTab(room) {
 
 	tab.appendChild(roomBtn);
 
-	// ❌ Ajouter le bouton "fermer" (sauf pour general)
 	if (room !== "general") {
 		const closeBtn = document.createElement("button");
 		closeBtn.innerHTML = "&times;";
 		closeBtn.className = "btn btn-sm btn-light ms-2";
 		closeBtn.style.padding = "0 6px";
 		closeBtn.onclick = (e) => {
-			e.stopPropagation(); // évite de switcher de room en même temps
+			e.stopPropagation();
 			closeChatTab(room);
 		};
 		tab.appendChild(closeBtn);
@@ -197,29 +178,22 @@ function createChatTab(room) {
 }
 
 function closeChatTab(room) {
-	// Supprimer visuellement l'onglet
 	const tab = document.querySelector(`#chat-tabs [data-room="${room}"]`);
 	if (tab) tab.remove();
-
 	openRooms.delete(room);
-
-	// Si on ferme la room active, switcher vers "general"
 	if (currentRoom === room) {
 		switchRoom("general");
 	}
 }
 
-
 function switchRoom(room) {
 	if (room === currentRoom) return;
-
 	document.querySelectorAll("#chat-tabs .nav-link").forEach((tab) => {
 		tab.classList.remove("active", "bg-primary", "text-white");
 		if (tab.dataset.room === room) {
 			tab.classList.add("active", "bg-primary", "text-white");
 		}
 	});
-	
 	currentRoom = room;
 	openChat(room);
 }

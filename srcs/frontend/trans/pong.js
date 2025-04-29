@@ -109,22 +109,22 @@ export function playPong({ remote = false, room = "myroom" } = {}) {
     });
 
     // End Game button
-    if (endBtn) {
-      endBtn.style.display = "inline-block";
-      endBtn.onclick = () => {
-        socket.send(JSON.stringify({ type: "end" }));
-        if (status) status.innerText = "Game ended.";
-      };
-    }
+    // if (endBtn) {
+    //   endBtn.style.display = "inline-block";
+    //   endBtn.onclick = () => {
+    //     socket.send(JSON.stringify({ type: "end" }));
+    //     if (status) status.innerText = "Game ended.";
+    //   };
+    // }
 
-    // Reset Game button
-    if (resetBtn) {
-      resetBtn.style.display = "inline-block";
-      resetBtn.onclick = () => {
-        socket.send(JSON.stringify({ type: "reset" }));
-        if (status) status.innerText = "Game restarted.";
-      };
-    }
+    // // Reset Game button
+    // if (resetBtn) {
+    //   resetBtn.style.display = "inline-block";
+    //   resetBtn.onclick = () => {
+    //     socket.send(JSON.stringify({ type: "reset" }));
+    //     if (status) status.innerText = "Game restarted.";
+    //   };
+    // }
 
     function drawRemote() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
