@@ -1,4 +1,169 @@
-const canvas = document.getElementById("moshpitCanvas");
+// moshpitRemote.js
+
+class MoshpitRemote {
+	constructor(matchId, playerId) {
+		this.matchId = matchId;
+		this.playerId = playerId;
+		this.socket = null;
+		this.gameState = null;
+	}
+  
+	connect() {
+		const token = localStorage.getItem("access");
+		const socket = new WebSocket(`ws://${window.location.host}/ws/moshpit/?token=${token}`);
+
+		// const token = localStorage.getItem('accessToken');
+		// this.socket = new WebSocket(`ws://${window.location.host}/ws/match/${this.matchId}/?token=${token}`);
+		
+		// this.socket = new WebSocket(`ws://${window.location.host}/ws/match/${this.matchId}/`);
+  
+		this.socket.onopen = () => {
+			console.log("✅ Connexion WebSocket établie pour le match", this.matchId);
+			this.sendGameStateRequest();
+		};
+  
+		this.socket.onmessage = (event) => {
+			const data = JSON.parse(event.data);
+			console.log("📨 Message reçu : ", data);
+			if (data.type === 'game_update') {
+				this.updateGameState(data.game_state);
+			}
+		};
+  
+		this.socket.onclose = (event) => {
+			console.log("⚠️ Connexion WebSocket fermée.", event);
+		};
+  
+		this.socket.onerror = (error) => {
+			console.error("❌ Erreur WebSocket : ", error);
+		};
+	}
+  
+	sendAction(action, params = {}) {
+		const message = {
+			action: action,
+			player_id: this.playerId,
+			...params,
+		};
+		this.socket.send(JSON.stringify(message));
+	}
+  
+	sendGameStateRequest() {
+		this.sendAction('request_game_state');
+	}
+  
+	updateGameState(state) {
+		this.gameState = state;
+		this.updateDisplay();
+	}
+  
+	updateDisplay() {
+		if (this.gameState) {
+			drawGameCircle(this.gameState);
+		}
+	}
+  
+	movePlayer(direction) {
+		this.sendAction('move', { direction });
+	}
+  
+	endGame() {
+		this.sendAction('end_game');
+	}
+}
+
+// --- DESSIN ---
+
+const canvas = document.getElementById('moshpitRemoteCanvas');
+const context = canvas.getContext('2d');
+const centerX = canvas.width / 2;
+const centerY = canvas.height / 2;
+const radius = 200; // à adapter selon ton besoin
+const paddleSize = Math.PI / 6; // exemple : 30° d'arc
+
+function drawBall(ball) {
+	context.beginPath();
+	context.arc(ball.x, ball.y, ball.radius, 0, 2 * Math.PI);
+	context.fillStyle = "#ffffff";
+	context.fill();
+	context.closePath();
+}
+
+function drawCurvedPaddle(player) {
+	const startAngle = player.angle - paddleSize / 2;
+	const endAngle = player.angle + paddleSize / 2;
+
+	context.beginPath();
+	context.arc(centerX, centerY, radius, startAngle, endAngle);
+	context.lineWidth = 10;
+	context.strokeStyle = player.color;
+	context.stroke();
+	context.closePath();
+}
+
+function drawAllPaddles(players) {
+	players.forEach(player => drawCurvedPaddle(player));
+}
+
+function drawPlayerSector(startAngle, endAngle, color) {
+	context.beginPath();
+	context.moveTo(centerX, centerY);
+	context.arc(centerX, centerY, radius, startAngle, endAngle);
+	context.closePath();
+	context.fillStyle = color;
+	context.fill();
+}
+
+function drawAllPlayerSectors(players) {
+	players.forEach(player => {
+		drawPlayerSector(player.min_angle, player.max_angle, player.color);
+	});
+}
+
+function drawGameCircle(gameState) {
+	context.clearRect(0, 0, canvas.width, canvas.height);
+
+	drawAllPlayerSectors(gameState.players);
+	drawBall(gameState.ball);
+	drawAllPaddles(gameState.players);
+
+	context.beginPath();
+	context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+	context.strokeStyle = "#fff";
+	context.lineWidth = 4;
+	context.stroke();
+}
+
+// --- Exemple d'utilisation ---
+
+const matchId = 1;
+const playerId = 123;
+
+const moshpitRemote = new MoshpitRemote(matchId, playerId);
+moshpitRemote.connect();
+
+// document.getElementById("endGameButton").addEventListener("click", () => {
+// 	moshpitRemote.endGame();
+// });
+
+// document.addEventListener("keydown", event =>
+// {
+// 	if (event.key === "ArrowRight")
+// 		moshpitRemote.movePlayer('right');
+// 	if (event.key === "ArrowLeft")
+// 		moshpitRemote.movePlayer('left');
+// })
+
+window.addEventListener("keydown", (e) => {
+	if (e.key === "ArrowLeft") {
+		sendAction("move", { direction: "left" });
+	} else if (e.key === "ArrowRight") {
+		sendAction("move", { direction: "right" });
+	}
+});
+
+
+/*const canvas = document.getElementById("moshpitRemoteCanvas");
 const contexte = canvas.getContext("2d");
 
 const centerX = canvas.width / 2;
@@ -42,7 +207,7 @@ const players = [
 {
 	angle: Math.PI,
 	color: "#4dff4d",
-	keyLeft: "q",
+	keyLeft: "a",
 	keyRight: "e",
 	direction: 0,
 	minAngle: 3 * Math.PI / 4,
@@ -52,7 +217,7 @@ const players = [
 {
 	angle: 3 * Math.PI / 2,
 	color: "#ffff4d",
-	keyLeft: "a",
+	keyLeft: "q",
 	keyRight: "d",
 	direction: 0,
 	minAngle: 5 * Math.PI / 4,
@@ -64,7 +229,75 @@ const players = [
 const eliminatedPlayers = [];//for a proper reset ?
 
 
+//////////////////////////////remote-bloc////////////////////////////
+// WebSocket connection function
 
+let socket;
+
+async function connectToWebSocket() {
+	const token = localStorage.getItem('accessToken'); // Get JWT from local storage
+	if (!token) {
+	  console.log("No JWT token found");
+	  return;
+	}
+  
+	// Create WebSocket connection with the token in the query string
+	socket = new WebSocket(`ws://localhost:8000/game?token=${token}`);
+  
+	socket.onopen = () => {
+		players.forEach(player => {
+		  socket.send(JSON.stringify({ type: 'playerInfo', player }));
+		});
+	  };
+
+	socket.onmessage = (event) => {
+		const data = JSON.parse(event.data);
+    	if (data.type === 'gameState')
+    		updateGameState(data);
+	}
+
+	socket.onerror = (error) => {
+	  console.error('WebSocket Error:', error);
+	};
+  
+	socket.onclose = () => {
+	  console.log('WebSocket connection closed');
+	};
+}
+
+function sendPlayerInfo(socket) {
+	players.forEach(player => {
+	  socket.send(JSON.stringify({
+		type: 'playerInfo',
+		player: {
+		  id: player.id,
+		  angle: player.angle,
+		  direction: player.direction
+		}
+	  }));
+	});
+  }
+
+  function updateGameState(data) {
+	// Mettez à jour la position des paddles et de la balle avec les données reçues
+	data.players.forEach((playerData, index) => {
+	  const player = players[index];
+	  player.angle = playerData.angle;
+	  player.direction = playerData.direction;
+	});
+  
+	// Mettez à jour la balle
+	ball.x = data.ball.x;
+	ball.y = data.ball.y;
+	ball.angle = data.ball.angle;
+	ball.speed = data.ball.speed;
+  
+	// Redessine le canvas avec les nouvelles positions
+	drawGameCircle();
+  }
+  
+
+/////////////////////////////the rest//////////////////////////////////
 document.addEventListener("keydown", event =>
 {
 	players.forEach(player => 
@@ -320,6 +553,10 @@ function drawGameCircle()
 	drawAllPlayerSector();
 	updatePlayers();
 	updateBall();
+
+	if (socket && socket.readyState === WebSocket.OPEN)
+		sendPlayerInfo(socket);
+	
 	drawBall();
 	drawAllPaddles();
 	checkBallCollision();
@@ -334,4 +571,7 @@ function drawGameCircle()
 		requestAnimationFrame(drawGameCircle);
 }
 
-drawGameCircle();
+window.onload = () => {
+	connectToWebSocket();
+	drawGameCircle();
+  };*/

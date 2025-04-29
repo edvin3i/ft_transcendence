@@ -24,6 +24,7 @@ from transa.middleware import JWTAuthMiddlewareStack
 import chat.routing
 import game.routing
 
+
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": JWTAuthMiddlewareStack(
