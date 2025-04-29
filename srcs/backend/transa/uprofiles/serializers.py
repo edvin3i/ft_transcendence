@@ -57,7 +57,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_object(self):
         return self.request.user.userprofile
 
-    # Add custom create() for nested JSON save
 
     def get_avatar_url(self, obj):
         request = self.context['request']
@@ -71,6 +70,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             return avatar_url
 
         return request.build_absolute_uri(avatar_url)
+    # Add custom create() for nested JSON save
+
 
     def create(self, validated_data):
         """
@@ -111,16 +112,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         user_instance = instance.user
 
         if user_data:
-
-            if "email" in user_data and user_instance.email != user_data["email"]:
-                if (
-                    User.objects.filter(email=user_data["email"])
-                    .exclude(pk=user_instance.pk)
-                    .exists()
-                ):
-                    raise serializers.ValidationError(
-                        {"email": "This email is already in use."}
-                    )
 
             user_instance.username = user_data.get("username", user_instance.username)
             user_instance.first_name = user_data.get(
