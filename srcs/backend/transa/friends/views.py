@@ -87,6 +87,10 @@ class FriendsRequestsIncomingListAPIView(generics.ListAPIView):
     incoming
     """
 
+    serializer_class = FriendshipSerializer
+    permission_classes = [
+        IsAuthenticated,
+    ]
     def get_queryset(self):
         return Friendship.objects.filter(
             to_user=self.request.user, status="pending"
@@ -164,7 +168,7 @@ class FriendsOnlineListAPIView(generics.ListAPIView):
     online
     """
 
-    serrial_class = FriendshipSerializer
+    serializer_class = FriendshipSerializer
     permission_classes = [
         IsAuthenticated,
     ]
