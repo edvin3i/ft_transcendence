@@ -70,9 +70,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             return avatar_url
 
         return request.build_absolute_uri(avatar_url)
+    
     # Add custom create() for nested JSON save
-
-
     def create(self, validated_data):
         """
         Custom create method to handle nested User data when creating a UserProfile.
