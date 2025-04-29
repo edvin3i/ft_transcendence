@@ -21,6 +21,7 @@ dependencies = [
     "qrcode>=8.0",
     "django-cors-headers>=4.7.0",
     "redis>=5.2.1",
+    "django-stubs>=5.2.0",
 ]
 
 [dependency-groups]
