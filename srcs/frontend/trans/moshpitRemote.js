@@ -9,7 +9,13 @@ class MoshpitRemote {
 	}
   
 	connect() {
-		this.socket = new WebSocket(`ws://${window.location.host}/ws/match/${this.matchId}/`);
+		const token = localStorage.getItem("access");
+		const socket = new WebSocket(`ws://${window.location.host}/ws/moshpit/?token=${token}`);
+
+		// const token = localStorage.getItem('accessToken');
+		// this.socket = new WebSocket(`ws://${window.location.host}/ws/match/${this.matchId}/?token=${token}`);
+		
+		// this.socket = new WebSocket(`ws://${window.location.host}/ws/match/${this.matchId}/`);
   
 		this.socket.onopen = () => {
 			console.log("✅ Connexion WebSocket établie pour le match", this.matchId);
@@ -68,7 +74,7 @@ class MoshpitRemote {
 
 // --- DESSIN ---
 
-const canvas = document.getElementById('gameCanvas');
+const canvas = document.getElementById('moshpitRemoteCanvas');
 const context = canvas.getContext('2d');
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
@@ -136,26 +142,25 @@ const playerId = 123;
 const moshpitRemote = new MoshpitRemote(matchId, playerId);
 moshpitRemote.connect();
 
-// document.getElementById("leftButton").addEventListener("click", () => {
-// 	moshpitRemote.movePlayer('left');
-// });
-  
-// document.getElementById("rightButton").addEventListener("click", () => {
-// 	moshpitRemote.movePlayer('right');
+// document.getElementById("endGameButton").addEventListener("click", () => {
+// 	moshpitRemote.endGame();
 // });
 
-document.getElementById("endGameButton").addEventListener("click", () => {
-	moshpitRemote.endGame();
+// document.addEventListener("keydown", event =>
+// {
+// 	if (event.key === "ArrowRight")
+// 		moshpitRemote.movePlayer('right');
+// 	if (event.key === "ArrowLeft")
+// 		moshpitRemote.movePlayer('left');
+// })
+
+window.addEventListener("keydown", (e) => {
+	if (e.key === "ArrowLeft") {
+		sendAction("move", { direction: "left" });
+	} else if (e.key === "ArrowRight") {
+		sendAction("move", { direction: "right" });
+	}
 });
-
-document.addEventListener("keydown", event =>
-{
-	if (event.key === "ArrowRight")
-		moshpitRemote.movePlayer('right');
-	if (event.key === "ArrowLeft")
-		moshpitRemote.movePlayer('left');
-})
-  
 
 
 /*const canvas = document.getElementById("moshpitRemoteCanvas");

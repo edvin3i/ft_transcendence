@@ -1,151 +1,184 @@
 import math
 import random
 
-# Paramètres du jeu
-center_x = 300  # Centre du cercle (à ajuster selon le canvas)
-center_y = 300
-radius = 290  # Rayon du cercle
-paddle_size = math.pi / 12  # Taille des paddles
-ball_radius = 8  # Rayon de la balle
+class MoshpitGame:
+    """
+    In-memory game state for a circular Pong (Moshpit) match.
+    Manages ball, players, collisions and eliminations.
+    """
+    def __init__(self):
+        # Game parameters
+        self.center_x = 300
+        self.center_y = 300
+        self.radius = 290
+        self.paddle_size = math.pi / 12
+        self.ball_radius = 8
+        self.speed_increment = 0.3
+        self.player_speed = 0.03
 
-players = [
-    {"angle": 0, "color": "#ff4d4d", "key_left": "ArrowLeft", "key_right": "ArrowRight", "direction": 0, "min_angle": -math.pi / 4, "max_angle": math.pi / 4, "id": "red"},
-    {"angle": math.pi / 2, "color": "#4da6ff", "key_left": "ArrowDown", "key_right": "ArrowUp", "direction": 0, "min_angle": math.pi / 4, "max_angle": 3 * math.pi / 4, "id": "blue"},
-    {"angle": math.pi, "color": "#4dff4d", "key_left": "a", "key_right": "e", "direction": 0, "min_angle": 3 * math.pi / 4, "max_angle": 5 * math.pi / 4, "id": "green"},
-    {"angle": 3 * math.pi / 2, "color": "#ffff4d", "key_left": "q", "key_right": "d", "direction": 0, "min_angle": 5 * math.pi / 4, "max_angle": 7 * math.pi / 4, "id": "yellow"}
-]
+        # Dynamic state
+        self.ball = {
+            'x': self.center_x,
+            'y': self.center_y,
+            'angle': random.uniform(0, 2 * math.pi),
+            'speed': 1,
+        }
+        # players: id -> {angle, color, direction, min_angle, max_angle, alive}
+        self.players = {}
+        self.eliminated = []
 
-ball = {
-    "x": center_x,
-    "y": center_y,
-    "angle": random.uniform(0, 2 * math.pi),
-    "speed": 2.5
-}
+    def _normalize(self, angle):
+        return angle % (2 * math.pi)
 
-eliminated_players = []
+    def _angular_distance(self, a, b):
+        diff = abs(a - b) % (2 * math.pi)
+        return min(diff, 2 * math.pi - diff)
 
-# Fonction de normalisation de l'angle
-def normalize_angle(angle):
-    return angle % (2 * math.pi)
+    def _reposition_players(self):
+        """
+        Evenly space all alive players around the circle and compute their paddle zones.
+        """
+        alive_ids = list(self.players.keys())
+        n = len(alive_ids)
+        if n == 0:
+            return
+        angle_step = 2 * math.pi / n
+        offset = math.pi / 2
+        for idx, pid in enumerate(alive_ids):
+            angle = self._normalize(offset + idx * angle_step)
+            p = self.players[pid]
+            p['angle'] = angle
+            half = self.paddle_size / 2
+            p['min_angle'] = self._normalize(angle - half)
+            p['max_angle'] = self._normalize(angle + half)
+            p['direction'] = 0
+            p['alive'] = True
 
-# Fonction pour vérifier si la balle touche le mur
-def is_ball_touching_wall():
-    dx = ball['x'] - center_x
-    dy = ball['y'] - center_y
-    distance = math.sqrt(dx * dx + dy * dy)
-    return distance >= radius - ball_radius
+    def add_player(self, player_id, color=None):
+        """Add a new player and reposition all paddles."""
+        if color is None:
+            color = f"#{random.randint(0, 0xFFFFFF):06x}"
+        # Initialize minimal player data
+        self.players[player_id] = {
+            'angle': 0,
+            'color': color,
+            'direction': 0,
+            'min_angle': 0,
+            'max_angle': 0,
+            'alive': True,
+        }
+        # Re-space all players
+        self._reposition_players()
 
-# Fonction pour obtenir le joueur sur le paddle
-def is_paddle_at(angle):
-    angle = normalize_angle(angle)
-    for player in players:
-        start = normalize_angle(player['angle'] - paddle_size / 2)
-        end = normalize_angle(player['angle'] + paddle_size / 2)
+    def remove_player(self, player_id):
+        """Eliminate a player and reposition remaining paddles."""
+        if player_id in self.players:
+            self.eliminated.append(self.players.pop(player_id))
+            self._reposition_players()
 
-        if start < end:
-            if start <= angle <= end:
-                return player
+    def set_player_direction(self, player_id, direction):
+        """Set movement direction: -1 (left), 0 (stop), 1 (right)"""
+        if player_id in self.players and self.players[player_id]['alive']:
+            self.players[player_id]['direction'] = direction
+
+    def _is_wall_collision(self):
+        dx = self.ball['x'] - self.center_x
+        dy = self.ball['y'] - self.center_y
+        dist = math.hypot(dx, dy)
+        return dist >= (self.radius - self.ball_radius)
+
+    def _paddle_at(self, angle):
+        """Return player dict if a paddle covers this angle"""
+        a = self._normalize(angle)
+        for p in self.players.values():
+            start = p['min_angle']
+            end = p['max_angle']
+            if start < end:
+                if start <= a <= end:
+                    return p
+            else:
+                if a >= start or a <= end:
+                    return p
+        return None
+
+    def _expected_player(self, angle):
+        """Return player who was supposed to cover this angle"""
+        a = self._normalize(angle)
+        for p in self.players.values():
+            mn, mx = p['min_angle'], p['max_angle']
+            if mn < mx:
+                if mn <= a <= mx:
+                    return p
+            else:
+                if a >= mn or a <= mx:
+                    return p
+        return None
+
+    def _handle_miss(self, angle):
+        missed = self._expected_player(angle)
+        if missed:
+            # remove by key: find key by matching dict
+            pid = next((k for k,v in self.players.items() if v is missed), None)
+            if pid:
+                self.remove_player(pid)
+
+    def _check_collision(self):
+        if not self._is_wall_collision():
+            return
+        dx = self.ball['x'] - self.center_x
+        dy = self.ball['y'] - self.center_y
+        angle = self._normalize(math.atan2(dy, dx))
+        paddle = self._paddle_at(angle)
+        if paddle:
+            # bounce
+            p_center = paddle['angle']
+            offset = angle - p_center
+            if offset > math.pi: offset -= 2*math.pi
+            if offset < -math.pi: offset += 2*math.pi
+            self.ball['angle'] = self._normalize(math.pi + self.ball['angle'] + offset * 4)
+            self.ball['speed'] += self.speed_increment
         else:
-            if angle >= start or angle <= end:
-                return player
-    return None
+            self._handle_miss(angle)
 
-# Fonction pour obtenir le joueur attendu à un angle donné
-def get_expected_player(angle):
-    angle = normalize_angle(angle)
-    for player in players:
-        if player['min_angle'] < player['max_angle']:
-            if player['min_angle'] <= angle <= player['max_angle']:
-                return player
-        else:
-            if angle >= player['min_angle'] or angle <= player['max_angle']:
-                return player
-    return None
+    def update(self):
+        """Advance one tick: players, ball motion and collisions."""
+        # update paddles
+        for p in self.players.values():
+            p['angle'] = self._normalize(p['angle'] + p['direction'] * self.player_speed)
+            # clamp within zone
+            mn = self._normalize(p['min_angle'] + self.paddle_size/2)
+            mx = self._normalize(p['max_angle'] - self.paddle_size/2)
+            a = p['angle']
+            if mn > mx:
+                if not (a >= mn or a <= mx):
+                    d1 = self._angular_distance(a, mn)
+                    d2 = self._angular_distance(a, mx)
+                    p['angle'] = mn if d1 < d2 else mx
+            else:
+                if a < mn: p['angle'] = mn
+                if a > mx: p['angle'] = mx
+        # update ball
+        self.ball['x'] += math.cos(self.ball['angle']) * self.ball['speed']
+        self.ball['y'] += math.sin(self.ball['angle']) * self.ball['speed']
+        # check collision
+        self._check_collision()
 
-# Fonction pour mettre à jour la position des joueurs
-def update_players():
-    speed = 0.03  # Vitesse des joueurs
-    for player in players:
-        player['angle'] += player['direction'] * speed
-        player['angle'] = normalize_angle(player['angle'])
-
-        min_angle = normalize_angle(player['min_angle'] + paddle_size / 2)
-        max_angle = normalize_angle(player['max_angle'] - paddle_size / 2)
-
-        if min_angle > max_angle:
-            in_zone = player['angle'] >= min_angle or player['angle'] <= max_angle
-            if not in_zone:
-                dist_to_min = angular_distance(player['angle'], min_angle)
-                dist_to_max = angular_distance(player['angle'], max_angle)
-                player['angle'] = min_angle if dist_to_min < dist_to_max else max_angle
-        else:
-            if player['angle'] < min_angle: player['angle'] = min_angle
-            if player['angle'] > max_angle: player['angle'] = max_angle
-
-# Fonction pour gérer la collision de la balle avec les paddles
-def check_ball_collision():
-    if not is_ball_touching_wall():
-        return
-
-    dx = ball['x'] - center_x
-    dy = ball['y'] - center_y
-    angle = normalize_angle(math.atan2(dy, dx))
-
-    player = is_paddle_at(angle)
-
-    if player:
-        paddle_center = normalize_angle(player['angle'])
-        offset = angle - paddle_center
-        if offset > math.pi: offset -= 2 * math.pi
-        if offset < -math.pi: offset += 2 * math.pi
-
-        bounce_strength = 4
-        ball['angle'] = normalize_angle(math.pi + ball['angle'] + offset * bounce_strength)
-        ball['speed'] += 0.3  # Accélération
-    else:
-        handle_miss(angle)
-
-# Fonction pour gérer les erreurs de manque
-def handle_miss(angle):
-    missed_player = get_expected_player(angle)
-    if missed_player:
-        players.remove(missed_player)
-        eliminated_players.append(missed_player)
-        if len(players) == 1:
-            win_screen(players[0])
-
-# Fonction pour afficher l'écran de victoire
-def win_screen(winner):
-    print(f"🏆 Joueur {winner['id']} gagne !")
-
-# Fonction de mise à jour de la balle
-def update_ball():
-    ball['x'] += math.cos(ball['angle']) * ball['speed']
-    ball['y'] += math.sin(ball['angle']) * ball['speed']
-
-# Fonction pour dessiner le cercle (de base)
-def draw_game_circle():
-    update_players()
-    update_ball()
-    check_ball_collision()
-
-# Fonction pour redémarrer le jeu
-def continue_game():
-    angle_step = 2 * math.pi / len(players)
-    offset = math.pi / 2
-
-    for i in range(len(players)):
-        angle = normalize_angle(offset + i * angle_step)
-        players[i]['angle'] = angle
-        players[i]['min_angle'] = normalize_angle(angle - angle_step / 2)
-        players[i]['max_angle'] = normalize_angle(angle + angle_step / 2)
-
-    ball['x'] = center_x
-    ball['y'] = center_y
-    ball['speed'] = 2.5
-    ball['angle'] = random.uniform(0, 2 * math.pi)
-
-# Fonction pour obtenir la distance angulaire entre deux angles
-def angular_distance(a, b):
-    diff = abs(a - b) % (2 * math.pi)
-    return min(diff, 2 * math.pi - diff)
+    def get_game_state(self):
+        """Return serializable snapshot for WebSocket clients"""
+        return {
+            'players': [
+                {
+                    'id': pid,
+                    'angle': v['angle'],
+                    'color': v['color'],
+                    'min_angle': v['min_angle'],
+                    'max_angle': v['max_angle'],
+                }
+                for pid, v in self.players.items()
+            ],
+            'ball': {
+                'x': self.ball['x'],
+                'y': self.ball['y'],
+                'radius': self.ball_radius,
+            }
+        }

@@ -1,140 +1,146 @@
 import json
 import asyncio
+import uuid
 from channels.generic.websocket import AsyncWebsocketConsumer
-# from .models import Match, UserProfile
+from .moshpit_logic import MoshpitGame
+
+from rest_framework_simplejwt.tokens import UntypedToken
+from rest_framework_simplejwt.exceptions import TokenError
+
+
+# In-memory storage for all matches: match_id -> {{ game, players, loop_task }}
+_matches = {}
 
 class MoshpitConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        # On récupère le match et le joueur en fonction des données
-        self.match_id = self.scope['url_route']['kwargs']['match_id']
-        self.player_id = self.scope['user'].id  # Utilisation de l'utilisateur connecté
-        self.match = await self.get_match(self.match_id)
-        self.player = await self.get_player(self.player_id)
+	async def connect(self):
+		# 🔐 Authentification JWT sans accès au modèle User
+		query_string = self.scope['query_string'].decode()
+		query_params = parse_qs(query_string)
+		token = query_params.get('token', [None])[0]
 
-        if not self.match or not self.player:
-            # Si on ne trouve pas le match ou le joueur, on ferme la connexion
-            await self.close()
-            return
+		if token is None:
+			print("❌ Aucun token JWT fourni.")
+			await self.close()
+			return
 
-        # On enregistre cette connexion dans le groupe du match
-        self.group_name = f"match_{self.match_id}"
-        await self.channel_layer.group_add(
-            self.group_name,
-            self.channel_name
-        )
+		try:
+			validated_token = UntypedToken(token)
+			self.player_id = str(validated_token['user_id'])  # Utilise juste l'ID
+			print(f"✅ Joueur authentifié : ID {self.player_id}")
+		except TokenError as e:
+			print("❌ Token JWT invalide :", e)
+			await self.close()
+			return
 
-        # Ajout du joueur à la partie, envoyer l'état initial
-        await self.send_game_state()
+		# 🎮 Setup de la partie
+		self.match_id = self.scope['url_route']['kwargs']['match_id']
+		self.group_name = f"match_{self.match_id}"
 
-        # Confirmer la connexion
-        await self.accept()
+		if self.match_id not in _matches:
+			_matches[self.match_id] = {
+				'game': MoshpitGame(),
+				'players': {},        # player_id -> channel_name
+				'loop_task': None,
+			}
+		match = _matches[self.match_id]
 
-    async def disconnect(self, close_code):
-        # Supprimer le joueur de la partie
-        await self.remove_player_from_game()
+		# Ajouter le joueur au jeu
+		match['game'].add_player(self.player_id)
+		match['players'][self.player_id] = self.channel_name
 
-        # Quitter le groupe du match
-        await self.channel_layer.group_discard(
-            self.group_name,
-            self.channel_name
-        )
+		await self.channel_layer.group_add(
+			self.group_name,
+			self.channel_name
+		)
+		await self.accept()
 
-    async def receive(self, text_data):
-        # Reçoit un message du client
-        data = json.loads(text_data)
-        action = data.get('action')
+		if match['loop_task'] is None:
+			match['loop_task'] = asyncio.create_task(self._game_loop())
 
-        if action == 'move':
-            await self.handle_move(data)
-        elif action == 'end_game':
-            await self.end_game()
+		# Envoyer l'état initial
+		initial = match['game'].get_game_state()
+		await self.channel_layer.group_send(
+			self.group_name,
+			{
+				'type': 'game_update',
+				'game_state': initial
+			}
+		)
 
-    async def handle_move(self, data):
-        # Traitement des mouvements des joueurs (exemple)
-        direction = data.get('direction')
-        # Mettre à jour l'état du joueur dans le match
-        await self.update_player_position(direction)
-        # Envoyer une mise à jour à tous les autres joueurs
-        await self.send_game_state()
+	async def disconnect(self, close_code):
+		# Remove player
+		if self.match_id in _matches:
+			match = _matches[self.match_id]
+			# Clean game state
+			match['game'].remove_player(self.player_id)
+			match['players'].pop(self.player_id, None)
 
-    async def send_game_state(self):
-        # Récupérer l'état actuel du jeu (ex: position des joueurs, balle, etc.)
-        game_state = await self.get_game_state()
-        # Envoi de l'état du jeu à tous les joueurs
-        await self.channel_layer.group_send(
-            self.group_name,
-            {
-                'type': 'game_update',
-                'game_state': game_state
-            }
-        )
+			# Leave group
+			await self.channel_layer.group_discard(
+				self.group_name,
+				self.channel_name
+			)
+			# If no players left, cancel loop
+			if not match['players']:
+				if match['loop_task']:
+					match['loop_task'].cancel()
+				_matches.pop(self.match_id, None)
 
-    async def game_update(self, event):
-        # Envoi d'un message de mise à jour du jeu à ce client
-        game_state = event['game_state']
-        await self.send(text_data=json.dumps({
-            'type': 'game_update',
-            'game_state': game_state
-        }))
+	async def receive(self, text_data):
+		data = json.loads(text_data)
+		action = data.get('action')
 
-    # Méthodes utilitaires pour récupérer l'état du match et les joueurs
-    async def get_match(self, match_id):
-        # Récupérer l'instance de match depuis la base de données
-        try:
-            match = await database_sync_to_async(Match.objects.get)(id=match_id)
-            return match
-        except Match.DoesNotExist:
-            return None
+		if action == 'move':
+			# direction: 'left' or 'right'
+			dir_str = data.get('direction')
+			direction = -1 if dir_str == 'left' else 1
+			_matches[self.match_id]['game'].set_player_direction(self.player_id, direction)
 
-    async def get_player(self, player_id):
-        # Récupérer l'instance du joueur depuis la base de données
-        try:
-            player = await database_sync_to_async(UserProfile.objects.get)(id=player_id)
-            return player
-        except UserProfile.DoesNotExist:
-            return None
+		elif action == 'request_game_state':
+			# Send back current state
+			state = _matches[self.match_id]['game'].get_game_state()
+			await self.send(text_data=json.dumps({'type': 'game_update', 'game_state': state}))
 
-    async def update_player_position(self, direction):
-        # Mettre à jour la position du joueur
-        player = self.player
-        if direction == 'left':
-            player.angle -= 0.1  # Exemple de mouvement vers la gauche
-        elif direction == 'right':
-            player.angle += 0.1  # Exemple de mouvement vers la droite
-        # Mettre à jour dans la DB
-        await database_sync_to_async(player.save)()
+		elif action == 'end_game':
+			# Cancel loop and broadcast end
+			match = _matches[self.match_id]
+			if match['loop_task']:
+				match['loop_task'].cancel()
+			await self.channel_layer.group_send(
+				self.group_name,
+				{
+					'type': 'game_update',
+					'game_state': {'ended': True}
+				}
+			)
 
-    async def get_game_state(self):
-        # Exemple de méthode pour obtenir l'état du jeu actuel
-        state = {
-            'players': [
-                {
-                    'id': player.id,
-                    'angle': player.angle,
-                    'color': player.color,
-                }
-                for player in self.match.players.all()
-            ],
-            'ball': {
-                'x': self.match.ball_x,
-                'y': self.match.ball_y,
-                'angle': self.match.ball_angle,
-                'speed': self.match.ball_speed,
-            }
-        }
-        return state
+	async def game_update(self, event):
+		# Forward game state to WebSocket
+		await self.send(text_data=json.dumps({
+			'type': 'game_update',
+			'game_state': event['game_state']
+		}))
 
-    async def remove_player_from_game(self):
-        # Retirer le joueur du match
-        player = self.player
-        self.match.players.remove(player)
-        # Mettre à jour la base de données si nécessaire
-        await database_sync_to_async(self.match.save)()
-
-    async def end_game(self):
-        # Fin de la partie, mettre à jour l'état dans la base de données
-        self.match.status = 'ended'
-        await database_sync_to_async(self.match.save)()
-
-        # Informer tous les clients que la partie est terminée
-        await self.send_game_state()
+	async def _game_loop(self):
+		"""
+		Runs at ~60 FPS, updates game and broadcasts state.
+		"""
+		try:
+			while True:
+				match = _matches.get(self.match_id)
+				if not match:
+					break
+				game = match['game']
+				game.update()
+				state = game.get_game_state()
+				await self.channel_layer.group_send(
+					self.group_name,
+					{
+						'type': 'game_update',
+						'game_state': state
+					}
+				)
+				await asyncio.sleep(1/60)
+		except asyncio.CancelledError:
+			# Loop cancelled when match ends
+			pass
