@@ -104,7 +104,7 @@ async function addFriend()
 
 	const token = await checkToken();
 
-	const response = await fetch('https://localhost/api/friends/request/', 
+	const response = await fetch(`https://localhost/api/friends/request/${friendId}/`, 
 	{
 		method: 'POST', 
 		headers: 
@@ -112,7 +112,7 @@ async function addFriend()
 			'Authorization': `Bearer ${token}`, 
 			'Content-Type': 'application/json'
 	    }, 
-		body: JSON.stringify({to_user: friendId})
+		//body: JSON.stringify({}) //({to_user: friendId})
 	});
 
 	const data = await response.json();

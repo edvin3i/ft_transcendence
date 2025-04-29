@@ -19,14 +19,18 @@ class FriendsCreateRequestAPIView(generics.CreateAPIView):
         IsAuthenticated,
     ]
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["to_user_id"] = self.request.data.get("to_user_id")
-        logger.info(f"VIEW: Context['to_user_id'] = {context["to_user_id"]}")
-        return context
+    def get_serializer(self, *args, **kwargs):
+        kwargs.setdefault("data", {})
+        kwargs["data"].update({"to_user": self.kwargs["pk"]})
+        return super().get_serializer(*args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save()
+
+    # context = super().get_serializer_context()
+    # context["to_user_id"] = self.kwargs.get("pk")
+    # logger.info(f"VIEW: Context['to_user_id'] = {context["to_user_id"]}")
+    # return context
 
     # def create(self, request, *args, **kwargs):
     #     data = request.data.copy()
