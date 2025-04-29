@@ -67,3 +67,20 @@ hr
     background: linear-gradient(to right, #ff00ff, #00fff7);
     margin: 2rem 0;
 }
+
+/*
+.container
+{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+canvas
+{
+	border-radius: 50%;
+    background-color: #222;
+    border: 5px solid #fff;
+}
+*/

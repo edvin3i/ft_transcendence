@@ -1,5 +1,43 @@
 // moshpitRemote.js
 
+/*
+let canvas;
+let context;
+let centerX;
+let centerY;
+*/
+const radius = 200; // à adapter selon ton besoin
+const paddleSize = Math.PI / 6; // exemple : 30° d'arc
+
+export function playMoshpit()
+{
+	/*
+	canvas = document.getElementById('moshpitRemoteCanvas');
+	context = canvas.getContext('2d');
+	centerX = canvas.width / 2;
+	centerY = canvas.height / 2;
+	*/
+
+	const canvas = document.getElementById('moshpitRemoteCanvas');
+	const context = canvas.getContext('2d');
+	const centerX = canvas.width / 2;
+	const centerY = canvas.height / 2;
+
+	const matchId = 1;
+	const playerId = 123;
+
+	const moshpitRemote = new MoshpitRemote(matchId, playerId);
+	moshpitRemote.connect();
+
+	window.addEventListener("keydown", (e) => {
+		if (e.key === "ArrowLeft") {
+			sendAction("move", { direction: "left" });
+		} else if (e.key === "ArrowRight") {
+			sendAction("move", { direction: "right" });
+		}
+	});
+}
+
 class MoshpitRemote {
 	constructor(matchId, playerId) {
 		this.matchId = matchId;
@@ -9,7 +47,7 @@ class MoshpitRemote {
 	}
   
 	connect() {
-		const token = localStorage.getItem("access");
+		const token = localStorage.getItem("accessToken");
 		const socket = new WebSocket(`ws://${window.location.host}/ws/moshpit/?token=${token}`);
 
 		// const token = localStorage.getItem('accessToken');
@@ -72,6 +110,7 @@ class MoshpitRemote {
 	}
 }
 
+/*
 // --- DESSIN ---
 
 const canvas = document.getElementById('moshpitRemoteCanvas');
@@ -80,6 +119,7 @@ const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 const radius = 200; // à adapter selon ton besoin
 const paddleSize = Math.PI / 6; // exemple : 30° d'arc
+*/
 
 function drawBall(ball) {
 	context.beginPath();
@@ -134,6 +174,7 @@ function drawGameCircle(gameState) {
 	context.stroke();
 }
 
+/*
 // --- Exemple d'utilisation ---
 
 const matchId = 1;
@@ -161,6 +202,7 @@ window.addEventListener("keydown", (e) => {
 		sendAction("move", { direction: "right" });
 	}
 });
+*/
 
 
 /*const canvas = document.getElementById("moshpitRemoteCanvas");
