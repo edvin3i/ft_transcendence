@@ -32,6 +32,7 @@ class Match(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
     )
+    is_draw = models.BooleanField(null=True, blank=True, default=False)
     round_number = models.PositiveIntegerField(default=1)
     is_finished = models.BooleanField(default=False)
 

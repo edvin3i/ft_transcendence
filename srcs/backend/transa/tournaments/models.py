@@ -31,8 +31,12 @@ class TournamentParticipant(models.Model):
     of a specific player with a tournament.
     """
 
-    player = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE)
+    player = models.ForeignKey(
+        UserProfile, related_name="tournament_participations", on_delete=models.CASCADE
+    )
+    tournament = models.ForeignKey(
+        Tournament, related_name="participants", on_delete=models.CASCADE
+    )
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

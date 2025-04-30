@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Match
 from uprofiles.models import UserProfile
-from uprofiles.serializers import UserProfileSerializer
+from uprofiles.serializers import UserSimpleSerializer
 
 
 class MatchSerializer(serializers.ModelSerializer):
@@ -12,9 +12,9 @@ class MatchSerializer(serializers.ModelSerializer):
     It includes all fields from the Match model.
     """
 
-    player1 = UserProfileSerializer(read_only=True)
-    player2 = UserProfileSerializer(read_only=True)
-    winner = UserProfileSerializer(read_only=True)
+    player1 = UserSimpleSerializer(read_only=True)
+    player2 = UserSimpleSerializer(read_only=True)
+    winner = UserSimpleSerializer(read_only=True)
 
     player1_id = serializers.PrimaryKeyRelatedField(
         queryset=UserProfile.objects.all(), write_only=True, source="player1"

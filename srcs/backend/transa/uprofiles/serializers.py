@@ -1,8 +1,7 @@
 from urllib.parse import urlparse
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
-from rest_framework.validators import UniqueValidator
-from .models import User, UserProfile
+from uprofiles.models import User, UserProfile
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -64,9 +63,35 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     user = UserSerializer()
 
+    total_matches_played = serializers.IntegerField(read_only=True)
+    total_wins = serializers.IntegerField(read_only=True)
+    total_draws = serializers.IntegerField(read_only=True)
+    total_losses = serializers.IntegerField(read_only=True)
+    win_rate = serializers.FloatField(read_only=True)
+    total_score = serializers.IntegerField(read_only=True)
+    average_score = serializers.FloatField(read_only=True)
+    match_history = serializers.SerializerMethodField()
+    tournament_history = serializers.SerializerMethodField()
+
     class Meta:
         model = UserProfile
-        fields = ["user", "avatar", "bio", "is_2fa_enabled", "totp_secret"]
+        fields = [
+            "id",
+            "user",
+            "avatar",
+            "bio",
+            "total_matches_played",
+            "total_wins",
+            "total_draws",
+            "total_losses",
+            "win_rate",
+            "total_score",
+            "average_score",
+            "match_history",
+            "tournament_history",
+            "is_2fa_enabled",
+            "totp_secret",
+        ]
 
     def get_object(self):
         return self.request.user.userprofile
@@ -84,6 +109,18 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         return request.build_absolute_uri(avatar_url)
 
+    def get_match_history(self, obj):
+        from game.serializers import MatchSerializer
+
+        matches = obj.all_matches
+        return MatchSerializer(matches, many=True, context=self.context).data
+
+    def get_tournament_history(self, obj):
+        from tournaments.serializers import TournamentSerializer
+
+        tours = obj.all_tournaments
+        return TournamentSerializer(tours, many=True, context=self.context).data
+
     # Add custom create() for nested JSON save
     def create(self, validated_data):
         """
@@ -99,8 +136,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             The created UserProfile instance with associated User
         """
         user_data = validated_data.pop("user")
-        # if user_data is None:
-        #     raise serializers.ValidationError("User is not provided")
         user_serializer = UserSerializer()
         user_instance = user_serializer.create(user_data)
         user_profile = UserProfile.objects.create(user=user_instance, **validated_data)
@@ -140,13 +175,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
             user_instance.save()
 
-        # instance.is_2fa_enabled = validated_data.get("is_2fa_enabled", instance.is_2fa_enabled)
-        # if not instance.is_2fa_enabled:
-        #     instance.totp_secret = None
-        # if instance.is_2fa_enabled and not instance.totp_secret:
-        #     instance.totp_secret = pyotp.random_base32()
         instance.avatar = validated_data.get("avatar", instance.avatar)
         instance.bio = validated_data.get("bio", instance.bio)
         instance.save()
 
         return instance
+
+
+class UserSimpleSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username")
+
+    class Meta:
+        model = UserProfile
+        fields = ("id", "username")
