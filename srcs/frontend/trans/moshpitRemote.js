@@ -48,7 +48,7 @@ class MoshpitRemote {
   
 	connect() {
 		const token = localStorage.getItem("accessToken");
-		const socket = new WebSocket(`ws://${window.location.host}/ws/moshpit/?token=${token}`);
+		const socket = new WebSocket(`wss://${window.location.host}/ws/moshpit/?token=${token}`);
 
 		// const token = localStorage.getItem('accessToken');
 		// this.socket = new WebSocket(`ws://${window.location.host}/ws/match/${this.matchId}/?token=${token}`);

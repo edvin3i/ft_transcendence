@@ -181,7 +181,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         if room:
             room["started"] = False
             score = room["score"]
-
+            is_draw = False
             if "match" not in room or room["match"] is None:
                 await self.send(text_data=json.dumps({"type": "end"}))
                 return

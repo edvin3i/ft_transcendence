@@ -1,6 +1,7 @@
 import json
 import asyncio
 import uuid
+from urllib.parse import parse_qs
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .moshpit_logic import MoshpitGame
 
