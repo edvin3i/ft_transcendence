@@ -137,14 +137,38 @@ function openChat(room = "general") {
 			chatLog.appendChild(connectedP);
 		}
 
-		const timestamp = data.timestamp ? `<span class="text-info">[${data.timestamp}]</span>` : "";
+		const timestamp = data.timestamp ? `[${data.timestamp}]` : "";
 		const sender = data.username || "Anonymous";
 		const message = data.message;
-
+		
 		const p = document.createElement("p");
-		p.innerHTML = `${timestamp} <strong>${sender}</strong> : ${message}`;
+		
+		// Timestamp
+		const tsSpan = document.createElement("span");
+		tsSpan.classList.add("text-info");
+		tsSpan.textContent = timestamp + " ";
+		p.appendChild(tsSpan);
+		
+		// Sender
+		const senderSpan = document.createElement("strong");
+		senderSpan.textContent = sender;
+		senderSpan.style.cursor = "pointer";
+		
+		if (sender !== "SYSTEM" && sender !== localStorage.getItem("username")) {
+			senderSpan.title = "Click to DM";
+			senderSpan.addEventListener("click", () => {
+				startDirectMessage(sender);
+			});
+		}
+		p.appendChild(senderSpan);
+		
+		// Separator + message
+		const textNode = document.createTextNode(` : ${message}`);
+		p.appendChild(textNode);
+		
+		// Display
 		chatLog.appendChild(p);
-		chatLog.scrollTop = chatLog.scrollHeight;
+		chatLog.scrollTop = chatLog.scrollHeight;	
 	};
 
 	socket.onclose = function (event) {
