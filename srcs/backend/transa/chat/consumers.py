@@ -94,22 +94,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 return
 
             if message.startswith("/dm "):
-                target = message.split(" ", 1)[1]
-                usernames = sorted([self.scope["user"].username, target])
+                target_username = message.split(" ", 1)[1]
+                try:
+                    target_user = await database_sync_to_async(get_user_model().objects.get)(username=target_username)
+                except get_user_model().DoesNotExist:
+                    await self.send(text_data=json.dumps({
+                        "username": "SYSTEM",
+                        "message": f"❌ User '{target_username}' does not exist."
+                    }))
+                    return
+
+                usernames = sorted([self.scope["user"].username, target_username])
                 room_name = f"dm__{usernames[0]}__{usernames[1]}"
-                await self.channel_layer.group_send(
-                    f"user_notify_{target}",
-                    {
-                        "type": "open_dm",
-                        "room": room_name,
-                        "from": self.scope["user"].username,
-                    },
-                )
-                await self.send(text_data=json.dumps({
-                    "username": "SYSTEM",
-                    "message": f"DM room with {target} opened!"
-                }))
+
+                # ✅ Notify both users
+                for username in usernames:
+                    await self.channel_layer.group_send(
+                        f"user_notify_{username}",
+                        {
+                            "type": "open_dm",
+                            "room": room_name,
+                            "from": self.scope["user"].username,
+                        },
+                    )
                 return
+
 
             if message.startswith("/invite "):
                 target = message.split(" ", 1)[1]
