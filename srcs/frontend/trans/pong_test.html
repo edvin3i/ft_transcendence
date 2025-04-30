@@ -25,7 +25,7 @@
     }
 
 	canvas {
-  	  background-image: url('./background.png');
+  	  background-image: url('./assets/background.png');
   	  background-size: cover;
   	  border: none;
       border: 2px solid rgb(255, 255, 255);
@@ -51,49 +51,56 @@
 	</div>
 	<canvas id="pongCanvas"></canvas>
 	
-	<script>
+<script>
 		const canvas = document.getElementById("pongCanvas");
 		const ctx = canvas.getContext("2d");
 		
 ////////////////////// GAME VARIABLES ////////////////////////	
-    let gameInterval = null;
-    let timerInterval = null;
-    let secondsElapsed = 0;
-	let rallyTime = 0;
-	let rallyInterval = null;
+    let gameInterval = null; // -->
+    let timerInterval = null; //
+    let secondsElapsed = 0; //
+	let rallyTime = 0; //
+	let rallyInterval = null; //
 
-    let paddleWidth = 8;
-    let paddleHeight = 0;
-    const paddleHeightRatio = 0.25; // 20% of canvas height
-	const maxBounceAngle = Math.PI / 3; // 60 degrees
-    let ballSize = 60;
+    let paddleWidth = 120; //
+    let paddleHeight = 10; // 
+    const paddleHeightRatio = 0.25; // 20% of canvas height //
+	const maxBounceAngle = Math.PI / 3; // 60 degrees //
+    let ballSize = 60; // <--
 
     let player1Y, player2Y, ballX, ballY;
     let player1Speed, player2Speed;
     let player1Score, player2Score;
 	
-	let defaultBallSpeed = 4;
-    let ballSpeedX, ballSpeedY;
-	let speedIncrement = 0.3;
+	let defaultBallSpeed = 4; //
+    let ballSpeedX, ballSpeedY; //
+	let speedIncrement = 0.3; //
 ////////////////////// ASSETS ///////////////////////////////
-const paddleImg = new Image();
-paddleImg.src = './paddle.png';
+const paddle1Img = new Image();
+paddle1Img.src = './assets/paddle1.png';
+
+const paddle2Img = new Image();
+paddle2Img.src = './assets/paddle2.png';
+
 const ballImg = new Image();
-ballImg.src = './ball.png';
+ballImg.src = './assets/ball.png';
 /////////////////////// PAUSE VARIABLES /////////////////////
-	let gameStarted = false;
+	let gameStarted = false; // -->
     let pauseOverlay = null;
     let isPaused = false;
     let pauseTimestamp = null;
     let timerStartTimestamp = null;
     let resumeBtn = null;
     let isResuming = false;
-    let isResizing = false;
+    let isResizing = false; // <--
 ///////////////////////// AI VARIABLES ////////////////////////////////////
 	let useAI = true; // ← Set to false to play 2-player manually
 	const aiMaxSpeed = 4; // how fast the AI paddle can move
 	const aiReactionDelay = 13; // in frames
 	let aiDelayCounter = 0;
+	let aiTargetY = null;
+	let aiThinkInterval = null;
+
 ///////////////////////////////////////////////////////////////////////////
 
     const paddle1 = { x: 0, y: 0, width: paddleWidth, height: paddleHeight };
@@ -143,6 +150,9 @@ ballImg.src = './ball.png';
 
     function stopTimer() {
       clearInterval(timerInterval);
+	  clearInterval(aiThinkInterval);
+	  aiThinkInterval = null;
+
     }
 
     function resizeCanvas() {
@@ -164,6 +174,9 @@ ballImg.src = './ball.png';
 	  pauseTimestamp = Date.now();
 	  isPaused = true;
 	  showPauseOverlay(reason);
+	  clearInterval(aiThinkInterval);
+	  aiThinkInterval = null;
+
 	}
 
     
@@ -250,6 +263,34 @@ ballImg.src = './ball.png';
     
 ///////////////////////////////////////////////////
     
+	function predictBallY() {
+	  // Clone ball state
+	  let simX = ballX;
+	  let simY = ballY;
+	  let simVX = ballSpeedX;
+	  let simVY = ballSpeedY;
+
+	  // Simulate until it reaches paddle2.x
+	  while (true) {
+	    simX += simVX;
+	    simY += simVY;
+	    // Bounce off top/bottom
+	    if (simY <= 0 || simY + ballSize >= canvas.height) {
+	      simVY *= -1;
+	    }
+	    // If the ball reaches or passes AI paddle
+	    if (simVX > 0 && simX + ballSize >= paddle2.x) {
+	      break;
+	    }
+	    // If the ball goes out on the left side (player scored), just return center
+	    if (simX < 0) return canvas.height / 2;
+	  }
+	  // Return predicted center Y
+	  return simY + ballSize / 2;
+	}
+
+
+
 	function resetBallSpeed() {
 	  clearInterval(rallyInterval);
 
@@ -286,17 +327,12 @@ ballImg.src = './ball.png';
 	  if (player1Y + paddleHeight > canvas.height) player1Y = canvas.height - paddleHeight;
 
 	  // AI logic or player 2
-	  if (useAI) {
-	    aiDelayCounter++;
-	    if (aiDelayCounter >= aiReactionDelay) {
-	      aiDelayCounter = 0;
-	      const ballCenter = ballY + ballSize / 2;
-	      const paddleCenter = player2Y + paddleHeight / 2;
+	  if (useAI && aiTargetY !== null) {
+  const paddleCenter = player2Y + paddleHeight / 2;
+  const deltaY = aiTargetY - paddleCenter;
+  player2Speed = Math.sign(deltaY) * Math.min(aiMaxSpeed, Math.abs(deltaY));
+}
 
-	      const deltaY = ballCenter - paddleCenter;
-	      player2Speed = Math.sign(deltaY) * Math.min(aiMaxSpeed, Math.abs(deltaY) / 4); // some damping
-	    }
-	  }
 	  player2Y += player2Speed;
 
 	  // Clamp player2 paddle
@@ -313,9 +349,8 @@ ballImg.src = './ball.png';
 	  ctx.clearRect(0, 0, canvas.width, canvas.height);
 	  paddle2.x = canvas.width - paddleWidth;
 
-	  ctx.fillStyle = "#FFF";
-	  ctx.fillRect(paddle1.x, paddle1.y, paddle1.width, paddle1.height);
-	  ctx.fillRect(paddle2.x, paddle2.y, paddle2.width, paddle2.height);
+	  ctx.drawImage(paddle1Img, paddle1.x, paddle1.y, paddle1.width, paddle1.height);
+	  ctx.drawImage(paddle2Img, paddle2.x, paddle2.y, paddle2.width, paddle2.height);
 
 	  ctx.drawImage(ballImg, ballX, ballY, ballSize, ballSize);
 
@@ -389,6 +424,13 @@ ballImg.src = './ball.png';
       player1Score = 0;
       player2Score = 0;
       gameStarted = true;
+	  aiThinkInterval = setInterval(() => 
+	  {
+	  	if (!useAI || isPaused || !gameStarted)
+	  		return;
+        aiTargetY = predictBallY(); // updates prediction
+	  }, 
+	  	1000); // every 1000ms = 1s
 	  resetBall()
 	  startRallyTimer();
       gameLoop();
