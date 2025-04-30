@@ -198,11 +198,7 @@ async function end2FA(data, page, push)
 
 	const token = await checkToken(data);
 
-<<<<<<< HEAD
 	const response = await fetch('api/auth/2fa/confirm/', 
-=======
-	const response = await fetch('api/auth/2fa/confirm/',  
->>>>>>> aj/dm
 	{
 		method: 'POST', 
 		headers: 
