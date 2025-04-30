@@ -143,6 +143,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         "username": "SYSTEM",
                         "message": f"{action} -> {target} is done",
                     }))
+                    await self.channel_layer.group_send(
+                        f"user_notify_{target}",
+                        {
+                            "type": "chat_message",
+                            "username": "SYSTEM",
+                            "message": f"👋 {user.username} sent you a friend request!",
+                            "timestamp": datetime.now().strftime("%H:%M:%S"),
+                        }
+                    )
                 except Exception as e:
                     await self.send(text_data=json.dumps({
                         "username": "SYSTEM",

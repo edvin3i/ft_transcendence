@@ -43,7 +43,7 @@ def friendship_action(me, target_username, action):
 @database_sync_to_async
 def is_blocked(from_user, sender_username):
     """
-    Checks the user is blocked
+    Checking the user is blocked
     reurns True or False
     """
     user = get_user_model()
@@ -60,7 +60,7 @@ def is_blocked(from_user, sender_username):
 @database_sync_to_async
 def are_friends(user1, user2_name):
     """
-    Checks the users are friends
+    Checking the users are friends
     reurns True or False
     """
     user = get_user_model()
