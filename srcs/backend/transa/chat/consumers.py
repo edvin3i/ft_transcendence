@@ -10,10 +10,8 @@ from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from datetime import datetime
 
-
 logger = logging.getLogger(__name__)
 redis_client = redis.Redis(host="redis", port=6379, db=0, decode_responses=True)
-
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def setup(self):
@@ -28,9 +26,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             try:
                 validated_token = AccessToken(token)
                 user_id = validated_token["user_id"]
-                user = await database_sync_to_async(get_user_model().objects.get)(
-                    id=user_id,
-                )
+                user = await database_sync_to_async(get_user_model().objects.get)(id=user_id)
                 self.scope["user"] = user
                 await redis_client.set(f"user_online:{user.id}", "1", ex=30)
                 logger.info(f"[🔐 JWT AUTH] Connected user: {user.username}")
@@ -42,16 +38,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             await self.setup()
 
+            # DM security check
+            if self.room_name.startswith("dm__"):
+                parts = self.room_name.split("__")
+                if len(parts) != 3:
+                    logger.warning("Invalid DM room format")
+                    await self.close()
+                    return
+                _, user1, user2 = parts
+                current_user = self.scope["user"].username
+                if current_user not in {user1, user2}:
+                    logger.warning(f"Unauthorized DM access: {current_user} not in room {self.room_name}")
+                    await self.close()
+                    return
+
             logger.info(f"[🔌 CONNECT] User connecting to room: {self.room_name}")
 
             await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+            await self.channel_layer.group_add(f"user_notify_{self.scope['user'].username}", self.channel_name)
             await self.accept()
 
             logger.info(f"[✅ CONNECTED] Joined group: {self.room_group_name}")
 
-            history_raw = await redis_client.lrange(
-                f"chat_room:{self.room_name}", 0, -1
-            )
+            history_raw = await redis_client.lrange(f"chat_room:{self.room_name}", 0, -1)
             history = [json.loads(m) for m in history_raw]
 
             for i, msg in enumerate(history):
@@ -59,9 +68,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     msg["history_end"] = True
                 await self.send(text_data=json.dumps(msg))
 
-            logger.info(
-                f"[📜 HISTORY] Found {len(history)} messages in {self.room_name}"
-            )
+            logger.info(f"[📜 HISTORY] Found {len(history)} messages in {self.room_name}")
 
         except Exception:
             logger.exception("[❌ ERROR] connect() failed")
@@ -71,15 +78,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.setup()
         user = self.scope["user"]
         await redis_client.delete(f"user_online:{user.id}")
-
-        if hasattr(self, "roo_group_name"):
-            await self.channel_layer.group_discard(
-                self.room_group_name, self.channel_name
-            )
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        await self.channel_layer.group_discard(f"user_notify_{user.username}", self.channel_name)
         logger.info(f"[👋 DISCONNECT] Leaving room: {self.room_group_name}")
 
     async def receive(self, text_data):
-
         logger.debug(f"[📩 RECEIVE] Raw data: {text_data}")
         try:
             data = json.loads(text_data)
@@ -90,17 +93,33 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await redis_client.set(f"user_online:{user.id}", "1", ex=30)
                 return
 
-            await redis_client.rpush(
-                f"chat_room:{self.room_name}",
-                json.dumps(
-                    {
-                        "username": username,
-                        "message": message,
-                        "timestamp": datetime.now().strftime("%H:%M:%S"),
-                    }
-                ),
-            )
-            await redis_client.ltrim(f"chat_room:{self.room_name}", -50, -1)
+            if message.startswith("/dm "):
+                target_username = message.split(" ", 1)[1]
+                try:
+                    target_user = await database_sync_to_async(get_user_model().objects.get)(username=target_username)
+                except get_user_model().DoesNotExist:
+                    await self.send(text_data=json.dumps({
+                        "username": "SYSTEM",
+                        "message": f"❌ User '{target_username}' does not exist."
+                    }))
+                    return
+
+                usernames = sorted([self.scope["user"].username, target_username])
+                room_name = f"dm__{usernames[0]}__{usernames[1]}"
+
+                # ✅ Notify both users
+                for username in usernames:
+                    await self.channel_layer.group_send(
+                        f"user_notify_{username}",
+                        {
+                            "type": "open_dm",
+                            "room": room_name,
+                            "from": self.scope["user"].username,
+                        },
+                    )
+                return
+
+
             if message.startswith("/invite "):
                 target = message.split(" ", 1)[1]
                 await self.channel_layer.group_send(
@@ -118,27 +137,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 try:
                     _, action, target = message.split(maxsplit=2)
                     if action not in {"add", "accept", "reject", "block", "unblock"}:
-                        logger.info("Wrong friend command")
                         raise ValidationError("Wrong command")
                     await friendship_action(user, target, action)
-                    await self.send(
-                        text_data=json.dumps(
-                            {
-                                "username": "SYSTEM",
-                                "message": f"{action} -> {target} is done",
-                            }
-                        )
-                    )
+                    await self.send(text_data=json.dumps({
+                        "username": "SYSTEM",
+                        "message": f"{action} -> {target} is done",
+                    }))
                 except Exception as e:
-                    await self.send(
-                        text_data=json.dumps(
-                            {
-                                "username": "SYSTEM",
-                                "message": f"{e}",
-                            }
-                        )
-                    )
+                    await self.send(text_data=json.dumps({
+                        "username": "SYSTEM",
+                        "message": str(e),
+                    }))
                 return
+
+            await redis_client.rpush(
+                f"chat_room:{self.room_name}",
+                json.dumps({
+                    "username": username,
+                    "message": message,
+                    "timestamp": datetime.now().strftime("%H:%M:%S"),
+                })
+            )
+            await redis_client.ltrim(f"chat_room:{self.room_name}", -50, -1)
 
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -147,7 +167,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "username": username,
                     "message": message,
                     "timestamp": datetime.now().strftime("%H:%M:%S"),
-                },
+                }
             )
 
         except Exception as e:
@@ -158,18 +178,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = event["message"]
         user = self.scope["user"]
 
-        if sender != "SYSTEM":
-            if await is_blocked(user, sender):
-                logger.info(f"[🙈 BLOCKED MESSAGE] {sender} -> {user.username}")
-                return
+        if sender != "SYSTEM" and await is_blocked(user, sender):
+            logger.info(f"[🙈 BLOCKED MESSAGE] {sender} -> {user.username}")
+            return
 
-        logger.debug(f"[📡 BROADCAST] {sender}: {message}")
-        await self.send(
-            text_data=json.dumps(
-                {
-                    "username": sender,
-                    "message": message,
-                    "timestamp": event.get("timestamp"),
-                }
-            )
-        )
+        await self.send(text_data=json.dumps({
+            "username": sender,
+            "message": message,
+            "timestamp": event.get("timestamp"),
+        }))
+
+    async def open_dm(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "open_dm",
+            "room": event["room"],
+            "from": event["from"]
+        }))

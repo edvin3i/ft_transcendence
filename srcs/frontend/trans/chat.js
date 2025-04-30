@@ -6,7 +6,6 @@ function chatPage()
 {
 	return `
 		<div class="d-flex justify-content-between align-items-center px-4" style="min-height: 100px;">
-			<!-- Chat Button à gauche -->
 			<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#chatBox" aria-expanded="false" aria-controls="chatBox">Chat 💬</button>
 		</div>
 		<div class="collapse" id="chatBox">
@@ -35,11 +34,9 @@ function chatPage()
 
 export function showChat()
 {
+	openRooms.clear(); // ✅ état vierge à chaque appel
 	document.getElementById('chat').innerHTML = chatPage();
-
 	addChatEventListeners();
-
-	openChat();
 }
 
 export function closeChat()
@@ -48,18 +45,54 @@ export function closeChat()
 		socket.close();
 }
 
+function getPrivateRoomName(userA, userB) {
+	const sorted = [userA, userB].sort();
+	return `dm__${sorted[0]}__${sorted[1]}`;
+}
+
+function startDirectMessage(targetUsername) {
+	const myUsername = localStorage.getItem("username");
+	if (!myUsername) return alert("Username not found in localStorage");
+	const room = getPrivateRoomName(myUsername, targetUsername);
+	switchRoom(room);
+}
+
+function addChatEventListeners()
+{
+	document.getElementById("join-room").addEventListener("click", () => {
+		const roomInput = document.getElementById("room-name");
+		const room = roomInput.value.trim();
+	
+		if (!room) return;
+	
+		if (room.startsWith("dm__")) {
+			alert("❌ You cannot join a private DM room manually.");
+			roomInput.value = "";
+			return;
+		}
+	
+		switchRoom(room);
+		roomInput.value = "";
+	});	
+
+	document.getElementById("room-name").addEventListener("keypress", (e) => {
+		if (e.key === "Enter") {
+			document.getElementById("join-room").click();
+		}
+	});
+
+	openChat(); // 👈 Lancement ici, une fois que tout est prêt
+}
+
 function openChat(room = "general") {
-
-//	console.log(openRooms);
-// different on first and second log in, may be the reason of the bug, also check global variables
 	let receivedHistory = false;
-
 	const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 	const token = localStorage.getItem("accessToken");
-
 	const wsUrl = `${protocol}://${window.location.host}/ws/chat/${room}/?token=${token}`;
 
-	createChatTab(room);
+	if (!openRooms.has(room)) {
+		createChatTab(room);
+	}	
 	document.querySelectorAll("#chat-tabs button").forEach((btn) => {
 		btn.classList.remove("active");
 		if (btn.dataset.room === room) {
@@ -67,7 +100,7 @@ function openChat(room = "general") {
 		}
 	});
 	currentRoom = room;
-	
+
 	if (socket) {
 		socket.onopen = null;
 		socket.onmessage = null;
@@ -76,11 +109,10 @@ function openChat(room = "general") {
 	}
 
 	document.getElementById("current-room-name").textContent = room;
-	document.getElementById("chat-log").innerHTML = ""; // reset
+	document.getElementById("chat-log").innerHTML = "";
 
 	console.log("💬 Connecting to:", wsUrl);
 	socket = new WebSocket(wsUrl);
-	receivedHistory = false;
 
 	socket.onopen = () => {
 		console.log("✅ WebSocket connected:", wsUrl);
@@ -88,37 +120,67 @@ function openChat(room = "general") {
 
 	socket.onmessage = function (e) {
 		const data = JSON.parse(e.data);
+
+		if (data.type === "open_dm") {
+			const room = data.room;
+			if (!openRooms.has(room)) {
+				switchRoom(room);
+			}
+			return;
+		}
+
 		const chatLog = document.getElementById("chat-log");
-	
-		// Detect first normal message (non-historique)
+
 		if (!receivedHistory) {
 			receivedHistory = true;
-	
-			// ✅ Affiche "connected" après les messages historiques
 			const connectedP = document.createElement("p");
 			connectedP.classList.add("fw-bold", "text-success", "mt-2");
 			connectedP.style.fontStyle = "italic";
 			connectedP.textContent = "✅ You are connected to the chat.";
 			chatLog.appendChild(connectedP);
 		}
-	
-		const timestamp = data.timestamp ? `<span class="text-info">[${data.timestamp}]</span>` : "";
+
+		const timestamp = data.timestamp ? `[${data.timestamp}]` : "";
 		const sender = data.username || "Anonymous";
 		const message = data.message;
-	
+		
 		const p = document.createElement("p");
-		p.innerHTML = `${timestamp} <strong>${sender}</strong> : ${message}`;
+		
+		// Timestamp
+		const tsSpan = document.createElement("span");
+		tsSpan.classList.add("text-info");
+		tsSpan.textContent = timestamp + " ";
+		p.appendChild(tsSpan);
+		
+		// Sender
+		const senderSpan = document.createElement("strong");
+		senderSpan.textContent = sender;
+		senderSpan.style.cursor = "pointer";
+		
+		if (sender !== "SYSTEM" && sender !== localStorage.getItem("username")) {
+			senderSpan.title = "Click to DM";
+			senderSpan.addEventListener("click", () => {
+				const input = document.getElementById("chat-message-input");
+				if (input) {
+					socket.send(JSON.stringify({ message: `/dm ${sender}` }));
+				}
+			});
+		}
+		p.appendChild(senderSpan);
+		
+		// Separator + message
+		const textNode = document.createTextNode(` : ${message}`);
+		p.appendChild(textNode);
+		
+		// Display
 		chatLog.appendChild(p);
-		chatLog.scrollTop = chatLog.scrollHeight;
+		chatLog.scrollTop = chatLog.scrollHeight;	
 	};
-	
 
 	socket.onclose = function (event) {
 		console.warn("❌ WebSocket closed:", event);
-
 		if (!event.wasClean && event.code === 1006) {
 			console.warn("🛑 Likely invalid/expired token");
-		//	handleLogout(); // was it a function from profile.js?
 		}
 	};
 
@@ -133,29 +195,6 @@ function openChat(room = "general") {
 	document.getElementById("chat-message-input").addEventListener("keypress", (e) => {
 		if (e.key === "Enter") {
 			document.getElementById("send").click();
-		}
-	});
-}
-
-//document.addEventListener("DOMContentLoaded", addChatEventListeners);
-		
-function addChatEventListeners()
-{
-//	updateUIWithUser();
-
-	document.getElementById("join-room").addEventListener("click", () => {
-		const roomInput = document.getElementById("room-name");
-		const room = roomInput.value.trim();
-		console.log("🔁 Room switch requested to:", room);
-
-		if (room) {
-			switchRoom(room);
-			document.getElementById("room-name").value = "";
-		}
-	});
-	document.getElementById("room-name").addEventListener("keypress", (e) => {
-		if (e.key === "Enter") {
-			document.getElementById("join-room").click(); // 👈 Simule le clic
 		}
 	});
 }
@@ -176,14 +215,13 @@ function createChatTab(room) {
 
 	tab.appendChild(roomBtn);
 
-	// ❌ Ajouter le bouton "fermer" (sauf pour general)
 	if (room !== "general") {
 		const closeBtn = document.createElement("button");
 		closeBtn.innerHTML = "&times;";
 		closeBtn.className = "btn btn-sm btn-light ms-2";
 		closeBtn.style.padding = "0 6px";
 		closeBtn.onclick = (e) => {
-			e.stopPropagation(); // évite de switcher de room en même temps
+			e.stopPropagation();
 			closeChatTab(room);
 		};
 		tab.appendChild(closeBtn);
@@ -197,29 +235,22 @@ function createChatTab(room) {
 }
 
 function closeChatTab(room) {
-	// Supprimer visuellement l'onglet
 	const tab = document.querySelector(`#chat-tabs [data-room="${room}"]`);
 	if (tab) tab.remove();
-
 	openRooms.delete(room);
-
-	// Si on ferme la room active, switcher vers "general"
 	if (currentRoom === room) {
 		switchRoom("general");
 	}
 }
 
-
 function switchRoom(room) {
 	if (room === currentRoom) return;
-
 	document.querySelectorAll("#chat-tabs .nav-link").forEach((tab) => {
 		tab.classList.remove("active", "bg-primary", "text-white");
 		if (tab.dataset.room === room) {
 			tab.classList.add("active", "bg-primary", "text-white");
 		}
 	});
-	
 	currentRoom = room;
 	openChat(room);
 }
