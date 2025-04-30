@@ -57,15 +57,9 @@ async function changeUserInformation()
 	const username = document.getElementById('username').value;
 	const email = document.getElementById('email').value;
 
+	/*
 	// waiting for Vanya's backend change START
-	if (username === localStorage.getItem('username') && 
-			email === localStorage.getItem('email'))
-	{
-		await setUserInformation();
-		openProfilePage();
-		return;
-	}
-	else if (username === localStorage.getItem('username'))
+	if (username === localStorage.getItem('username'))
 	{
 		const id = localStorage.getItem('id');
 
@@ -108,51 +102,8 @@ async function changeUserInformation()
 		}
 		return;
 	}
-	else if (email === localStorage.getItem('email'))
-	{
-		const id = localStorage.getItem('id');
-
-		const token = await checkToken();
-
-		const response = await 
-			fetch(`api/users/update/${id}/`, 
-		{
-			method: 'PATCH',
-			headers: 
-			{
-				'Authorization': `Bearer ${token}`,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({user: 
-			{
-				username: username
-			}})
-		});
-
-		const data = await response.json();
-
-		if (response.ok)
-		{
-			await setUserInformation();
-			showNavigationHeader();
-			openProfilePage();
-		}
-		else if (data.user.username)
-		{
-			document.getElementById('username').focus();
-			document.getElementById('userInformationChangeResult').innerHTML = 
-				`The usename '${username}' is already in use`;
-		}
-		else
-		{
-			document.getElementById('username').blur();
-			document.getElementById('email').blur();
-			document.getElementById('userInformationChangeResult').innerHTML = 
-				"An error occurred while updating your information";
-		}
-		return;
-	}
 	// waiting for Vanya's backend change END
+	*/
 
 	const id = localStorage.getItem('id');
 
