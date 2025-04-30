@@ -36,11 +36,22 @@ export function showChat()
 	addChatEventListeners();
 }
 
-
 export function closeChat()
 {
 	if (socket)
 		socket.close();
+}
+
+function getPrivateRoomName(userA, userB) {
+	const sorted = [userA, userB].sort();
+	return `dm__${sorted[0]}__${sorted[1]}`;
+}
+
+function startDirectMessage(targetUsername) {
+	const myUsername = localStorage.getItem("username");
+	if (!myUsername) return alert("Username not found in localStorage");
+	const room = getPrivateRoomName(myUsername, targetUsername);
+	switchRoom(room);
 }
 
 function addChatEventListeners()
@@ -99,6 +110,15 @@ function openChat(room = "general") {
 
 	socket.onmessage = function (e) {
 		const data = JSON.parse(e.data);
+
+		if (data.type === "open_dm") {
+			const room = data.room;
+			if (!openRooms.has(room)) {
+				switchRoom(room);
+			}
+			return;
+		}
+
 		const chatLog = document.getElementById("chat-log");
 
 		if (!receivedHistory) {
