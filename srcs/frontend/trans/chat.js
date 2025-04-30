@@ -157,7 +157,10 @@ function openChat(room = "general") {
 		if (sender !== "SYSTEM" && sender !== localStorage.getItem("username")) {
 			senderSpan.title = "Click to DM";
 			senderSpan.addEventListener("click", () => {
-				startDirectMessage(sender);
+				const input = document.getElementById("chat-message-input");
+				if (input) {
+					socket.send(JSON.stringify({ message: `/dm ${sender}` }));
+				}
 			});
 		}
 		p.appendChild(senderSpan);
