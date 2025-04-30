@@ -16,9 +16,10 @@ def create_match(player_1, player_2):
 
 
 @database_sync_to_async
-def finish_match(match, score_p1, score_p2, winner_id):
+def finish_match(match, score_p1, score_p2, winner_id, is_draw):
     match.score_p1 = score_p1
     match.score_p2 = score_p2
     match.winner_id = winner_id
+    match.is_draw = is_draw
     match.is_finished = True
     match.save()

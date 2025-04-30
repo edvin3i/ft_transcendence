@@ -191,7 +191,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                 winner = room["match"].player2_id
             else:
                 winner = None
-            await finish_match(room["match"], score[0], score[1], winner)
+                is_draw = True
+            await finish_match(room["match"], score[0], score[1], winner, is_draw)
 
         await self.send(text_data=json.dumps({"type": "end"}))
 
