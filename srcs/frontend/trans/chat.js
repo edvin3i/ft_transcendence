@@ -59,11 +59,18 @@ function addChatEventListeners()
 	document.getElementById("join-room").addEventListener("click", () => {
 		const roomInput = document.getElementById("room-name");
 		const room = roomInput.value.trim();
-		if (room) {
-			switchRoom(room);
+	
+		if (!room) return;
+	
+		if (room.startsWith("dm__")) {
+			alert("❌ You cannot join a private DM room manually.");
 			roomInput.value = "";
+			return;
 		}
-	});
+	
+		switchRoom(room);
+		roomInput.value = "";
+	});	
 
 	document.getElementById("room-name").addEventListener("keypress", (e) => {
 		if (e.key === "Enter") {
