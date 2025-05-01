@@ -24,12 +24,12 @@ urlpatterns = [
         name="user_delete",
     ),
     path(
-        "profile/<int:user_id>/",
+        "<int:user_id>/",
         views.UserSelfProfileAPIView.as_view(),
         name="user_detail_profile",
     ),
     path(
-        "profile/me/",
+        "me/",
         views.UserProfileSelfAPIView.as_view(),
         name="me",
     ),
