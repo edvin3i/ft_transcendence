@@ -5,7 +5,7 @@ from friends.permissions import IsSender, IsReciever, IsParticipant
 from django.utils import timezone
 from django.db.models import Q
 from friends.models import Friendship
-from friends.serializers import FriendshipSerializer, FriendsRequestCreateSerializer
+from friends.serializers import FriendsSerializer, FriendshipSerializer, FriendsRequestCreateSerializer
 
 import logging
 
@@ -158,16 +158,28 @@ class FriendsAllListAPIView(generics.ListAPIView):
     all
     """
 
-    serializer_class = FriendshipSerializer
+    serializer_class = FriendsSerializer
     permission_classes = [
         IsAuthenticated,
     ]
 
     def get_queryset(self):
-        return Friendship.objects.filter(
+        user = self.request.user
+
+        friendships = Friendship.objects.filter(
             Q(from_user=self.request.user) | Q(to_user=self.request.user),
             status="accepted",
-        )
+        ).select_related("from_user", "to_user")
+
+        friends_ids = []
+        for f in friendships:
+            if f.from_user == user:
+                friends_ids.append(f.to_user)
+            else:
+                friends_ids.append(f.from_user)
+
+        return friends_ids
+
 
 
 class FriendsOnlineListAPIView(generics.ListAPIView):
