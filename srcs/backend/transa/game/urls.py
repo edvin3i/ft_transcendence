@@ -28,4 +28,9 @@ urlpatterns = [
         views.MatchDeleteAPIView.as_view(),
         name="game_delete",
     ),
+    path(
+        "report/<int:pk>/",
+        views.MatchReportAPIView.as_view(),
+        name="match_report",
+    ),
 ]
