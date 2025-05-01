@@ -145,6 +145,10 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
     // LOCAL MODE - ENRICHED PONG
     // -------------------------
   
+    let isPaused = false;
+    let pauseOverlay = null;
+    let isResuming = false;
+
     canvas.width = window.innerWidth * 0.95;
     canvas.height = window.innerHeight * 0.95;
   
@@ -197,6 +201,85 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
       });
     }
   
+    function pauseGame(reason = "Paused") {
+      if (isPaused || isResuming || gameEnded) return;
+      isPaused = true;
+      clearInterval(aiThinkInterval);
+      aiThinkInterval = null;
+      clearInterval(rallyInterval);
+      rallyInterval = null;
+      showPauseOverlay(reason);
+    }
+    
+    function resumeGame() {
+      if (!isPaused || isResuming || gameEnded) return;
+      isResuming = true;
+    
+      let countdown = 3;
+      showPauseOverlay(`Resuming in ${countdown}...`, false);
+    
+      const countdownInterval = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+          showPauseOverlay(`Resuming in ${countdown}...`, false);
+        } else {
+          clearInterval(countdownInterval);
+          hidePauseOverlay();
+          isPaused = false;
+          isResuming = false;
+          startRallyTimer();
+          aiThinkInterval = setInterval(() => {
+            if (!useAI || gameEnded || isPaused) return;
+            aiTargetY = predictBallY();
+          }, 1000);
+          gameLoop();
+        }
+      }, 1000);
+    }
+    
+    function showPauseOverlay(message, showResume = true) {
+      if (!pauseOverlay) {
+        pauseOverlay = document.createElement("div");
+        pauseOverlay.style.position = "absolute";
+        pauseOverlay.style.top = "50%";
+        pauseOverlay.style.left = "50%";
+        pauseOverlay.style.transform = "translate(-50%, -50%)";
+        pauseOverlay.style.fontSize = "32px";
+        pauseOverlay.style.fontWeight = "bold";
+        pauseOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+        pauseOverlay.style.color = "white";
+        pauseOverlay.style.padding = "30px 50px";
+        pauseOverlay.style.borderRadius = "12px";
+        pauseOverlay.style.zIndex = "100";
+        pauseOverlay.style.textAlign = "center";
+    
+        const text = document.createElement("div");
+        text.id = "pauseText";
+        pauseOverlay.appendChild(text);
+    
+        const resumeBtn = document.createElement("button");
+        resumeBtn.textContent = "Resume";
+        resumeBtn.style.marginTop = "20px";
+        resumeBtn.style.padding = "10px 20px";
+        resumeBtn.style.fontSize = "20px";
+        resumeBtn.style.cursor = "pointer";
+        resumeBtn.addEventListener("click", resumeGame);
+        resumeBtn.id = "resumeBtn";
+    
+        pauseOverlay.appendChild(resumeBtn);
+        document.body.appendChild(pauseOverlay);
+      }
+    
+      document.getElementById("pauseText").textContent = message;
+      document.getElementById("resumeBtn").style.display = showResume ? "block" : "none";
+      pauseOverlay.style.display = "block";
+    }
+    
+    function hidePauseOverlay() {
+      if (pauseOverlay) pauseOverlay.style.display = "none";
+    }
+    
+
     function predictBallY() {
       let simX = ballX, simY = ballY, simVX = ballSpeedX, simVY = ballSpeedY;
       while (true) {
@@ -263,6 +346,31 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
       ctx.fillText(player2Score, 3 * canvas.width / 4.5, 60);
     }
   
+    function showVictoryMessage(winner) {
+      const overlay = document.createElement("div");
+      overlay.id = "victoryMessage";
+      overlay.style.position = "absolute";
+      overlay.style.top = "50%";
+      overlay.style.left = "50%";
+      overlay.style.transform = "translate(-50%, -50%)";
+      overlay.style.background = "rgba(0, 0, 0, 0.85)";
+      overlay.style.padding = "30px 50px";
+      overlay.style.borderRadius = "15px";
+      overlay.style.color = "white";
+      overlay.style.fontSize = "28px";
+      overlay.style.fontWeight = "bold";
+      overlay.style.zIndex = "100";
+      overlay.innerText = `🎉 ${winner} wins! 🎉`;
+    
+      const frameContainer = document.getElementById("frameContainer") || document.body;
+      frameContainer.appendChild(overlay);
+    
+      setTimeout(() => {
+        overlay.remove();
+      }, 4000);
+    }
+    
+
     function moveBall() {
       ballX += ballSpeedX;
       ballY += ballSpeedY;
@@ -293,6 +401,7 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
         player2Score++;
         if (player2Score === 2) {
           gameEnded = true;
+          showVictoryMessage("Player 2");
           if (typeof onGameEnd === "function") onGameEnd("right");
           return;
         }
@@ -303,6 +412,7 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
         player1Score++;
         if (player1Score === 2) {
           gameEnded = true;
+          showVictoryMessage("Player 1");
           if (typeof onGameEnd === "function") onGameEnd("left");
           return;
         }
@@ -311,7 +421,7 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
     }
   
     function gameLoop() {
-      if (gameEnded) return;
+      if (gameEnded || isPaused) return;
       movePaddles();
       moveBall();
       draw();
@@ -327,27 +437,32 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
     }
   
     function startGame() {
+      // ✅ Stop all previous intervals
+      clearInterval(rallyInterval);
+      clearInterval(aiThinkInterval);
+      rallyInterval = null;
+      aiThinkInterval = null;
+    
       player1Score = 0;
       player2Score = 0;
       gameEnded = false;
+    
       paddleHeight = canvas.height * paddleHeightRatio;
-  
       player1Y = canvas.height / 2 - paddleHeight / 2;
       player2Y = canvas.height / 2 - paddleHeight / 2;
-  
       paddle1.height = paddleHeight;
       paddle2.height = paddleHeight;
-  
+    
       resetBall();
-  
-      if (aiThinkInterval) clearInterval(aiThinkInterval);
+    
       aiThinkInterval = setInterval(() => {
-        if (!useAI || gameEnded) return;
+        if (!useAI || gameEnded || isPaused) return;
         aiTargetY = predictBallY();
       }, 1000);
-  
+    
       gameLoop();
     }
+    
   
     // Launch the game initially
     startGame();
@@ -365,6 +480,16 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
     document.addEventListener("keyup", (e) => {
       if (e.key === "w" || e.key === "s") player1Speed = 0;
       if (!useAI && (e.key === "ArrowUp" || e.key === "ArrowDown")) player2Speed = 0;
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (isPaused) {
+          resumeGame();
+        } else {
+          pauseGame("Paused");
+        }
+      }
     });
   }
 }
