@@ -105,10 +105,9 @@ async function changeUserInformation()
 	// waiting for Vanya's backend change END
 	*/
 
-	const id = localStorage.getItem('id');
 	const token = await checkToken();
 
-	const response = await fetch(`api/users/update/${id}/`, 
+	const response = await fetch(`api/users/me/update/`, 
 	{
 		method: 'PATCH',
 		headers: 
@@ -163,7 +162,7 @@ export async function setUserInformation()
 {
 	const token = await checkToken();
 
-	const response = await fetch('api/users/profile/me', 
+	const response = await fetch('api/users/me', 
 	{
 		method: 'GET',
 		headers: 
@@ -188,10 +187,9 @@ export async function uploadAvatar()
 	const formData = new FormData();
 	formData.append('file', fileInput.files[0]);
 
-	const id = localStorage.getItem('id');
 	const token = await checkToken();
 
-	const response = await fetch(`api/users/update/${id}/`, 
+	const response = await fetch(`api/users/me/update/`, 
 	{
 		method: 'PATCH', 
 		headers: {'Authorization': `Bearer ${token}`}, 

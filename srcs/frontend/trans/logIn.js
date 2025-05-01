@@ -129,7 +129,7 @@ async function check2FAStatus(data, page, push)
 {
 	const token = await checkToken(data);
 
-	const response = await fetch('api/users/profile/me', 
+	const response = await fetch('api/users/me', 
 	{
 		method: 'GET', 
 		headers: 
