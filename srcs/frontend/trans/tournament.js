@@ -124,7 +124,11 @@ function placeWinner(winner, player1, player2) {
 }
 
 function showNextOrRestartButton() {
-	const isFinalRound = currentRoundIndex >= bracketStructure.length;
+	const isFinalRound = (
+		currentRoundIndex >= bracketStructure.length ||
+		(currentRoundIndex === bracketStructure.length - 1 &&
+		currentMatchIndex >= bracketStructure[bracketStructure.length - 1].length)
+	);	
 	if (!isFinalRound) {
 		document.getElementById("nextMatchBtn").style.display = "inline-block";
 	}
@@ -191,4 +195,4 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 });
 
-//test3
+//test4
