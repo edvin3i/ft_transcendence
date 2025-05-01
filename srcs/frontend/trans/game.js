@@ -101,6 +101,7 @@ function tournamentPage() {
 			<div id="registration">
 				<input type="text" id="playerAlias" placeholder="Enter alias">
 				<button id="addPlayerBtn">Add</button>
+				<p id="playerCount" style="margin: 0; color: white;">0 / 8 players maximum</p>
 				<ul id="playerList" style="list-style: none; padding: 0;"></ul>
 				<button id="startTournamentBtn">Start Tournament</button>
 			</div>
@@ -129,8 +130,9 @@ function tournamentPage() {
 // 🧩 Launch tournament screen and wire event listeners dynamically
 function openTournamentPage() {
 	document.getElementById('app').innerHTML = tournamentPage();
-
 	import('./tournament.js').then(mod => {
+		mod.resetTournament(); // 🧼 clean any previous state
+
 		const addBtn = document.getElementById('addPlayerBtn');
 		const input = document.getElementById('playerAlias');
 		const startBtn = document.getElementById('startTournamentBtn');
@@ -141,19 +143,20 @@ function openTournamentPage() {
 		startBtn.addEventListener('click', mod.startTournament);
 
 		input.addEventListener('keydown', (e) => {
-			if (e.key === 'Enter') addBtn.click(); // Enable Enter to add player
+			if (e.key === 'Enter') addBtn.click();
 		});
 
 		nextBtn.addEventListener('click', () => {
 			nextBtn.style.display = 'none';
-			mod.startMatch(); // Launch next match manually
+			mod.startMatch();
 		});
 
 		restartBtn.addEventListener('click', () => {
-			mod.resetTournament(); // Restart with cleared state
+			mod.resetTournament();
 		});
 	});
 }
+
 
 // 👾 Display Moshpit canvas 
 function moshpitPage() {

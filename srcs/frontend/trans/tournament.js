@@ -9,24 +9,42 @@ let bracketStructure = [];         // 2D array representing rounds and matches
 // Render the list of player names to the DOM
 function renderPlayerList() {
 	const list = document.getElementById("playerList");
+	const counter = document.getElementById("playerCount");
 	list.innerHTML = "";
 	players.forEach(p => {
 		const li = document.createElement("li");
 		li.textContent = p;
 		list.appendChild(li);
 	});
+
+	if (counter) {
+		counter.textContent = `${players.length} / 8 players maximum`;
+	}
 }
+
 
 // Add a player name from input field and update the display
 export function addPlayer() {
 	const input = document.getElementById("playerAlias");
 	const name = input.value.trim();
-	if (name && !players.includes(name)) {
-		players.push(name);
-		renderPlayerList();
-		input.value = "";
+
+	if (!name) return;
+
+	if (players.includes(name)) {
+		alert("This player is already in the tournament.");
+		return;
 	}
+
+	if (players.length >= 8) {
+		alert("Maximum of 8 players reached.");
+		return;
+	}
+
+	players.push(name);
+	renderPlayerList();
+	input.value = "";
 }
+
 
 // Initialize a new tournament and generate the bracket
 export function startTournament() {
@@ -245,3 +263,11 @@ export function resetTournament() {
 	document.getElementById("nextMatchBtn").style.display = "none";
 	document.getElementById("restartBtn").style.display = "none";
 }
+
+
+window.addEventListener("popstate", () => {
+	const newPage = window.history.state?.page;
+	if (newPage !== "tournamentPage") {
+		resetTournament();
+	}
+});
