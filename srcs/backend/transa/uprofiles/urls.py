@@ -24,7 +24,7 @@ urlpatterns = [
         name="user_delete",
     ),
     path(
-        "<int:user_id>/",
+        "<int:pk>/",
         views.UserDetailProfileAPIView.as_view(),
         name="user_detail_profile",
     ),
