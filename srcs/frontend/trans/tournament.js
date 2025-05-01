@@ -6,6 +6,7 @@ function tournamentPage()
 			<div id="registration">
 				<input type="text" id="playerAlias" placeholder="Enter alias">
 				<button id="addPlayerBtn">Add</button>
+				<p id="playerCount" style="margin: 0; color: white;">0 / 8 players maximum</p>
 				<ul id="playerList" style="list-style: none; padding: 0;"></ul>
 				<button id="startTournamentBtn">Start Tournament</button>
 			</div>
@@ -19,15 +20,19 @@ function tournamentPage()
 			
 			<p><button id="restartBtn" style="display: none;">✨ New Tournament</button></p>
 
-			<div id="tournamentHistory" class="text-left" style="margin-top: 30px;">
-				<h3 style="color: #fff;">📜 Tournament History</h3>
-				<ul id="historyList" style="list-style: none; padding-left: 0; color: #ccc;"></ul>
-			</div>
+			<!-- START: Hidden results section -->
+			<div id="tournamentResults" style="display: none;">
+				<div id="tournamentHistory" class="text-left" style="margin-top: 30px;">
+					<h3 style="color: #fff;">📜 Tournament History</h3>
+					<ul id="historyList" style="list-style: none; padding-left: 0; color: #ccc;"></ul>
+				</div>
 
-			<div id="bracketView" style="margin-top: 50px;">
-				<h3 style="color: #fff;">🏆 Bracket</h3>
-				<div id="bracketContainer" style="display: flex; flex-wrap: wrap; gap: 40px; color: #fff;"></div>
+				<div id="bracketView" style="margin-top: 50px;">
+					<h3 style="color: #fff;">🏆 Bracket</h3>
+					<div id="bracketContainer" style="display: flex; flex-wrap: wrap; gap: 40px; color: #fff;"></div>
+				</div>
 			</div>
+			<!-- END: Hidden results section -->
 		</div>
 	`;
 }
@@ -48,6 +53,8 @@ let currentRoundIndex = 0;         // Current round index
 let bracketStructure = [];         // 2D array representing rounds and matches
 
 function playTournament() {
+		resetTournament();
+
 		const addBtn = document.getElementById('addPlayerBtn');
 		const input = document.getElementById('playerAlias');
 		const startBtn = document.getElementById('startTournamentBtn');
@@ -74,23 +81,39 @@ function playTournament() {
 // Render the list of player names to the DOM
 function renderPlayerList() {
 	const list = document.getElementById("playerList");
+	const counter = document.getElementById("playerCount");
 	list.innerHTML = "";
 	players.forEach(p => {
 		const li = document.createElement("li");
 		li.textContent = p;
 		list.appendChild(li);
 	});
+
+	if (counter) {
+		counter.textContent = `${players.length} / 8 players maximum`;
+	}
 }
 
 // Add a player name from input field and update the display
 export function addPlayer() {
 	const input = document.getElementById("playerAlias");
 	const name = input.value.trim();
-	if (name && !players.includes(name)) {
-		players.push(name);
-		renderPlayerList();
-		input.value = "";
+
+	if (!name) return;
+
+	if (players.includes(name)) {
+		alert("This player is already in the tournament.");
+		return;
 	}
+
+	if (players.length >= 8) {
+		alert("Maximum of 8 players reached.");
+		return;
+	}
+
+	players.push(name);
+	renderPlayerList();
+	input.value = "";
 }
 
 // Initialize a new tournament and generate the bracket
@@ -137,6 +160,7 @@ export function startTournament() {
 	currentRoundIndex = 0;
 	currentMatchIndex = 0;
 	renderBracket();
+	document.getElementById("tournamentResults").style.display = "block";
 	document.getElementById("nextMatchBtn").style.display = "inline-block";
 }
 
@@ -318,4 +342,5 @@ export function resetTournament() {
 	document.getElementById("registration").style.display = "block";
 	document.getElementById("nextMatchBtn").style.display = "none";
 	document.getElementById("restartBtn").style.display = "none";
+	document.getElementById("tournamentResults").style.display = "none";
 }
