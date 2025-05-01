@@ -22,7 +22,7 @@ export function openProfilePage()
 	document.getElementById('app').innerHTML = profilePage();
 
 	const avatar = localStorage.getItem('avatar');
-	document.getElementById('avatar').src = "https://localhost/media/default.jpg"; // waiting for backend change
+	document.getElementById('avatar').src = avatar // no more waiting
 	
 	const uploadAvatarButton = document.getElementById('uploadAvatarButton');
 	uploadAvatarButton.addEventListener('click', uploadAvatar);

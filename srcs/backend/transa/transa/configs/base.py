@@ -22,6 +22,8 @@ except KeyError as e:
 # except KeyError as e:
 #     raise RuntimeError("Could not find a DJ_DEBUG in environment") from e
 
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Application definition
 
