@@ -114,18 +114,23 @@ function tournamentPage() {
 			<p><button id="nextMatchBtn" style="display: none;">▶️ Next Match</button></p>
 			<p><button id="restartBtn" style="display: none;">✨ New Tournament</button></p>
 
-			<div id="tournamentHistory" class="text-left" style="margin-top: 30px;">
-				<h3 style="color: #fff;">📜 Tournament History</h3>
-				<ul id="historyList" style="list-style: none; padding-left: 0; color: #ccc;"></ul>
-			</div>
+			<!-- START: Hidden results section -->
+			<div id="tournamentResults" style="display: none;">
+				<div id="tournamentHistory" class="text-left" style="margin-top: 30px;">
+					<h3 style="color: #fff;">📜 Tournament History</h3>
+					<ul id="historyList" style="list-style: none; padding-left: 0; color: #ccc;"></ul>
+				</div>
 
-			<div id="bracketView" style="margin-top: 50px;">
-				<h3 style="color: #fff;">🏆 Bracket</h3>
-				<div id="bracketContainer" style="display: flex; flex-wrap: wrap; gap: 40px; color: #fff;"></div>
+				<div id="bracketView" style="margin-top: 50px;">
+					<h3 style="color: #fff;">🏆 Bracket</h3>
+					<div id="bracketContainer" style="display: flex; flex-wrap: wrap; gap: 40px; color: #fff;"></div>
+				</div>
 			</div>
+			<!-- END: Hidden results section -->
 		</div>
 	`;
 }
+
 
 // 🧩 Launch tournament screen and wire event listeners dynamically
 function openTournamentPage() {

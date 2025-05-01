@@ -90,6 +90,7 @@ export function startTournament() {
 	currentRoundIndex = 0;
 	currentMatchIndex = 0;
 	renderBracket();
+	document.getElementById("tournamentResults").style.display = "block";
 	document.getElementById("nextMatchBtn").style.display = "inline-block";
 }
 
@@ -262,6 +263,7 @@ export function resetTournament() {
 	document.getElementById("registration").style.display = "block";
 	document.getElementById("nextMatchBtn").style.display = "none";
 	document.getElementById("restartBtn").style.display = "none";
+	document.getElementById("tournamentResults").style.display = "none";
 }
 
 
