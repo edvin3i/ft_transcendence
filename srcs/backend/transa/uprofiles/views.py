@@ -28,18 +28,22 @@ class UserProfileCreateAPIView(generics.CreateAPIView):
     serializer_class = UserProfileSerializer
 
 
-class UserProfileUpdateAPIView(generics.UpdateAPIView):
+class UserProfileUpdateAPIView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
-    lookup_field = "user_id"
+    # lookup_field = "user_id"
+    def get_object(self):
+        return self.request.user.userprofile
 
 
-class UserProfileDestroyAPIView(generics.DestroyAPIView):
-    permission_classes = [IsAdminUser]
+class UserProfileDestroyAPIView(generics.RetrieveDestroyAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
-    lookup_field = "user_id"
+    # lookup_field = "user_id"
+    def get_object(self):
+        return self.request.user.userprofile
 
 
 class UserProfileDetailAPIView(generics.RetrieveAPIView):
@@ -54,4 +58,4 @@ class UserProfileSelfAPIView(generics.RetrieveAPIView):
     serializer_class = UserProfileSerializer
 
     def get_object(self):
-        return UserProfile.objects.get(user=self.request.user)
+        return self.request.user.userprofile

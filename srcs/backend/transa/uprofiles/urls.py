@@ -14,12 +14,12 @@ urlpatterns = [
         name="user_create",
     ),
     path(
-        "update/<int:user_id>/",
+        "me/update/",
         views.UserProfileUpdateAPIView.as_view(),
         name="user_update",
     ),
     path(
-        "delete/<int:user_id>/",
+        "me/delete/",
         views.UserProfileDestroyAPIView.as_view(),
         name="user_delete",
     ),
