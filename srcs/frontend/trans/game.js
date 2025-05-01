@@ -1,8 +1,9 @@
-import {playPong} from './pong.js'
-import {playMoshpit} from './moshpitRemote.js'
+// Import the core game modes
+import { playPong } from './pong.js';
+import { playMoshpit } from './moshpitRemote.js';
 
-function gamePage()
-{
+// 🎮 Main game menu with buttons for each mode
+function gamePage() {
 	return `
 		<div class="text-center">
 			<h2>Pong Game</h2>
@@ -16,25 +17,19 @@ function gamePage()
 	`;
 }
 
-export function openGamePage()
-{
+// 🚀 Entry point to render the main game selection screen
+export function openGamePage() {
 	document.getElementById('app').innerHTML = gamePage();
-	
-	const localButton = document.getElementById('localButton');
-	localButton.addEventListener('click', openLocalGamePage);
-		
-	const remoteButton = document.getElementById('remoteButton');
-	remoteButton.addEventListener('click', openRemoteGamePage);
-	
-	const tournamentButton = document.getElementById('tournamentButton');
-	tournamentButton.addEventListener('click', openTournamentPage);
 
-	const moshpitButton = document.getElementById('moshpitButton');
-	moshpitButton.addEventListener('click', openMoshpitPage);
+	// Bind each button to its respective page
+	document.getElementById('localButton').addEventListener('click', openLocalGamePage);
+	document.getElementById('remoteButton').addEventListener('click', openRemoteGamePage);
+	document.getElementById('tournamentButton').addEventListener('click', openTournamentPage);
+	document.getElementById('moshpitButton').addEventListener('click', openMoshpitPage);
 }
 
-function localGamePage()
-{
+// 🎮 Local 2-player Pong screen
+function localGamePage() {
 	return `
 		<div class="text-center">
 			<h2>Local Pong Game</h2>
@@ -46,15 +41,14 @@ function localGamePage()
 	`;
 }
 
-function openLocalGamePage()
-{
+// 🧠 Launch local Pong game mode
+function openLocalGamePage() {
 	document.getElementById('app').innerHTML = localGamePage();
-	
-	playPong({remote: false});
+	playPong({ remote: false });
 }
 
-function enterRoomPage()
-{
+// 🌐 Remote Pong room entry screen
+function enterRoomPage() {
 	return `
 		<div class="text-center">
 			<h2>Remote Pong Game</h2>
@@ -62,22 +56,20 @@ function enterRoomPage()
 				<input id="roomInput" placeholder="Enter room name" value="myroom">
 			</p>
 			<p>
-				<button id="remoteButton"">Enter room</button>
+				<button id="remoteButton">Enter room</button>
 			</p>
 		</div>
 	`;
 }
 
-function openRemoteGamePage()
-{
+// 🚪 Load remote room input and bind Enter Room button
+function openRemoteGamePage() {
 	document.getElementById('app').innerHTML = enterRoomPage();
-	
-	const enterRoomButton = document.getElementById('remoteButton');
-	enterRoomButton.addEventListener('click', startRemoteGame);
+	document.getElementById('remoteButton').addEventListener('click', startRemoteGame);
 }
 
-function remoteGamePage()
-{
+// 🕹️ Remote Pong game canvas and controls
+function remoteGamePage() {
 	return `
 		<div class="text-center">
 			<h2>Remote Pong Game</h2>
@@ -94,18 +86,15 @@ function remoteGamePage()
 	`;
 }
 
-
-function startRemoteGame()
-{
+// 🚀 Connect to remote Pong room and launch game
+function startRemoteGame() {
 	const room = document.getElementById('roomInput').value;
-	
 	document.getElementById('app').innerHTML = remoteGamePage();
-
-	playPong({remote: true, room: room});
+	playPong({ remote: true, room: room });
 }
 
-function tournamentPage()
-{
+// 🏆 Tournament setup screen
+function tournamentPage() {
 	return `
 		<div class="text-center">
 			<h2>Tournament Mode 🏆</h2>
@@ -120,9 +109,8 @@ function tournamentPage()
 				<h3 id="playerNames">Match</h3>
 				<canvas id="pongCanvas" width="500" height="300"></canvas>
 			</div>
-			
+
 			<p><button id="nextMatchBtn" style="display: none;">▶️ Next Match</button></p>
-			
 			<p><button id="restartBtn" style="display: none;">✨ New Tournament</button></p>
 
 			<div id="tournamentHistory" class="text-left" style="margin-top: 30px;">
@@ -138,7 +126,7 @@ function tournamentPage()
 	`;
 }
 
-
+// 🧩 Launch tournament screen and wire event listeners dynamically
 function openTournamentPage() {
 	document.getElementById('app').innerHTML = tournamentPage();
 
@@ -153,27 +141,22 @@ function openTournamentPage() {
 		startBtn.addEventListener('click', mod.startTournament);
 
 		input.addEventListener('keydown', (e) => {
-			if (e.key === 'Enter') {
-				addBtn.click();
-			}
+			if (e.key === 'Enter') addBtn.click(); // Enable Enter to add player
 		});
 
 		nextBtn.addEventListener('click', () => {
 			nextBtn.style.display = 'none';
-			mod.startMatch();
+			mod.startMatch(); // Launch next match manually
 		});
 
 		restartBtn.addEventListener('click', () => {
-			mod.resetTournament();
+			mod.resetTournament(); // Restart with cleared state
 		});
 	});
 }
 
-
-
-
-function moshpitPage()
-{
+// 👾 Display Moshpit canvas 
+function moshpitPage() {
 	return `
 		<div class="container">
 			<h2 class="text-center">Moshpit</h2>
@@ -182,9 +165,8 @@ function moshpitPage()
 	`;
 }
 
-function openMoshpitPage()
-{
+// 🚀 Launch Moshpit game mode
+function openMoshpitPage() {
 	document.getElementById('app').innerHTML = moshpitPage();
-
 	playMoshpit();
 }

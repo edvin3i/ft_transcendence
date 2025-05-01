@@ -1,10 +1,12 @@
-// tournament.js — version avec Next Match manuel, Restart, victoire finale propre et sans Round fantôme
+// tournament.js — version with manual Next Match, full reset, clean bracket and winner display
 
-let players = [];
-let currentMatchIndex = 0;
-let currentRoundIndex = 0;
-let bracketStructure = [];
+// Global state variables
+let players = [];                  // List of players
+let currentMatchIndex = 0;         // Current match index within the round
+let currentRoundIndex = 0;         // Current round index
+let bracketStructure = [];         // 2D array representing rounds and matches
 
+// Render the list of player names to the DOM
 function renderPlayerList() {
 	const list = document.getElementById("playerList");
 	list.innerHTML = "";
@@ -15,6 +17,7 @@ function renderPlayerList() {
 	});
 }
 
+// Add a player name from input field and update the display
 export function addPlayer() {
 	const input = document.getElementById("playerAlias");
 	const name = input.value.trim();
@@ -25,12 +28,14 @@ export function addPlayer() {
 	}
 }
 
+// Initialize a new tournament and generate the bracket
 export function startTournament() {
 	if (players.length < 2) {
 		alert("Please enter at least 2 players.");
 		return;
 	}
-// 🔄 Clear any old game rendering state
+
+	// Clear old canvas state if present
 	const canvas = document.getElementById("pongCanvas");
 	if (canvas) {
 		const ctx = canvas.getContext("2d");
@@ -38,12 +43,14 @@ export function startTournament() {
 	}
 	document.getElementById("playerNames").textContent = "";
 
+	// Reset interface and display bracket
 	document.getElementById("registration").style.display = "none";
 	document.getElementById("gameArea").style.display = "block";
 	document.getElementById("historyList").innerHTML = "";
 	document.getElementById("nextMatchBtn").style.display = "none";
 	document.getElementById("restartBtn").style.display = "none";
 
+	// Generate the full bracket including empty slots for byes
 	const numPlayers = players.length;
 	const totalRounds = Math.ceil(Math.log2(numPlayers));
 	const filledPlayers = [...players];
@@ -52,12 +59,12 @@ export function startTournament() {
 	}
 
 	bracketStructure = [];
-
 	for (let r = 0; r < totalRounds; r++) {
 		const numMatches = Math.ceil(filledPlayers.length / (2 ** (r + 1)));
 		bracketStructure.push(new Array(numMatches).fill(null));
 	}
 
+	// Fill the first round with actual pairings
 	for (let i = 0; i < filledPlayers.length; i += 2) {
 		bracketStructure[0][i / 2] = [filledPlayers[i], filledPlayers[i + 1]];
 	}
@@ -68,6 +75,7 @@ export function startTournament() {
 	document.getElementById("nextMatchBtn").style.display = "inline-block";
 }
 
+// Start a single match or skip to next round if needed
 export function startMatch() {
 	const round = bracketStructure[currentRoundIndex];
 	if (!round || currentMatchIndex >= round.length) {
@@ -88,6 +96,7 @@ export function startMatch() {
 		return;
 	}
 
+	// Show players before launching pong game
 	const [player1, player2] = match;
 	document.getElementById("playerNames").textContent = `Next match: ${player1} vs ${player2}`;
 
@@ -108,20 +117,22 @@ export function startMatch() {
 	}, 2000);
 }
 
+// Place winner in next round's correct slot
 function placeWinner(winner, player1, player2) {
 	logMatch(player1, player2, winner);
 
 	const nextIndex = Math.floor(currentMatchIndex / 2);
 	const targetRoundIndex = currentRoundIndex + 1;
 
-	// 🛑 Stop if tournament is over
-    if (targetRoundIndex >= bracketStructure.length) {
-        document.getElementById("playerNames").textContent = `🏆 Winner: ${winner}`;
-        document.getElementById("restartBtn").style.display = "inline-block";
-        document.getElementById("nextMatchBtn").style.display = "none"; // 👈 ajoute ça
-        return;
-    }    
+	// End of tournament: declare winner
+	if (targetRoundIndex >= bracketStructure.length) {
+		document.getElementById("playerNames").textContent = `🏆 Winner: ${winner}`;
+		document.getElementById("restartBtn").style.display = "inline-block";
+		document.getElementById("nextMatchBtn").style.display = "none";
+		return;
+	}
 
+	// Fill in the match pairing in the next round
 	if (!bracketStructure[targetRoundIndex][nextIndex]) {
 		bracketStructure[targetRoundIndex][nextIndex] = [null, null];
 	}
@@ -130,17 +141,19 @@ function placeWinner(winner, player1, player2) {
 	bracketStructure[targetRoundIndex][nextIndex][slot] = winner;
 }
 
+// Decide if next match or restart button should be shown
 function showNextOrRestartButton() {
 	const isFinalRound = (
 		currentRoundIndex >= bracketStructure.length ||
 		(currentRoundIndex === bracketStructure.length - 1 &&
 		currentMatchIndex >= bracketStructure[bracketStructure.length - 1].length)
-	);	
+	);
 	if (!isFinalRound) {
 		document.getElementById("nextMatchBtn").style.display = "inline-block";
 	}
 }
 
+// Append match result to tournament history
 function logMatch(player1, player2, winner) {
 	const p1 = player1 || 'bye';
 	const p2 = player2 || 'bye';
@@ -149,6 +162,7 @@ function logMatch(player1, player2, winner) {
 	document.getElementById("historyList").appendChild(li);
 }
 
+// Draw bracket in columns (1 per round)
 function renderBracket() {
 	const bracketContainer = document.getElementById("bracketContainer");
 	bracketContainer.innerHTML = "";
@@ -161,7 +175,7 @@ function renderBracket() {
 		column.style.minWidth = "120px";
 		column.innerHTML = `<h4 style=\"color: white;\">Round ${roundIndex + 1}</h4>`;
 
-		round.forEach((match, matchIndex) => {
+		round.forEach((match) => {
 			const matchBox = document.createElement("div");
 			matchBox.style.border = "1px solid #999";
 			matchBox.style.padding = "10px";
@@ -184,7 +198,7 @@ function renderBracket() {
 	});
 }
 
-// Activation des boutons dynamiques
+// Hook up buttons on first load
 document.addEventListener('DOMContentLoaded', () => {
 	const nextBtn = document.getElementById('nextMatchBtn');
 	if (nextBtn) {
@@ -201,28 +215,28 @@ document.addEventListener('DOMContentLoaded', () => {
 			currentRoundIndex = 0;
 			currentMatchIndex = 0;
 			bracketStructure = [];
-		
-			// Nettoie l'affichage
+
 			document.getElementById("app").innerHTML = "";
 			import('./navigation.js').then(mod => {
-				mod.openTournamentPage(); // Recharge la page du tournoi proprement
+				mod.openTournamentPage();
 			});
 		});
 	}
 });
 
+// External reset that clears the UI and memory
 export function resetTournament() {
 	players = [];
 	currentMatchIndex = 0;
 	currentRoundIndex = 0;
 	bracketStructure = [];
-  
+
 	const list = document.getElementById("playerList");
 	if (list) list.innerHTML = "";
-  
+
 	const input = document.getElementById("playerAlias");
 	if (input) input.value = "";
-  
+
 	document.getElementById("historyList").innerHTML = "";
 	document.getElementById("bracketContainer").innerHTML = "";
 	document.getElementById("playerNames").textContent = "";
@@ -230,6 +244,4 @@ export function resetTournament() {
 	document.getElementById("registration").style.display = "block";
 	document.getElementById("nextMatchBtn").style.display = "none";
 	document.getElementById("restartBtn").style.display = "none";
-  }
-  
-//test5
+}
