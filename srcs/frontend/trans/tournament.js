@@ -1,4 +1,4 @@
-// tournament.js — version avec bracket structure complet + Tournament History
+// tournament.js — version avec Next Match manuel, Restart, victoire finale propre et sans Round fantôme
 
 let players = [];
 let currentMatchIndex = 0;
@@ -34,12 +34,14 @@ export function startTournament() {
 	document.getElementById("registration").style.display = "none";
 	document.getElementById("gameArea").style.display = "block";
 	document.getElementById("historyList").innerHTML = "";
+	document.getElementById("nextMatchBtn").style.display = "none";
+	document.getElementById("restartBtn").style.display = "none";
 
 	const numPlayers = players.length;
 	const totalRounds = Math.ceil(Math.log2(numPlayers));
 	const filledPlayers = [...players];
 	while (filledPlayers.length < 2 ** totalRounds) {
-		filledPlayers.push(null); // ajoute des "byes"
+		filledPlayers.push(null);
 	}
 
 	bracketStructure = [];
@@ -49,7 +51,6 @@ export function startTournament() {
 		bracketStructure.push(new Array(numMatches).fill(null));
 	}
 
-	// Round 0: les matchs initiaux
 	for (let i = 0; i < filledPlayers.length; i += 2) {
 		bracketStructure[0][i / 2] = [filledPlayers[i], filledPlayers[i + 1]];
 	}
@@ -57,10 +58,10 @@ export function startTournament() {
 	currentRoundIndex = 0;
 	currentMatchIndex = 0;
 	renderBracket();
-	startMatch();
+	document.getElementById("nextMatchBtn").style.display = "inline-block";
 }
 
-function startMatch() {
+export function startMatch() {
 	const round = bracketStructure[currentRoundIndex];
 	if (!round || currentMatchIndex >= round.length) {
 		currentRoundIndex++;
@@ -76,7 +77,7 @@ function startMatch() {
 		placeWinner(winner, winner, loser);
 		currentMatchIndex++;
 		renderBracket();
-		startMatch();
+		showNextOrRestartButton();
 		return;
 	}
 
@@ -93,7 +94,7 @@ function startMatch() {
 					placeWinner(winner, player1, player2);
 					currentMatchIndex++;
 					renderBracket();
-					setTimeout(startMatch, 1000);
+					showNextOrRestartButton();
 				}
 			});
 		});
@@ -103,21 +104,37 @@ function startMatch() {
 function placeWinner(winner, player1, player2) {
 	logMatch(player1, player2, winner);
 
-	const nextRound = bracketStructure[currentRoundIndex + 1];
-	if (!nextRound) {
-		document.getElementById("playerNames").textContent = `\ud83c\udfc6 Winner: ${winner}`;
-		return;
+	const nextIndex = Math.floor(currentMatchIndex / 2);
+	const targetRoundIndex = currentRoundIndex + 1;
+
+	// 🛑 Stop if tournament is over
+    if (targetRoundIndex >= bracketStructure.length) {
+        document.getElementById("playerNames").textContent = `🏆 Winner: ${winner}`;
+        document.getElementById("restartBtn").style.display = "inline-block";
+        document.getElementById("nextMatchBtn").style.display = "none"; // 👈 ajoute ça
+        return;
+    }    
+
+	if (!bracketStructure[targetRoundIndex][nextIndex]) {
+		bracketStructure[targetRoundIndex][nextIndex] = [null, null];
 	}
 
-	const nextIndex = Math.floor(currentMatchIndex / 2);
-	if (!nextRound[nextIndex]) nextRound[nextIndex] = [null, null];
 	const slot = currentMatchIndex % 2 === 0 ? 0 : 1;
-	nextRound[nextIndex][slot] = winner;
+	bracketStructure[targetRoundIndex][nextIndex][slot] = winner;
+}
+
+function showNextOrRestartButton() {
+	const isFinalRound = currentRoundIndex >= bracketStructure.length;
+	if (!isFinalRound) {
+		document.getElementById("nextMatchBtn").style.display = "inline-block";
+	}
 }
 
 function logMatch(player1, player2, winner) {
+	const p1 = player1 || 'bye';
+	const p2 = player2 || 'bye';
 	const li = document.createElement("li");
-	li.textContent = `\ud83c\udfd1 ${player1} vs ${player2} \u2192 \ud83c\udfc6 ${winner}`;
+	li.innerHTML = `🏁 ${p1} vs ${p2} → 🏆 ${winner}`;
 	document.getElementById("historyList").appendChild(li);
 }
 
@@ -145,8 +162,6 @@ function renderBracket() {
 			if (Array.isArray(match)) {
 				const [p1, p2] = match;
 				matchBox.innerHTML = `${p1 || 'bye'} vs ${p2 || 'bye'}`;
-			} else if (typeof match === "string") {
-				matchBox.innerHTML = `<span style=\"color: #0f0;\">\ud83c\udfc6 ${match}</span>`;
 			} else {
 				matchBox.textContent = "Waiting...";
 			}
@@ -157,3 +172,23 @@ function renderBracket() {
 		bracketContainer.appendChild(column);
 	});
 }
+
+// Activation des boutons dynamiques
+document.addEventListener('DOMContentLoaded', () => {
+	const nextBtn = document.getElementById('nextMatchBtn');
+	if (nextBtn) {
+		nextBtn.addEventListener('click', () => {
+			nextBtn.style.display = "none";
+			startMatch();
+		});
+	}
+
+	const restartBtn = document.getElementById('restartBtn');
+	if (restartBtn) {
+		restartBtn.addEventListener('click', () => {
+			location.reload();
+		});
+	}
+});
+
+//test3

@@ -121,6 +121,9 @@ function tournamentPage()
 				<canvas id="pongCanvas" width="500" height="300"></canvas>
 			</div>
 			
+			<p><button id="nextMatchBtn" style="display: none;">▶️ Next Match</button></p>
+			<p><button id="restartBtn" style="display: none;">🔁 Restart Tournament</button></p>
+
 			<div id="tournamentHistory" class="text-left" style="margin-top: 30px;">
 				<h3 style="color: #fff;">📜 Tournament History</h3>
 				<ul id="historyList" style="list-style: none; padding-left: 0; color: #ccc;"></ul>
@@ -130,7 +133,6 @@ function tournamentPage()
 				<h3 style="color: #fff;">🏆 Bracket</h3>
 				<div id="bracketContainer" style="display: flex; flex-wrap: wrap; gap: 40px; color: #fff;"></div>
 			</div>
-
 		</div>
 	`;
 }
@@ -143,18 +145,30 @@ function openTournamentPage() {
 		const addBtn = document.getElementById('addPlayerBtn');
 		const input = document.getElementById('playerAlias');
 		const startBtn = document.getElementById('startTournamentBtn');
+		const nextBtn = document.getElementById('nextMatchBtn');
+		const restartBtn = document.getElementById('restartBtn');
 
 		addBtn.addEventListener('click', mod.addPlayer);
 		startBtn.addEventListener('click', mod.startTournament);
 
-		// ✅ Ajout du raccourci clavier pour appuyer sur Entrée
 		input.addEventListener('keydown', (e) => {
 			if (e.key === 'Enter') {
 				addBtn.click();
 			}
 		});
+
+		nextBtn.addEventListener('click', () => {
+			nextBtn.style.display = 'none';
+			mod.startMatch();
+		});
+
+		restartBtn.addEventListener('click', () => {
+			openTournamentPage();
+		});
 	});
 }
+
+
 
 
 function moshpitPage()
