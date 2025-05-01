@@ -6,6 +6,7 @@ from .moshpit_logic import MoshpitGame
 
 from rest_framework_simplejwt.tokens import UntypedToken
 from rest_framework_simplejwt.exceptions import TokenError
+from urllib.parse import parse_qs
 
 
 # In-memory storage for all matches: match_id -> {{ game, players, loop_task }}

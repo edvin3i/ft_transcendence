@@ -48,13 +48,10 @@ class MoshpitRemote {
   
 	connect() {
 		const token = localStorage.getItem("accessToken");
-		const socket = new WebSocket(`ws://${window.location.host}/ws/moshpit/?token=${token}`);
+		const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 
-		// const token = localStorage.getItem('accessToken');
-		// this.socket = new WebSocket(`ws://${window.location.host}/ws/match/${this.matchId}/?token=${token}`);
-		
-		// this.socket = new WebSocket(`ws://${window.location.host}/ws/match/${this.matchId}/`);
-  
+		this.socket = new WebSocket(`${protocol}://${window.location.host}/ws/moshpit/${this.matchId}/?token=${token}`);
+
 		this.socket.onopen = () => {
 			console.log("✅ Connexion WebSocket établie pour le match", this.matchId);
 			this.sendGameStateRequest();
