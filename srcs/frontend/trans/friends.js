@@ -1,4 +1,5 @@
 import {checkToken} from './token.js'
+import {openUserProfilePage} from './userProfile.js'
 
 function friendsPage()
 {
@@ -50,7 +51,7 @@ async function getFriendsList()
 			"You haven't added any friends yet";
 	else
 	{
-		const username  = localStorage.getItem('username');
+		const username = localStorage.getItem('username');
 
 		for (const friend of friends)
 		{
@@ -147,4 +148,6 @@ async function addFriend()
 	console.log(data);
 
 	document.getElementById('addFriendResponse').innerHtml = data.message;
+
+	openUserProfilePage(friendId);
 }

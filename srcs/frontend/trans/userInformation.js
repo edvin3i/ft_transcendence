@@ -183,7 +183,7 @@ export async function uploadAvatar()
 {
 	const fileInput = document.getElementById('avatarInput');
 	const formData = new FormData();
-	formData.append('file', fileInput.files[0]);
+	formData.append('avatar', fileInput.files[0]);
 
 	const token = await checkToken();
 
@@ -201,6 +201,7 @@ export async function uploadAvatar()
 	}
 	else
 	{
+		alert("Something went wrong while updating your avatar!");
 		const data = await response.json();
 		console.log(data);
 	}
