@@ -1,4 +1,5 @@
 import {playPong} from './pong.js'
+import {playTournament} from './tournament.js'
 import {playMoshpit} from './moshpitRemote.js'
 
 function gamePage()
@@ -138,39 +139,12 @@ function tournamentPage()
 	`;
 }
 
-
-function openTournamentPage() {
+function openTournamentPage()
+{
 	document.getElementById('app').innerHTML = tournamentPage();
 
-	import('./tournament.js').then(mod => {
-		const addBtn = document.getElementById('addPlayerBtn');
-		const input = document.getElementById('playerAlias');
-		const startBtn = document.getElementById('startTournamentBtn');
-		const nextBtn = document.getElementById('nextMatchBtn');
-		const restartBtn = document.getElementById('restartBtn');
-
-		addBtn.addEventListener('click', mod.addPlayer);
-		startBtn.addEventListener('click', mod.startTournament);
-
-		input.addEventListener('keydown', (e) => {
-			if (e.key === 'Enter') {
-				addBtn.click();
-			}
-		});
-
-		nextBtn.addEventListener('click', () => {
-			nextBtn.style.display = 'none';
-			mod.startMatch();
-		});
-
-		restartBtn.addEventListener('click', () => {
-			mod.resetTournament();
-		});
-	});
+	playTournament();
 }
-
-
-
 
 function moshpitPage()
 {

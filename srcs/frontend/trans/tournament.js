@@ -5,6 +5,33 @@ let currentMatchIndex = 0;
 let currentRoundIndex = 0;
 let bracketStructure = [];
 
+export function playTournament() {
+		addTournamentEventListeners();
+		const addBtn = document.getElementById('addPlayerBtn');
+		const input = document.getElementById('playerAlias');
+		const startBtn = document.getElementById('startTournamentBtn');
+		const nextBtn = document.getElementById('nextMatchBtn');
+		const restartBtn = document.getElementById('restartBtn');
+
+		addBtn.addEventListener('click', addPlayer);
+		startBtn.addEventListener('click', startTournament);
+
+		input.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') {
+				addBtn.click();
+			}
+		});
+
+		nextBtn.addEventListener('click', () => {
+			nextBtn.style.display = 'none';
+			startMatch();
+		});
+
+		restartBtn.addEventListener('click', () => {
+			resetTournament();
+		});
+}
+
 function renderPlayerList() {
 	const list = document.getElementById("playerList");
 	list.innerHTML = "";
@@ -185,7 +212,8 @@ function renderBracket() {
 }
 
 // Activation des boutons dynamiques
-document.addEventListener('DOMContentLoaded', () => {
+//document.addEventListener('DOMContentLoaded', () => {
+function addTournamentEventListeners() {
 	const nextBtn = document.getElementById('nextMatchBtn');
 	if (nextBtn) {
 		nextBtn.addEventListener('click', () => {
@@ -209,7 +237,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			});
 		});
 	}
-});
+}
+//});
 
 export function resetTournament() {
 	players = [];
