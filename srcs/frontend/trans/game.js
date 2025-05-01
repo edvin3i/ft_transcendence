@@ -136,15 +136,26 @@ function tournamentPage()
 }
 
 
-function openTournamentPage()
-{
+function openTournamentPage() {
 	document.getElementById('app').innerHTML = tournamentPage();
 
 	import('./tournament.js').then(mod => {
-		document.getElementById('addPlayerBtn').addEventListener('click', mod.addPlayer);
-		document.getElementById('startTournamentBtn').addEventListener('click', mod.startTournament);
+		const addBtn = document.getElementById('addPlayerBtn');
+		const input = document.getElementById('playerAlias');
+		const startBtn = document.getElementById('startTournamentBtn');
+
+		addBtn.addEventListener('click', mod.addPlayer);
+		startBtn.addEventListener('click', mod.startTournament);
+
+		// ✅ Ajout du raccourci clavier pour appuyer sur Entrée
+		input.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') {
+				addBtn.click();
+			}
+		});
 	});
 }
+
 
 function moshpitPage()
 {

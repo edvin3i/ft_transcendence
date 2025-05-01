@@ -1,7 +1,9 @@
+// tournament.js — version avec bracket structure complet + Tournament History
+
 let players = [];
 let currentMatchIndex = 0;
-let currentRound = [];
-let nextRound = [];
+let currentRoundIndex = 0;
+let bracketStructure = [];
 
 function renderPlayerList() {
 	const list = document.getElementById("playerList");
@@ -28,97 +30,94 @@ export function startTournament() {
 		alert("Please enter at least 2 players.");
 		return;
 	}
-	if (players.length % 2 !== 0) {
-		alert("Number of players must be even for this simple bracket system.");
-		return;
-	}
 
 	document.getElementById("registration").style.display = "none";
 	document.getElementById("gameArea").style.display = "block";
+	document.getElementById("historyList").innerHTML = "";
 
-	currentRound = [];
-	for (let i = 0; i < players.length; i += 2) {
-		const p1 = players[i];
-		const p2 = players[i + 1];
-		if (p1 && p2) currentRound.push([p1, p2]);
+	const numPlayers = players.length;
+	const totalRounds = Math.ceil(Math.log2(numPlayers));
+	const filledPlayers = [...players];
+	while (filledPlayers.length < 2 ** totalRounds) {
+		filledPlayers.push(null); // ajoute des "byes"
 	}
-	nextRound = [];
-	currentMatchIndex = 0;
 
+	bracketStructure = [];
+
+	for (let r = 0; r < totalRounds; r++) {
+		const numMatches = Math.ceil(filledPlayers.length / (2 ** (r + 1)));
+		bracketStructure.push(new Array(numMatches).fill(null));
+	}
+
+	// Round 0: les matchs initiaux
+	for (let i = 0; i < filledPlayers.length; i += 2) {
+		bracketStructure[0][i / 2] = [filledPlayers[i], filledPlayers[i + 1]];
+	}
+
+	currentRoundIndex = 0;
+	currentMatchIndex = 0;
+	renderBracket();
 	startMatch();
 }
 
 function startMatch() {
-	// Si le tournoi est terminé
-	if (currentRound.length === 0 && nextRound.length === 1) {
-		const winner = nextRound[0];
-		document.getElementById("playerNames").textContent = `🏆 Winner: ${winner}`;
-		renderBracket();
-		return;
-	}
-
-	// Si la ronde est terminée, on génère la suivante
-	if (currentMatchIndex >= currentRound.length) {
-		const tempWinners = [...nextRound];
-		currentRound = [];
-		nextRound = [];
-
-		for (let i = 0; i < tempWinners.length; i += 2) {
-			const p1 = tempWinners[i];
-			const p2 = tempWinners[i + 1];
-
-			if (!p2) {
-				// Bye automatique : pas d'adversaire
-				logMatch(p1, "(bye)", p1);
-				nextRound.push(p1);
-				continue;
-			}
-
-			currentRound.push([p1, p2]);
-		}
-
+	const round = bracketStructure[currentRoundIndex];
+	if (!round || currentMatchIndex >= round.length) {
+		currentRoundIndex++;
 		currentMatchIndex = 0;
-		renderBracket(); // met à jour la vue avant de recommencer
 		startMatch();
 		return;
 	}
 
-	// Lancement du match actuel
-	const match = currentRound[currentMatchIndex];
-
-	if (!Array.isArray(match) || match.length !== 2) {
-		console.error("Invalid match format:", match);
+	const match = round[currentMatchIndex];
+	if (!match || match.includes(null)) {
+		const winner = match.find(p => p !== null);
+		const loser = match.find(p => p === null);
+		placeWinner(winner, winner, loser);
 		currentMatchIndex++;
+		renderBracket();
 		startMatch();
 		return;
 	}
 
 	const [player1, player2] = match;
-
 	document.getElementById("playerNames").textContent = `Next match: ${player1} vs ${player2}`;
 
 	setTimeout(() => {
 		document.getElementById("playerNames").textContent = `${player1} vs ${player2}`;
-
 		import('./pong.js').then(({ playPong }) => {
 			playPong({
 				remote: false,
 				onGameEnd: (winnerSide) => {
 					const winner = winnerSide === "left" ? player1 : player2;
-					logMatch(player1, player2, winner);
-					nextRound.push(winner);
+					placeWinner(winner, player1, player2);
 					currentMatchIndex++;
 					renderBracket();
-					setTimeout(startMatch, 1000); // pause avant le prochain
+					setTimeout(startMatch, 1000);
 				}
 			});
 		});
 	}, 2000);
 }
 
+function placeWinner(winner, player1, player2) {
+	logMatch(player1, player2, winner);
+
+	const nextRound = bracketStructure[currentRoundIndex + 1];
+	if (!nextRound) {
+		document.getElementById("playerNames").textContent = `\ud83c\udfc6 Winner: ${winner}`;
+		return;
+	}
+
+	const nextIndex = Math.floor(currentMatchIndex / 2);
+	if (!nextRound[nextIndex]) nextRound[nextIndex] = [null, null];
+	const slot = currentMatchIndex % 2 === 0 ? 0 : 1;
+	nextRound[nextIndex][slot] = winner;
+}
+
 function logMatch(player1, player2, winner) {
 	const li = document.createElement("li");
-	li.textContent = `🏁 ${player1} vs ${player2} → 🏆 ${winner}`;
+	li.textContent = `\ud83c\udfd1 ${player1} vs ${player2} \u2192 \ud83c\udfc6 ${winner}`;
 	document.getElementById("historyList").appendChild(li);
 }
 
@@ -126,25 +125,35 @@ function renderBracket() {
 	const bracketContainer = document.getElementById("bracketContainer");
 	bracketContainer.innerHTML = "";
 
-	[currentRound, nextRound].forEach((round, roundIndex) => {
-		if (round.length === 0) return;
+	bracketStructure.forEach((round, roundIndex) => {
 		const column = document.createElement("div");
 		column.style.background = "#222";
 		column.style.padding = "10px";
 		column.style.borderRadius = "10px";
-		column.innerHTML = `<h4 style="color: white;">Round ${roundIndex + 1}</h4>`;
-		round.forEach(match => {
+		column.style.minWidth = "120px";
+		column.innerHTML = `<h4 style=\"color: white;\">Round ${roundIndex + 1}</h4>`;
+
+		round.forEach((match, matchIndex) => {
 			const matchBox = document.createElement("div");
 			matchBox.style.border = "1px solid #999";
 			matchBox.style.padding = "10px";
 			matchBox.style.marginBottom = "10px";
 			matchBox.style.background = "#111";
 			matchBox.style.borderRadius = "5px";
-			matchBox.textContent = Array.isArray(match)
-				? `${match[0]} vs ${match[1]}`
-				: `${match}`;
+			matchBox.style.color = "#eee";
+
+			if (Array.isArray(match)) {
+				const [p1, p2] = match;
+				matchBox.innerHTML = `${p1 || 'bye'} vs ${p2 || 'bye'}`;
+			} else if (typeof match === "string") {
+				matchBox.innerHTML = `<span style=\"color: #0f0;\">\ud83c\udfc6 ${match}</span>`;
+			} else {
+				matchBox.textContent = "Waiting...";
+			}
+
 			column.appendChild(matchBox);
 		});
+
 		bracketContainer.appendChild(column);
 	});
 }
