@@ -1,3 +1,5 @@
+import {openTournamentPage} from './game.js'
+
 // tournament.js — version with manual Next Match, full reset, clean bracket and winner display
 
 // Global state variables
@@ -5,6 +7,31 @@ let players = [];                  // List of players
 let currentMatchIndex = 0;         // Current match index within the round
 let currentRoundIndex = 0;         // Current round index
 let bracketStructure = [];         // 2D array representing rounds and matches
+
+export function playTournament() {
+		addTournamentEventListeners();
+		const addBtn = document.getElementById('addPlayerBtn');
+		const input = document.getElementById('playerAlias');
+		const startBtn = document.getElementById('startTournamentBtn');
+		const nextBtn = document.getElementById('nextMatchBtn');
+		const restartBtn = document.getElementById('restartBtn');
+
+		addBtn.addEventListener('click', addPlayer);
+		startBtn.addEventListener('click', startTournament);
+
+		input.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') addBtn.click(); // Enable Enter to add player
+		});
+
+		nextBtn.addEventListener('click', () => {
+			nextBtn.style.display = 'none';
+			startMatch(); // Launch next match manually
+		});
+
+		restartBtn.addEventListener('click', () => {
+			resetTournament(); // Restart with cleared state
+		});
+}
 
 // Render the list of player names to the DOM
 function renderPlayerList() {
@@ -199,7 +226,10 @@ function renderBracket() {
 }
 
 // Hook up buttons on first load
+/*
 document.addEventListener('DOMContentLoaded', () => {
+*/
+function addTournamentEventListeners() {
 	const nextBtn = document.getElementById('nextMatchBtn');
 	if (nextBtn) {
 		nextBtn.addEventListener('click', () => {
@@ -217,12 +247,18 @@ document.addEventListener('DOMContentLoaded', () => {
 			bracketStructure = [];
 
 			document.getElementById("app").innerHTML = "";
+			/*
 			import('./navigation.js').then(mod => {
 				mod.openTournamentPage();
 			});
+			*/
+			openTournamentPage();
 		});
 	}
+}
+/*
 });
+*/
 
 // External reset that clears the UI and memory
 export function resetTournament() {

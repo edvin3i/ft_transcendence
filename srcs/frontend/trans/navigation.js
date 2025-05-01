@@ -3,7 +3,6 @@ import {openLogInPage} from './logIn.js'
 import {openProfilePage} from './profile.js'
 import {openFriendsPage} from './friends.js'
 import {openGamePage} from './game.js'
-import './tournament.js';
 
 const homePage = 'profilePage';
 
