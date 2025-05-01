@@ -30,6 +30,13 @@ export function startTournament() {
 		alert("Please enter at least 2 players.");
 		return;
 	}
+// 🔄 Clear any old game rendering state
+	const canvas = document.getElementById("pongCanvas");
+	if (canvas) {
+		const ctx = canvas.getContext("2d");
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	}
+	document.getElementById("playerNames").textContent = "";
 
 	document.getElementById("registration").style.display = "none";
 	document.getElementById("gameArea").style.display = "block";
