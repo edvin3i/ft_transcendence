@@ -110,15 +110,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
             return None
 
         avatar_url = str(obj.avatar.url or "")
-        parsed_url = urlparse(avatar_url)
-
-        logger.info(f"[FRIENDS Serializer]: avatar_url = {avatar_url}")
-        logger.info(f"[FRIENDS Serializer]: parsed_url = {parsed_url}")
-
+        # parsed_url = urlparse(avatar_url)
         # if parsed_url.scheme in ("https",):
         #     logger.info(f"[FRIENDS Serializer]: parsed_url.scheme = {parsed_url.scheme}")
         #     return avatar_url
-        logger.info(f"[FRIENDS Serializer]: absolute_url = {request.build_absolute_uri(avatar_url)}")
         return request.build_absolute_uri(avatar_url)
 
     def get_match_history(self, obj):
