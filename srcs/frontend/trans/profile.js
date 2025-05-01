@@ -5,6 +5,8 @@ function profilePage()
 {
 	return `
 		<div class="text-center">
+			<img id="avatar" alt="Avatar" class="rounded-circle mx-auto" style="width: 150px; height: 150px; object-fit: cover; display: block">
+			<button id="uploadAvatarButton" class="mx-auto" style="display: block;">Upload new avatar</button>
 			<h2>Your information:</h2>
 			<p id="userInformation">username: <span id="username"></span><br>email: <span id="email"></span></p>
 			<button id="changeButton">Change</button>
@@ -18,7 +20,13 @@ function profilePage()
 export function openProfilePage()
 {
 	document.getElementById('app').innerHTML = profilePage();
+
+	const avatar = localStorage.getItem('avatar');
+	document.getElementById('avatar').src = "https://localhost/media/default.jpg"; // waiting for backend change
 	
+	const uploadAvatarButton = document.getElementById('uploadAvatarButton');
+	uploadAvatarButton.addEventListener('click', uploadAvatar);
+
 	const username = localStorage.getItem('username');
 	const email = localStorage.getItem('email');
 
@@ -27,7 +35,6 @@ export function openProfilePage()
 	
 	const changeButton = document.getElementById('changeButton');
 	changeButton.addEventListener('click', openUserInformationChangePage);
-	
 	
 	if (localStorage.getItem('2FA') === 'false')
 	{
@@ -43,4 +50,9 @@ export function openProfilePage()
 	const enableOrDisableButton = 
 		document.getElementById('enableOrDisableButton');
 	enableOrDisableButton.addEventListener('click', open2FAStatusChangePage);
+}
+
+function uploadAvatar()
+{
+	return;
 }
