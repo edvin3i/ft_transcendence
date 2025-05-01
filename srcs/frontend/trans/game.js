@@ -122,7 +122,8 @@ function tournamentPage()
 			</div>
 			
 			<p><button id="nextMatchBtn" style="display: none;">▶️ Next Match</button></p>
-			<p><button id="restartBtn" style="display: none;">🔁 Restart Tournament</button></p>
+			
+			<p><button id="restartBtn" style="display: none;">✨ New Tournament</button></p>
 
 			<div id="tournamentHistory" class="text-left" style="margin-top: 30px;">
 				<h3 style="color: #fff;">📜 Tournament History</h3>
@@ -163,7 +164,7 @@ function openTournamentPage() {
 		});
 
 		restartBtn.addEventListener('click', () => {
-			openTournamentPage();
+			mod.resetTournament();
 		});
 	});
 }

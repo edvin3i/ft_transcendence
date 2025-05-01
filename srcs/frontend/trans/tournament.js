@@ -190,9 +190,39 @@ document.addEventListener('DOMContentLoaded', () => {
 	const restartBtn = document.getElementById('restartBtn');
 	if (restartBtn) {
 		restartBtn.addEventListener('click', () => {
-			location.reload();
+			players = [];
+			currentRoundIndex = 0;
+			currentMatchIndex = 0;
+			bracketStructure = [];
+		
+			// Nettoie l'affichage
+			document.getElementById("app").innerHTML = "";
+			import('./navigation.js').then(mod => {
+				mod.openTournamentPage(); // Recharge la page du tournoi proprement
+			});
 		});
 	}
 });
 
-//test4
+export function resetTournament() {
+	players = [];
+	currentMatchIndex = 0;
+	currentRoundIndex = 0;
+	bracketStructure = [];
+  
+	const list = document.getElementById("playerList");
+	if (list) list.innerHTML = "";
+  
+	const input = document.getElementById("playerAlias");
+	if (input) input.value = "";
+  
+	document.getElementById("historyList").innerHTML = "";
+	document.getElementById("bracketContainer").innerHTML = "";
+	document.getElementById("playerNames").textContent = "";
+	document.getElementById("gameArea").style.display = "none";
+	document.getElementById("registration").style.display = "block";
+	document.getElementById("nextMatchBtn").style.display = "none";
+	document.getElementById("restartBtn").style.display = "none";
+  }
+  
+//test5
