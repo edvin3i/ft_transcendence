@@ -104,7 +104,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         avatar_url = obj.avatar_url
         parsed_url = urlparse(avatar_url)
 
-        if parsed_url.scheme in ("http", "https"):
+        if parsed_url.scheme in ("https"):
             return avatar_url
 
         return request.build_absolute_uri(avatar_url)
