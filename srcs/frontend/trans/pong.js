@@ -1,4 +1,4 @@
-export function playPong({ remote = false, room = "myroom" } = {}) {
+export function playPong({ remote = false, room = "myroom" , onGameEnd = null} = {}) {
   const canvas = document.getElementById("pongCanvas");
   const status = document.getElementById("pongStatus");
   const label = document.getElementById("playerLabel");
@@ -182,9 +182,17 @@ export function playPong({ remote = false, room = "myroom" } = {}) {
       if (ballX <= 8 && ballY >= paddle1Y && ballY <= paddle1Y + 60) ballSpeedX = -ballSpeedX;
       if (ballX + 8 >= canvas.width - 8 && ballY >= paddle2Y && ballY <= paddle2Y + 60) ballSpeedX = -ballSpeedX;
 
-      if (ballX <= 0) { score2++; resetBall(); }
-      if (ballX + 8 >= canvas.width) { score1++; resetBall(); }
-
+      if (ballX <= 0) { 
+        score2++; 
+        if (score2 === 2 && typeof onGameEnd === "function") return onGameEnd("right");
+        resetBall(); 
+      }
+      if (ballX + 8 >= canvas.width) { 
+        score1++; 
+        if (score1 === 2 && typeof onGameEnd === "function") return onGameEnd("left");
+        resetBall(); 
+      }
+      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillRect(0, paddle1Y, 8, 60);
       ctx.fillRect(canvas.width - 8, paddle2Y, 8, 60);

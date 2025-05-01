@@ -108,16 +108,69 @@ function tournamentPage()
 {
 	return `
 		<div class="text-center">
-			<h2>Tournament</h2>
-			<p>Work in progress...</p>
+			<h2>Tournament Mode 🏆</h2>
+			<div id="registration">
+				<input type="text" id="playerAlias" placeholder="Enter alias">
+				<button id="addPlayerBtn">Add</button>
+				<ul id="playerList" style="list-style: none; padding: 0;"></ul>
+				<button id="startTournamentBtn">Start Tournament</button>
+			</div>
+
+			<div id="gameArea" style="display:none;">
+				<h3 id="playerNames">Match</h3>
+				<canvas id="pongCanvas" width="500" height="300"></canvas>
+			</div>
+			
+			<p><button id="nextMatchBtn" style="display: none;">▶️ Next Match</button></p>
+			
+			<p><button id="restartBtn" style="display: none;">✨ New Tournament</button></p>
+
+			<div id="tournamentHistory" class="text-left" style="margin-top: 30px;">
+				<h3 style="color: #fff;">📜 Tournament History</h3>
+				<ul id="historyList" style="list-style: none; padding-left: 0; color: #ccc;"></ul>
+			</div>
+
+			<div id="bracketView" style="margin-top: 50px;">
+				<h3 style="color: #fff;">🏆 Bracket</h3>
+				<div id="bracketContainer" style="display: flex; flex-wrap: wrap; gap: 40px; color: #fff;"></div>
+			</div>
 		</div>
 	`;
 }
 
-function openTournamentPage()
-{
+
+function openTournamentPage() {
 	document.getElementById('app').innerHTML = tournamentPage();
+
+	import('./tournament.js').then(mod => {
+		const addBtn = document.getElementById('addPlayerBtn');
+		const input = document.getElementById('playerAlias');
+		const startBtn = document.getElementById('startTournamentBtn');
+		const nextBtn = document.getElementById('nextMatchBtn');
+		const restartBtn = document.getElementById('restartBtn');
+
+		addBtn.addEventListener('click', mod.addPlayer);
+		startBtn.addEventListener('click', mod.startTournament);
+
+		input.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') {
+				addBtn.click();
+			}
+		});
+
+		nextBtn.addEventListener('click', () => {
+			nextBtn.style.display = 'none';
+			mod.startMatch();
+		});
+
+		restartBtn.addEventListener('click', () => {
+			mod.resetTournament();
+		});
+	});
 }
+
+
+
 
 function moshpitPage()
 {
