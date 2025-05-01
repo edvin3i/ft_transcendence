@@ -61,12 +61,10 @@ async function changeUserInformation()
 	// waiting for Vanya's backend change START
 	if (username === localStorage.getItem('username'))
 	{
-		const id = localStorage.getItem('id');
-
 		const token = await checkToken();
 
 		const response = await 
-			fetch(`api/users/update/${id}/`, 
+			fetch(`api/users/me/update/`, 
 		{
 			method: 'PATCH',
 			headers: 
