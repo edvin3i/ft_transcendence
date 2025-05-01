@@ -1,4 +1,5 @@
-export function playPong({ remote = false, room = "myroom" , onGameEnd = null} = {}) {
+export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai = false } = {}) {
+
   const canvas = document.getElementById("pongCanvas");
   const status = document.getElementById("pongStatus");
   const label = document.getElementById("playerLabel");
@@ -141,69 +142,229 @@ export function playPong({ remote = false, room = "myroom" , onGameEnd = null} =
 
   } else {
     // -------------------------
-    // LOCAL MODE
+    // LOCAL MODE - ENRICHED PONG
     // -------------------------
-    let paddle1Y = 100, paddle2Y = 100;
-    let ballX = 250, ballY = 150;
-    let ballSpeedX = 2, ballSpeedY = 2;
+  
+    canvas.width = window.innerWidth * 0.95;
+    canvas.height = window.innerHeight * 0.95;
+  
+    const ctx = canvas.getContext("2d");
+  
+    // Game constants
+    const paddleWidth = 120;
+    const paddleHeightRatio = 0.25;
+    let paddleHeight = canvas.height * paddleHeightRatio;
+    const ballSize = 60;
+    const defaultBallSpeed = 4;
+    const maxBounceAngle = Math.PI / 3;
+    const speedIncrement = 0.3;
+    const aiMaxSpeed = 4;
+  
+    // Game state
+    let useAI = ai;
+    let gameEnded = false;
+    let rallyInterval = null;
+    let aiThinkInterval = null;
+  
+    // Entities
+    let paddle1 = { x: 0, y: 0, width: paddleWidth, height: paddleHeight };
+    let paddle2 = { x: 0, y: 0, width: paddleWidth, height: paddleHeight };
+    let player1Y, player2Y;
     let player1Speed = 0, player2Speed = 0;
-    let score1 = 0, score2 = 0;
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "w") player1Speed = -5;
-      if (event.key === "s") player1Speed = 5;
-      if (event.key === "ArrowUp") player2Speed = -5;
-      if (event.key === "ArrowDown") player2Speed = 5;
-    });
-
-    document.addEventListener("keyup", (event) => {
-      if (event.key === "w" || event.key === "s") player1Speed = 0;
-      if (event.key === "ArrowUp" || event.key === "ArrowDown") player2Speed = 0;
-    });
-
-    function resetBall() {
-      ballX = canvas.width / 2;
-      ballY = canvas.height / 2;
-      ballSpeedX = -ballSpeedX;
+    let player1Score = 0, player2Score = 0;
+    let ballX, ballY, ballSpeedX = 0, ballSpeedY = 0;
+    let aiTargetY = null;
+  
+    const paddle1Img = new Image(); paddle1Img.src = './assets/paddle1.png';
+    const paddle2Img = new Image(); paddle2Img.src = './assets/paddle2.png';
+    const ballImg = new Image();    ballImg.src = './assets/2Dball.png';
+  
+    // IA Toggle button
+    const toggleBtn = document.getElementById("toggleAI");
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", () => {
+        useAI = !useAI;
+        console.log("AI is now", useAI ? "ENABLED" : "DISABLED");
+      });
     }
-
-    function gameLoop() {
-      paddle1Y += player1Speed;
-      paddle2Y += player2Speed;
-
-      paddle1Y = Math.max(0, Math.min(canvas.height - 60, paddle1Y));
-      paddle2Y = Math.max(0, Math.min(canvas.height - 60, paddle2Y));
-
+  
+    // Restart button
+    const startBtn = document.getElementById("startBtn");
+    if (startBtn) {
+      startBtn.addEventListener("click", () => {
+        stopGame();
+        startGame();
+      });
+    }
+  
+    function predictBallY() {
+      let simX = ballX, simY = ballY, simVX = ballSpeedX, simVY = ballSpeedY;
+      while (true) {
+        simX += simVX;
+        simY += simVY;
+        if (simY <= 0 || simY + ballSize >= canvas.height) simVY *= -1;
+        if (simVX > 0 && simX + ballSize >= paddle2.x) break;
+        if (simX < 0) return canvas.height / 2;
+      }
+      return simY + ballSize / 2;
+    }
+  
+    function startRallyTimer() {
+      clearInterval(rallyInterval);
+      rallyInterval = setInterval(() => {
+        ballSpeedX += ballSpeedX > 0 ? speedIncrement : -speedIncrement;
+        ballSpeedY += ballSpeedY > 0 ? speedIncrement : -speedIncrement;
+      }, 1000);
+    }
+  
+    function resetBallSpeed() {
+      clearInterval(rallyInterval);
+      let angle;
+      do {
+        angle = Math.random() * 2 * Math.PI;
+      } while (Math.abs(Math.cos(angle)) < 0.25 || Math.abs(Math.sin(angle)) < 0.15);
+      ballSpeedX = defaultBallSpeed * Math.cos(angle);
+      ballSpeedY = defaultBallSpeed * Math.sin(angle);
+      startRallyTimer();
+    }
+  
+    function resetBall() {
+      resetBallSpeed();
+      ballX = canvas.width / 2 - ballSize / 2;
+      ballY = canvas.height / 2 - ballSize / 2;
+    }
+  
+    function movePaddles() {
+      player1Y += player1Speed;
+      player1Y = Math.max(0, Math.min(canvas.height - paddleHeight, player1Y));
+  
+      if (useAI && aiTargetY !== null) {
+        const paddleCenter = player2Y + paddleHeight / 2;
+        const deltaY = aiTargetY - paddleCenter;
+        player2Speed = Math.sign(deltaY) * Math.min(aiMaxSpeed, Math.abs(deltaY));
+      }
+  
+      player2Y += player2Speed;
+      player2Y = Math.max(0, Math.min(canvas.height - paddleHeight, player2Y));
+  
+      paddle1.y = player1Y;
+      paddle2.y = player2Y;
+    }
+  
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      paddle2.x = canvas.width - paddleWidth;
+      ctx.drawImage(paddle1Img, paddle1.x, paddle1.y, paddle1.width, paddle1.height);
+      ctx.drawImage(paddle2Img, paddle2.x, paddle2.y, paddle2.width, paddle2.height);
+      ctx.drawImage(ballImg, ballX, ballY, ballSize, ballSize);
+      ctx.font = "bold 50px Serif";
+      ctx.fillStyle = "white";
+      ctx.fillText(player1Score, canvas.width / 3.5, 60);
+      ctx.fillText(player2Score, 3 * canvas.width / 4.5, 60);
+    }
+  
+    function moveBall() {
       ballX += ballSpeedX;
       ballY += ballSpeedY;
-
-      if (ballY <= 0 || ballY + 8 >= canvas.height) ballSpeedY = -ballSpeedY;
-
-      if (ballX <= 8 && ballY >= paddle1Y && ballY <= paddle1Y + 60) ballSpeedX = -ballSpeedX;
-      if (ballX + 8 >= canvas.width - 8 && ballY >= paddle2Y && ballY <= paddle2Y + 60) ballSpeedX = -ballSpeedX;
-
-      if (ballX <= 0) { 
-        score2++; 
-        if (score2 === 2 && typeof onGameEnd === "function") return onGameEnd("right");
-        resetBall(); 
+  
+      if (ballY <= 0 || ballY + ballSize >= canvas.height) ballSpeedY *= -1;
+  
+      // Left paddle
+      if (ballX <= paddle1.x + paddleWidth &&
+          ballY + ballSize >= paddle1.y && ballY <= paddle1.y + paddleHeight) {
+        const intersect = (ballY + ballSize / 2 - (paddle1.y + paddleHeight / 2)) / (paddleHeight / 2);
+        const bounceAngle = intersect * maxBounceAngle;
+        const speed = Math.hypot(ballSpeedX, ballSpeedY);
+        ballSpeedX = speed * Math.cos(bounceAngle);
+        ballSpeedY = speed * Math.sin(bounceAngle);
       }
-      if (ballX + 8 >= canvas.width) { 
-        score1++; 
-        if (score1 === 2 && typeof onGameEnd === "function") return onGameEnd("left");
-        resetBall(); 
+  
+      // Right paddle
+      if (ballX + ballSize >= paddle2.x &&
+          ballY + ballSize >= paddle2.y && ballY <= paddle2.y + paddleHeight) {
+        const intersect = (ballY + ballSize / 2 - (paddle2.y + paddleHeight / 2)) / (paddleHeight / 2);
+        const bounceAngle = intersect * maxBounceAngle;
+        const speed = Math.hypot(ballSpeedX, ballSpeedY);
+        ballSpeedX = -speed * Math.cos(bounceAngle);
+        ballSpeedY = speed * Math.sin(bounceAngle);
       }
-      
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillRect(0, paddle1Y, 8, 60);
-      ctx.fillRect(canvas.width - 8, paddle2Y, 8, 60);
-      ctx.fillRect(ballX, ballY, 8, 8);
-      ctx.font = "30px Arial";
-      ctx.fillText(score1, canvas.width / 4, 30);
-      ctx.fillText(score2, 3 * canvas.width / 4, 30);
-
+  
+      if (ballX <= 0) {
+        player2Score++;
+        if (player2Score === 2) {
+          gameEnded = true;
+          if (typeof onGameEnd === "function") onGameEnd("right");
+          return;
+        }
+        resetBall();
+      }
+  
+      if (ballX + ballSize >= canvas.width) {
+        player1Score++;
+        if (player1Score === 2) {
+          gameEnded = true;
+          if (typeof onGameEnd === "function") onGameEnd("left");
+          return;
+        }
+        resetBall();
+      }
+    }
+  
+    function gameLoop() {
+      if (gameEnded) return;
+      movePaddles();
+      moveBall();
+      draw();
       requestAnimationFrame(gameLoop);
     }
-
-    gameLoop();
+  
+    function stopGame() {
+      gameEnded = true;
+      clearInterval(rallyInterval);
+      clearInterval(aiThinkInterval);
+      rallyInterval = null;
+      aiThinkInterval = null;
+    }
+  
+    function startGame() {
+      player1Score = 0;
+      player2Score = 0;
+      gameEnded = false;
+      paddleHeight = canvas.height * paddleHeightRatio;
+  
+      player1Y = canvas.height / 2 - paddleHeight / 2;
+      player2Y = canvas.height / 2 - paddleHeight / 2;
+  
+      paddle1.height = paddleHeight;
+      paddle2.height = paddleHeight;
+  
+      resetBall();
+  
+      if (aiThinkInterval) clearInterval(aiThinkInterval);
+      aiThinkInterval = setInterval(() => {
+        if (!useAI || gameEnded) return;
+        aiTargetY = predictBallY();
+      }, 1000);
+  
+      gameLoop();
+    }
+  
+    // Launch the game initially
+    startGame();
+  
+    // Keyboard controls
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "w") player1Speed = -5;
+      if (e.key === "s") player1Speed = 5;
+      if (!useAI) {
+        if (e.key === "ArrowUp") player2Speed = -5;
+        if (e.key === "ArrowDown") player2Speed = 5;
+      }
+    });
+  
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "w" || e.key === "s") player1Speed = 0;
+      if (!useAI && (e.key === "ArrowUp" || e.key === "ArrowDown")) player2Speed = 0;
+    });
   }
 }

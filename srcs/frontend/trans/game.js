@@ -31,12 +31,19 @@ export function openGamePage() {
 // 🎮 Local 2-player Pong screen
 function localGamePage() {
 	return `
-		<div class="text-center">
-			<h2>Local Pong Game</h2>
-			<p id="playerNames" style="font-weight:bold;"></p>
-			<p id="playerLabel" style="font-weight:bold; margin-bottom:10px;"></p>
-			<canvas id="pongCanvas" width="500" height="300"></canvas>
-			<p>Use W and S for Player 1 (left) and Arrow keys for Player 2 (right)</p>
+		<div id="frameContainer">
+			<div id="uiLayer">
+				<div id="controls">
+					<button id="startBtn">Start / Restart</button>
+					<span id="timer">00:00</span>
+					<button id="toggleAI">Toggle AI</button>
+				</div>
+				<img id="fullFrameOverlay" src="assets/frame.png" alt="Frame Overlay" />
+				<canvas id="pongCanvas"></canvas>
+				<div style="position: absolute; top: 10px; left: 10px;">
+					<button onclick="history.back()">← Back to main menu</button>
+				</div>
+			</div>
 		</div>
 	`;
 }
