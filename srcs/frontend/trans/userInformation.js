@@ -106,7 +106,6 @@ async function changeUserInformation()
 	*/
 
 	const id = localStorage.getItem('id');
-
 	const token = await checkToken();
 
 	const response = await fetch(`api/users/update/${id}/`, 
@@ -181,4 +180,32 @@ export async function setUserInformation()
 	localStorage.setItem('username', data.user.username);
 	localStorage.setItem('email', data.user.email);
 	localStorage.setItem('2FA', data.is_2fa_enabled);
+}
+
+export async function uploadAvatar()
+{
+	const fileInput = document.getElementById('avatarInput');
+	const formData = new FormData();
+	formData.append('file', fileInput.files[0]);
+
+	const id = localStorage.getItem('id');
+	const token = await checkToken();
+
+	const response = await fetch(`api/users/update/${id}/`, 
+	{
+		method: 'PATCH', 
+		headers: {'Authorization': `Bearer ${token}`}, 
+		body: formData
+	});
+
+	if (response.ok)
+	{
+		await setUserInformation();
+		openProfilePage();
+	}
+	else
+	{
+		const data = await response.json();
+		console.log(data);
+	}
 }
