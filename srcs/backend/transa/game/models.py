@@ -36,5 +36,15 @@ class Match(models.Model):
     round_number = models.PositiveIntegerField(default=1)
     is_finished = models.BooleanField(default=False)
 
+    # for tournaments
+    prev_match_1 = models.ForeignKey(
+        "self", null=True, blank=True, related_name="next_as_1",
+        on_delete=models.SET_NULL
+    )
+    prev_match_2 = models.ForeignKey(
+        "self", null=True, blank=True, related_name="next_as_2",
+        on_delete=models.SET_NULL
+    )
+
     def __str__(self):
         return f"{self.created_at} | {self.player1} vs {self.player2}, winner: {self.winner}"
