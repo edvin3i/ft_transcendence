@@ -5,6 +5,7 @@ function profilePage()
 {
 	return `
 		<div class="text-center">
+			<h2>Your profile</h2>
 			<img id="avatar" alt="Avatar" class="rounded-circle mx-auto" style="width: 150px; height: 150px; object-fit: cover; display: block">
 			<input type="file" accept="image/*" id="avatarInput" style="display: none;"></input>
 			<button id="uploadAvatarButton" class="mx-auto" style="display: block;">Upload new avatar</button>
