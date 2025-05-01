@@ -122,6 +122,7 @@ class MoshpitGame:
             # remove by key: find key by matching dict
             pid = next((k for k,v in self.players.items() if v is missed), None)
             if pid:
+                print(f"💀 Joueur {pid} éliminé (angle {angle:.2f})")
                 self.remove_player(pid)
 
     def _check_collision(self):
