@@ -165,7 +165,8 @@ class FriendsAllListAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         return Friendship.objects.filter(
-            Q(from_user=self.request.user) | Q(to_user=self.request.user), status="accepted"
+            Q(from_user=self.request.user) | Q(to_user=self.request.user),
+            status="accepted",
         )
 
 
