@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from friends.permissions import IsSender, IsReciever, IsParticipant
 from django.utils import timezone
+from django.db.models import Q
 from friends.models import Friendship
 from friends.serializers import FriendshipSerializer, FriendsRequestCreateSerializer
 
@@ -164,8 +165,8 @@ class FriendsAllListAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         return Friendship.objects.filter(
-            from_user=self.request.user, status="accepted"
-        ).select_related("to_user")
+            Q(from_user=self.request.user) | Q(to_user=self.request.user), status="accepted"
+        )
 
 
 class FriendsOnlineListAPIView(generics.ListAPIView):
