@@ -1,6 +1,7 @@
 // Import the core game modes
 import { playPong } from './pong.js';
 import { playMoshpit } from './moshpitRemote.js';
+import { playPong3D } from './pong3d.js'
 
 // 🎮 Main game menu with buttons for each mode
 function gamePage() {
@@ -12,10 +13,12 @@ function gamePage() {
 				<button id="remoteButton" class="btn btn-primary">Remote 🌐</button>
 				<button id="tournamentButton" class="btn btn-primary">Tournament 🏆</button>
 				<button id="moshpitButton" class="btn btn-primary">Moshpit 👾</button>
+				<button id="threeDButton" class="btn btn-primary">3D Mode 🧠</button>
 			</div>
 		</div>
 	`;
 }
+
 
 // 🚀 Entry point to render the main game selection screen
 export function openGamePage() {
@@ -26,6 +29,7 @@ export function openGamePage() {
 	document.getElementById('remoteButton').addEventListener('click', openRemoteGamePage);
 	document.getElementById('tournamentButton').addEventListener('click', openTournamentPage);
 	document.getElementById('moshpitButton').addEventListener('click', openMoshpitPage);
+	document.getElementById('threeDButton').addEventListener('click', open3DPage);
 }
 
 // 🎮 Local 2-player Pong screen
@@ -176,4 +180,9 @@ function moshpitPage() {
 function openMoshpitPage() {
 	document.getElementById('app').innerHTML = moshpitPage();
 	playMoshpit();
+}
+
+function open3DPage() {
+	document.getElementById('app').innerHTML = ''; // clear current view
+	playPong3D();
 }
