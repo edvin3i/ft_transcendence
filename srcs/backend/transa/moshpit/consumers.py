@@ -42,6 +42,7 @@ class MoshpitConsumer(AsyncWebsocketConsumer):
 				'game': MoshpitGame(),
 				'players': {},        # player_id -> channel_name
 				'loop_task': None,
+				'started': False,
 			}
 		match = _matches[self.match_id]
 
@@ -55,8 +56,16 @@ class MoshpitConsumer(AsyncWebsocketConsumer):
 		)
 		await self.accept()
 
-		if match['loop_task'] is None:
+		required_players = 4#number of awaaited players
+		if len(match['players']) == required_players and not match['started']:
+			match['started'] = True
 			match['loop_task'] = asyncio.create_task(self._game_loop())
+			print(f"🎮 Match {self.match_id} démarré avec {len(match['players'])} joueurs.")
+		else:
+			await self.send(text_data=json.dumps({
+				"type": "waiting",
+				"players": list(match['players'].keys())
+			}))
 
 		# Envoyer l'état initial
 		initial = match['game'].get_game_state()

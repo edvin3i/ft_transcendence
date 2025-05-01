@@ -11,7 +11,7 @@ class MoshpitGame:
         self.center_x = 300
         self.center_y = 300
         self.radius = 290
-        self.paddle_size = math.pi / 12
+        self.paddle_size = math.pi / 6
         self.ball_radius = 8
         self.speed_increment = 0.3
         self.player_speed = 0.03
@@ -21,7 +21,7 @@ class MoshpitGame:
             'x': self.center_x,
             'y': self.center_y,
             'angle': random.uniform(0, 2 * math.pi),
-            'speed': 1,
+            'speed': 0.3,
         }
         # players: id -> {angle, color, direction, min_angle, max_angle, alive}
         self.players = {}
@@ -49,8 +49,10 @@ class MoshpitGame:
             p = self.players[pid]
             p['angle'] = angle
             half = self.paddle_size / 2
-            p['min_angle'] = self._normalize(angle - half)
-            p['max_angle'] = self._normalize(angle + half)
+            # p['min_angle'] = self._normalize(angle - half)
+            # p['max_angle'] = self._normalize(angle + half)
+            p['min_angle'] = self._normalize(angle - angle_step / 2)
+            p['max_angle'] = self._normalize(angle + angle_step / 2)
             p['direction'] = 0
             p['alive'] = True
 
