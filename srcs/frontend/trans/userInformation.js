@@ -107,15 +107,15 @@ async function changeUserInformation()
 
 	const response = await fetch(`api/users/me/update/`, 
 	{
-		method: 'PATCH',
+		method: 'PATCH', 
 		headers: 
 		{
-			'Authorization': `Bearer ${token}`,
+			'Authorization': `Bearer ${token}`, 
 			'Content-Type': 'application/json'
-		},
+		}, 
 		body: JSON.stringify({user: 
 		{
-			username: username,
+			username: username, 
 			email: email
 		}})
 	});
@@ -162,10 +162,10 @@ export async function setUserInformation()
 
 	const response = await fetch('api/users/me', 
 	{
-		method: 'GET',
+		method: 'GET', 
 		headers: 
 		{
-			'Authorization': `Bearer ${token}`,
+			'Authorization': `Bearer ${token}`, 
 			'Content-Type': 'application/json'
 		}
 	});
@@ -200,9 +200,5 @@ export async function uploadAvatar()
 		openProfilePage();
 	}
 	else
-	{
 		alert("Something went wrong while updating your avatar!");
-		const data = await response.json();
-		console.log(data);
-	}
 }
