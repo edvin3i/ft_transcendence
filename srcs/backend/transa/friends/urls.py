@@ -47,5 +47,7 @@ urlpatterns = [
         views.FriendsOnlineListAPIView.as_view(),
         name="friends_online",
     ),
-    path("blocked", views.FriendsBlockedListAPIView.as_view(), name="friends_blocked"),
+    path("blocked",
+         views.FriendsBlockedListAPIView.as_view(),
+         name="friends_blocked"),
 ]

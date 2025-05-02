@@ -114,9 +114,25 @@ function openChat(room = "general") {
 	console.log("💬 Connecting to:", wsUrl);
 	socket = new WebSocket(wsUrl);
 
-	socket.onopen = () => {
+	let pinginterval;
+
+	socket.onopen = () => 
+	{
 		console.log("✅ WebSocket connected:", wsUrl);
+		pinginterval = setInterval(() => 
+		{
+    if (socket && socket.readyState === WebSocket.OPEN)
+    			{
+        			socket.send(JSON.stringify(
+        				{
+        					type: "ping" 
+        				}
+        				));
+    			}
+		}, 3000);
 	};
+
+
 
 	socket.onmessage = function (e) {
 		const data = JSON.parse(e.data);
@@ -179,11 +195,16 @@ function openChat(room = "general") {
 
 	socket.onclose = function (event) {
 		console.warn("❌ WebSocket closed:", event);
+		clearInterval(pinginterval);
 		if (!event.wasClean && event.code === 1006) {
 			console.warn("🛑 Likely invalid/expired token");
 		}
 	};
-
+	window.addEventListener("beforeunload", () =>
+	{
+  		if (socket) socket.close();
+	}
+	);
 	document.getElementById("send").onclick = () => {
 		const input = document.getElementById("chat-message-input");
 		if (input.value.trim() !== "") {

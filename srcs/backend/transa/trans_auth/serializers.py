@@ -18,7 +18,6 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
     refresh_token = serializers.CharField(read_only=True)
     username = serializers.CharField(read_only=True)
 
-
     def validate_code(self, code):
         if not any(OA_CLIENT_ID or OA_SECRET or OA_REDIR_URL):
             raise serializers.ValidationError("OAuth config params was not provided")
@@ -92,7 +91,7 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
                 bio="",
             )
 
-        user.email = ft_email
+        user.email = ft_email if not user.email else user.email
         user.first_name = ft_fname
         user.last_name = ft_lname
         user.save()

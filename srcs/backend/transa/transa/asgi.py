@@ -18,6 +18,8 @@ django.setup()  # ← ← ← OBLIGATOIRE ici aussi
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
+import moshpit.routing
+
 
 # ⚠️ Ces imports ne doivent arriver qu'après le django.setup()
 from transa.middleware import JWTAuthMiddlewareStack
@@ -29,7 +31,7 @@ application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": JWTAuthMiddlewareStack(
         URLRouter(
-            chat.routing.websocket_urlpatterns + game.routing.websocket_urlpatterns
+            chat.routing.websocket_urlpatterns + game.routing.websocket_urlpatterns + moshpit.routing.websocket_urlpatterns 
         )
     ),
 })

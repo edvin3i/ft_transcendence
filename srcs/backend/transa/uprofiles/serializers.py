@@ -28,16 +28,14 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {"password": {"write_only": True}}
 
     def validate_username(self, value):
-        request = self.context.get("request")
-        user = getattr(request, "user", None)
+        instance = getattr(self, "instance", None)
 
-        if user and user.is_authenticated:
-            if User.objects.exclude(pk=user.pk).filter(username=value).exists():
+        if instance:
+            if User.objects.exclude(pk=instance.pk).filter(username=value).exists():
                 raise ValidationError(f"The username '{value}' is already in use.")
         else:
             if User.objects.filter(username=value).exists():
                 raise ValidationError(f"The username '{value}' is already in use.")
-
         return value
 
     # Add custom create() for pass hashing
@@ -66,10 +64,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
     through a nested serializer approach. It includes user, avatar, and bio fields.
     """
 
-    user = UserSerializer()
+    user = UserSerializer(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance is not None:
+            self.fields["user"] = UserSerializer(
+                instance=self.instance.user,
+                required=False,
+            )
 
     avatar_url = serializers.SerializerMethodField()
-
+    is_online = serializers.SerializerMethodField(read_only=True)
     total_matches_played = serializers.IntegerField(read_only=True)
     total_wins = serializers.IntegerField(read_only=True)
     total_draws = serializers.IntegerField(read_only=True)
@@ -88,6 +95,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "avatar",
             "avatar_url",
             "bio",
+            "is_online",
             "total_matches_played",
             "total_wins",
             "total_draws",
@@ -128,6 +136,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
         tours = obj.all_tournaments
         return TournamentSerializer(tours, many=True, context=self.context).data
 
+    def get_is_online(self, obj):
+        from chat.utils import is_online
+
+        return is_online(obj.user.id)
+
     # Add custom create() for nested JSON save
     def create(self, validated_data):
         """
@@ -166,21 +179,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
         user_instance = instance.user
 
         if user_data:
-
-            user_instance.username = user_data.get("username", user_instance.username)
-            user_instance.first_name = user_data.get(
-                "first_name", user_instance.first_name
+            user_serializer = UserSerializer(
+                instance=user_instance, data=user_data, partial=True
             )
-            user_instance.last_name = user_data.get(
-                "last_name", user_instance.last_name
-            )
-            user_instance.email = user_data.get("email", user_instance.email)
-
-            password = user_data.get("password", None)
-            if password:
-                user_instance.set_password(password)
-
-            user_instance.save()
+            if not user_serializer.is_valid():
+                raise ValidationError(user_serializer.errors)
+            user_serializer.save()
 
         instance.avatar = validated_data.get("avatar", instance.avatar)
         instance.bio = validated_data.get("bio", instance.bio)

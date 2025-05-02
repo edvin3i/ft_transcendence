@@ -1,4 +1,5 @@
 from rest_framework import generics, status
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from friends.permissions import IsSender, IsReciever, IsParticipant
@@ -6,6 +7,7 @@ from django.utils import timezone
 from django.db.models import Q
 from friends.models import Friendship
 from friends.serializers import FriendshipSerializer, FriendsRequestCreateSerializer
+
 
 import logging
 
@@ -170,25 +172,35 @@ class FriendsAllListAPIView(generics.ListAPIView):
         )
 
 
-class FriendsOnlineListAPIView(generics.ListAPIView):
+class FriendsOnlineListAPIView(APIView):
     """
     online
     """
-
     serializer_class = FriendshipSerializer
     permission_classes = [
         IsAuthenticated,
     ]
 
-    def get_queryset(self):
-        friends = Friendship.objects.filter(
-            from_user=self.request.user,
-        ).select_related("to_user")
-        users_ids = [f.to_user_id for f in friends]
-        online_ids = [
-            uid for uid in users_ids if is_online(uid)
-        ]  # need to implement is_online
-        return friends.filter(to_user__in=online_ids)
+    def get(self, request):
+        from chat.utils import is_online
+
+        user = request.user
+
+        friendships = Friendship.objects.filter(
+            Q(from_user=self.request.user) | Q(to_user=self.request.user),
+            status="accepted",
+        ).select_related("from_user", "to_user")
+        friend_profiles = set()
+        for fr in friendships:
+            other = fr.to_user if fr.from_user == user else fr.from_user
+            friend_profiles.add(other)
+        online = [u for u in friend_profiles if is_online(u.id)]
+        online_ids = [u.id for u in online]
+        online_map = {u.id: u.username for u in online}
+        return Response({
+            "online_ids": online_ids,
+            "online_map": online_map,
+        })
 
 
 class FriendsBlockedListAPIView(generics.ListAPIView):

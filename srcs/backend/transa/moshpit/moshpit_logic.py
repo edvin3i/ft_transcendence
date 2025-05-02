@@ -11,21 +11,26 @@ class MoshpitGame:
         self.center_x = 300
         self.center_y = 300
         self.radius = 290
-        self.paddle_size = math.pi / 12
+        self.paddle_size = math.pi / 6
         self.ball_radius = 8
         self.speed_increment = 0.3
         self.player_speed = 0.03
+        self.finished = False
+        self.winner = None
 
-        # Dynamic state
+        self._init_ball()
+
+        # players: id -> {angle, color, direction, min_angle, max_angle, alive}
+        self.players = {}
+        self.eliminated = []
+
+    def _init_ball(self):
         self.ball = {
             'x': self.center_x,
             'y': self.center_y,
             'angle': random.uniform(0, 2 * math.pi),
             'speed': 1,
         }
-        # players: id -> {angle, color, direction, min_angle, max_angle, alive}
-        self.players = {}
-        self.eliminated = []
 
     def _normalize(self, angle):
         return angle % (2 * math.pi)
@@ -49,8 +54,8 @@ class MoshpitGame:
             p = self.players[pid]
             p['angle'] = angle
             half = self.paddle_size / 2
-            p['min_angle'] = self._normalize(angle - half)
-            p['max_angle'] = self._normalize(angle + half)
+            p['min_angle'] = self._normalize(angle - angle_step / 2)
+            p['max_angle'] = self._normalize(angle + angle_step / 2)
             p['direction'] = 0
             p['alive'] = True
 
@@ -70,10 +75,22 @@ class MoshpitGame:
         # Re-space all players
         self._reposition_players()
 
+
+    def end_game(self):
+        self.ball['speed'] = 0
+        self.finished = True
+        alive = [pid for pid, p in self.players.items() if p['alive']]
+        self.winner = alive[0] if alive else None
+        print(f"🎉 Fin de partie, vainqueur : {self.winner}")
+
+
     def remove_player(self, player_id):
         """Eliminate a player and reposition remaining paddles."""
         if player_id in self.players:
             self.eliminated.append(self.players.pop(player_id))
+            if len(self.players) == 1:
+                self.end_game()
+            self._init_ball()
             self._reposition_players()
 
     def set_player_direction(self, player_id, direction):
@@ -85,14 +102,16 @@ class MoshpitGame:
         dx = self.ball['x'] - self.center_x
         dy = self.ball['y'] - self.center_y
         dist = math.hypot(dx, dy)
+        print(f"⚠️ Distance au mur: {dist:.2f} (rayon {self.radius})")
         return dist >= (self.radius - self.ball_radius)
 
     def _paddle_at(self, angle):
         """Return player dict if a paddle covers this angle"""
         a = self._normalize(angle)
         for p in self.players.values():
-            start = p['min_angle']
-            end = p['max_angle']
+            half = self.paddle_size / 2
+            start = self._normalize(p['angle'] - half)
+            end = self._normalize(p['angle'] + half)
             if start < end:
                 if start <= a <= end:
                     return p
@@ -120,16 +139,19 @@ class MoshpitGame:
             # remove by key: find key by matching dict
             pid = next((k for k,v in self.players.items() if v is missed), None)
             if pid:
+                print(f"💀 Joueur {pid} éliminé (angle {angle:.2f})")
                 self.remove_player(pid)
 
     def _check_collision(self):
         if not self._is_wall_collision():
             return
+        print(f"⚠️ Collision avec le mur (angle {self.ball['angle']:.2f})")
         dx = self.ball['x'] - self.center_x
         dy = self.ball['y'] - self.center_y
         angle = self._normalize(math.atan2(dy, dx))
         paddle = self._paddle_at(angle)
         if paddle:
+            print(f"⚡️ Collision avec la raquette {paddle['color']} (angle {angle:.2f})")
             # bounce
             p_center = paddle['angle']
             offset = angle - p_center
@@ -138,6 +160,7 @@ class MoshpitGame:
             self.ball['angle'] = self._normalize(math.pi + self.ball['angle'] + offset * 4)
             self.ball['speed'] += self.speed_increment
         else:
+            print(f"❌ Pas de raquette à l'angle {angle:.2f} (miss)")
             self._handle_miss(angle)
 
     def update(self):
@@ -180,5 +203,7 @@ class MoshpitGame:
                 'x': self.ball['x'],
                 'y': self.ball['y'],
                 'radius': self.ball_radius,
-            }
+            },
+            'finished': self.finished,
+            'winner': self.winner,
         }
