@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from .views import OpenRoomsAPIView
+
 
 
 urlpatterns = [
@@ -27,5 +29,10 @@ urlpatterns = [
         "delete/<int:pk>/",
         views.MatchDeleteAPIView.as_view(),
         name="game_delete",
+    ),
+    path(
+        "open-rooms/",
+        OpenRoomsAPIView.as_view(),
+        name="open_rooms",
     ),
 ]
