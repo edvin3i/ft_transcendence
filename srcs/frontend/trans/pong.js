@@ -44,6 +44,10 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
   
+      if (data.type !== "state" && data.type !== "timer") {
+        console.log("📩 Message reçu :", data);
+      }
+
       if (data.type === "init") {
         playerId = data.playerId;
         label.innerText = playerId === 0 ? "1 (left)" : "2 (right)";
@@ -55,6 +59,7 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
       }
   
       if (data.type === "state") {
+        status.innerText = "";
         paddle1Y = data.paddle1_y;
         paddle2Y = data.paddle2_y;
         ballX = data.ball.x;

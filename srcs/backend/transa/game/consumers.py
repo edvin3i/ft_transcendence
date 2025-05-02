@@ -206,14 +206,17 @@ class GameConsumer(AsyncWebsocketConsumer):
             if "match" not in room or room["match"] is None:
                 await self.send(text_data=json.dumps({"type": "end"}))
                 return
-            if score[0] > score[1]:
-                winner = room["match"].player1_id
-            elif score[1] > score[0]:
-                winner = room["match"].player2_id
+            is_draw = score[0] == score[1]
+            if not is_draw:
+                winner = room["match"].player1_id if score[0] > score[1] else room["match"].player2_id
             else:
                 winner = None
-                is_draw = True
-            await finish_match(room["match"], score[0], score[1], winner, is_draw)
+
+            try:
+                await finish_match(room["match"], score[0], score[1], winner, is_draw)
+            except Exception as e:
+                logger.error(f"[🔥 ERROR] During match finalization: {e}")
+
 
         result = {"type": "end"}
         if "match" in room and room["match"] is not None:
@@ -225,8 +228,16 @@ class GameConsumer(AsyncWebsocketConsumer):
             else:
                 result["winner"] = "draw"
 
-        await self.send(text_data=json.dumps(result))
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "broadcast_end",
+                "result": result,
+            }
+        )
 
+    async def broadcast_end(self, event):
+        await self.send(text_data=json.dumps(event["result"]))
 
     async def game_loop(self, room):
         import math, time
