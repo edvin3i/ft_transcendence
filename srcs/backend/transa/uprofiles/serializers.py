@@ -76,7 +76,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             )
 
     avatar_url = serializers.SerializerMethodField()
-
+    is_online = serializers.SerializerMethodField(read_only=True)
     total_matches_played = serializers.IntegerField(read_only=True)
     total_wins = serializers.IntegerField(read_only=True)
     total_draws = serializers.IntegerField(read_only=True)
@@ -95,6 +95,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "avatar",
             "avatar_url",
             "bio",
+            "is_online",
             "total_matches_played",
             "total_wins",
             "total_draws",
@@ -134,6 +135,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         tours = obj.all_tournaments
         return TournamentSerializer(tours, many=True, context=self.context).data
+
+    def get_is_online(self, obj):
+        from chat.utils import is_online
+
+        return is_online(obj.user.id)
 
     # Add custom create() for nested JSON save
     def create(self, validated_data):
