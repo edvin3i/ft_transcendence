@@ -192,6 +192,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 json.dumps(
                     {
                         "username": username,
+                        "user_id": user.id,
                         "message": message,
                         "timestamp": datetime.now().strftime("%H:%M:%S"),
                     }
