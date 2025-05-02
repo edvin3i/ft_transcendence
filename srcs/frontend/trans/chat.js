@@ -232,7 +232,17 @@ function createChatTab(room) {
 	tab.setAttribute("type", "button");
 
 	const roomBtn = document.createElement("span");
-	roomBtn.textContent = `#${room}`;
+	let label = `#${room}`;  // valeur par défaut
+
+	if (room.startsWith("dm__")) {
+		const [_, userA, userB] = room.split("__");
+		const currentUser = localStorage.getItem("username");
+		const otherUser = (userA === currentUser) ? userB : userA;
+		label = `@${otherUser}`;
+	}
+
+	roomBtn.textContent = label;
+
 	roomBtn.className = "flex-grow-1";
 	roomBtn.style.cursor = "pointer";
 	roomBtn.onclick = () => switchRoom(room);
