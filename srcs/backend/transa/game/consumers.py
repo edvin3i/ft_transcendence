@@ -229,52 +229,86 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 
     async def game_loop(self, room):
+        import math, time
+
+        room["last_rally_time"] = time.time()
+        paddle_height = 60
+        canvas_height = 300
+        canvas_width = 500
+        paddle_thickness = 8
+        ball_size = 8
+
+        def bounce(ball_y, paddle_y, paddle_height, vx_sign):
+            intersect = (ball_y - (paddle_y + paddle_height / 2)) / (paddle_height / 2)
+            intersect = max(-1, min(1, intersect))
+            max_angle = math.pi / 3
+            angle = intersect * max_angle
+            speed = math.hypot(room["ball"]["vx"], room["ball"]["vy"])
+            vx = vx_sign * speed * math.cos(angle)
+            vy = speed * math.sin(angle)
+            return vx, vy
+
         while room in GameConsumer.rooms.values() and room["started"]:
+            now = time.time()
+
+            # Move paddles
             room["paddle1_y"] += room["directions"][0] * 5
             room["paddle2_y"] += room["directions"][1] * 5
-            room["paddle1_y"] = max(0, min(240, room["paddle1_y"]))
-            room["paddle2_y"] = max(0, min(240, room["paddle2_y"]))
+            room["paddle1_y"] = max(0, min(canvas_height - paddle_height, room["paddle1_y"]))
+            room["paddle2_y"] = max(0, min(canvas_height - paddle_height, room["paddle2_y"]))
 
             ball = room["ball"]
             ball["x"] += ball["vx"]
             ball["y"] += ball["vy"]
 
-            if ball["y"] <= 0 or ball["y"] >= 300:
+            # Top/bottom wall collision
+            if ball["y"] <= 0 or ball["y"] + ball_size >= canvas_height:
                 ball["vy"] *= -1
 
-            if (
-                ball["x"] <= 8
-                and room["paddle1_y"] <= ball["y"] <= room["paddle1_y"] + 60
-            ):
-                ball["vx"] *= -1
-            elif (
-                ball["x"] >= 492
-                and room["paddle2_y"] <= ball["y"] <= room["paddle2_y"] + 60
-            ):
-                ball["vx"] *= -1
+            # Left paddle
+            if ball["x"] <= paddle_thickness:
+                if room["paddle1_y"] <= ball["y"] <= room["paddle1_y"] + paddle_height:
+                    ball["vx"], ball["vy"] = bounce(ball["y"], room["paddle1_y"], paddle_height, 1)
+                    room["last_rally_time"] = now
+                else:
+                    room["score"][1] += 1
+                    await self.reset_ball(room)
+                    continue
 
-            if ball["x"] <= 0:
-                room["score"][1] += 1
-                await self.reset_ball(room)
-            elif ball["x"] >= 500:
-                room["score"][0] += 1
-                await self.reset_ball(room)
+            # Right paddle
+            if ball["x"] + ball_size >= canvas_width - paddle_thickness:
+                if room["paddle2_y"] <= ball["y"] <= room["paddle2_y"] + paddle_height:
+                    ball["vx"], ball["vy"] = bounce(ball["y"], room["paddle2_y"], paddle_height, -1)
+                    room["last_rally_time"] = now
+                else:
+                    room["score"][0] += 1
+                    await self.reset_ball(room)
+                    continue
 
+            # Rally acceleration every second
+            if now - room["last_rally_time"] >= 1.0:
+                rally_boost = 0.3
+                speed = math.hypot(ball["vx"], ball["vy"]) + rally_boost
+                angle = math.atan2(ball["vy"], ball["vx"])
+                ball["vx"] = speed * math.cos(angle)
+                ball["vy"] = speed * math.sin(angle)
+                room["last_rally_time"] = now
+
+            # Timer update
             room["timer"] -= 1 / 60
             if int(room["timer"]) != int(room["_last_timer"]):
                 room["_last_timer"] = int(room["timer"])
                 await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {"type": "timer_update", "timer": int(room["timer"])},
+                    self.room_group_name, {"type": "timer_update", "timer": int(room["timer"])}
                 )
 
+            # End of game if time runs out
             if room["timer"] <= 0:
                 room["started"] = False
-                await self.channel_layer.group_send(
-                    self.room_group_name, {"type": "game_end"}
-                )
+                await self.channel_layer.group_send(self.room_group_name, {"type": "game_end"})
                 break
 
+            # Send game state
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -287,6 +321,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             )
 
             await asyncio.sleep(1 / 60)
+
 
     async def reset_game(self, room):
         room["ball"] = {"x": 250, "y": 150, "vx": 3, "vy": 3}
