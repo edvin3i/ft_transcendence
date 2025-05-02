@@ -62,7 +62,27 @@ fclean:
 		docker network prune -f
 		$(RM) $(DATA_DIR)
 
-.PHONY: create_dirs build up down start stop list clean fclean
+cli:
+	@echo "\e[36mLaunching CLI Pong client...\e[0m"
+	@python3 cli/pong_cli.py
+
+cli-login:
+	@echo "\e[36m🔐 Logging in and saving tokens...\e[0m"
+	@python3 -c 'import cli.pong_cli as p; p.login_and_save_tokens(input("Username: "), __import__("getpass").getpass("Password: "))'
+
+cli-reset:
+	@echo "\e[33m🗑️  Deleting CLI token file...\e[0m"
+	@rm -f cli/.tokens.json
+
+cli-help:
+	@echo "\n🕹️  CLI Commands:"
+	@echo "  make cli         → Launch the ascii game"
+	@echo "  make cli-login   → Auth a user and generate a token"
+	@echo "  make cli-reset   → delete the local token (.tokens.json)\n"
+
+
+
+.PHONY: create_dirs build up down start stop list clean fclean cli cli-login cli-reset
 
 # sudo echo "127.0.0.1        gbreana.42.fr" >> /etc/hosts
 # sudo echo "127.0.0.1        db.gbreana.42.fr" >> /etc/hosts

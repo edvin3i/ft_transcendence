@@ -20,6 +20,16 @@ export function playPong({ remote = false, room = "myroom" , onGameEnd = null} =
     // const socket = new WebSocket(`wss://${window.location.host}/ws/game/${room}/`);
     const token = localStorage.getItem("accessToken");
     const socket = new WebSocket(`wss://${window.location.host}/ws/game/${room}/?token=${token}`);
+
+    // 👇 ADD THIS for clean disconnect on tab close
+    window.addEventListener("beforeunload", () => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "end" }));
+        socket.close();
+      }
+    });
+
+
     let playerId = null;
     let paddle1Y = 0, paddle2Y = 0;
     let ballX = 0, ballY = 0;
@@ -56,10 +66,24 @@ export function playPong({ remote = false, room = "myroom" , onGameEnd = null} =
         score2 = data.score[1];
       }
 
+      if (data.type === "started") {
+        if (status) status.innerText = ""; // match started, clear waiting
+      }      
+
       if (data.type === "end") {
         if (status) status.innerText = "Game ended.";
+      
+        // 🎉 Nouveau bloc : afficher le gagnant
+        if (data.winner === "left") {
+          nameLabel.innerText = `🏆 Player 1 wins!`;
+        } else if (data.winner === "right") {
+          nameLabel.innerText = `🏆 Player 2 wins!`;
+        } else if (data.winner === "draw") {
+          nameLabel.innerText = `🤝 It's a draw!`;
+        }
+      
         socket.close();
-      }
+      }      
 
       if (data.type === "timer") {
         if (timerDisplay) timerDisplay.innerText = `⏱️ Time left: ${data.value}s`;
@@ -138,6 +162,25 @@ export function playPong({ remote = false, room = "myroom" , onGameEnd = null} =
     }
 
     drawRemote();
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && socket.readyState === WebSocket.OPEN) {
+        // Signale au serveur que le joueur quitte
+        socket.send(JSON.stringify({ type: "end" }));
+        socket.close();
+    
+        // Nettoyage de l'interface locale
+        const canvas = document.getElementById("pongCanvas");
+        if (canvas) {
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        if (status) status.innerText = "Left the match";
+        if (nameLabel) nameLabel.innerText = "";
+        if (timerDisplay) timerDisplay.innerText = "";
+        if (label) label.innerText = "";
+      }
+    });
+    
 
   } else {
     // -------------------------
