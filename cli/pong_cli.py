@@ -26,6 +26,7 @@ state = {
     "running": True,
     "waiting": True,
     "timer": 60,
+    "last_dir": None,
 }
 
 def login_and_save_tokens(username: str, password: str):
@@ -84,7 +85,10 @@ def draw_game(win):
     if state["waiting"]:
         win.addstr(HEIGHT // 2, WIDTH // 2 - 12, "Waiting for opponent...")
     else:
-        win.addch(state["ball_y"], state["ball_x"], "●")
+        try:
+            win.addch(int(state["ball_y"]), int(state["ball_x"]), "●")
+        except curses.error:
+            pass
         for i in range(5):
             win.addch(state["paddle1_y"] + i, 1, "█")
             win.addch(state["paddle2_y"] + i, WIDTH - 2, "█")
@@ -122,10 +126,10 @@ async def pong_loop(stdscr, room_name, token):
                         state["waiting"] = False
                     elif data["type"] == "state":
                         state["waiting"] = False
-                        state["paddle1_y"] = max(1, min(HEIGHT - 6, data["paddle1_y"] // 15))
-                        state["paddle2_y"] = max(1, min(HEIGHT - 6, data["paddle2_y"] // 15))
-                        state["ball_x"] = max(1, min(WIDTH - 2, data["ball"]["x"] // 10))
-                        state["ball_y"] = max(1, min(HEIGHT - 2, data["ball"]["y"] // 15))
+                        state["paddle1_y"] = max(1, min(HEIGHT - 6, int(data["paddle1_y"] * HEIGHT / 300)))
+                        state["paddle2_y"] = max(1, min(HEIGHT - 6, int(data["paddle2_y"] * HEIGHT / 300)))
+                        state["ball_x"] = max(1, min(WIDTH - 2, int(data["ball"]["x"] * WIDTH / 500)))
+                        state["ball_y"] = max(1, min(HEIGHT - 2, int(data["ball"]["y"] * HEIGHT / 300)))
                         state["score1"], state["score2"] = data["score"]
                     elif data["type"] == "timer":
                         state["timer"] = data["value"]
@@ -147,14 +151,19 @@ async def pong_loop(stdscr, room_name, token):
                     if key == ord("q"):
                         state["running"] = False
                         break
-                    elif state["playerId"] == 0 and key in [ord("w"), ord("s")]:
+                    dir = None
+                    if state["playerId"] == 0 and key in [ord("w"), ord("s")]:
                         dir = -1 if key == ord("w") else 1
-                        await websocket.send(json.dumps({"type": "move", "direction": dir}))
                     elif state["playerId"] == 1 and key in [curses.KEY_UP, curses.KEY_DOWN]:
                         dir = -1 if key == curses.KEY_UP else 1
+
+                    if dir is not None and dir != state["last_dir"]:
                         await websocket.send(json.dumps({"type": "move", "direction": dir}))
-                    elif key == -1 and not state["waiting"]:
+                        state["last_dir"] = dir
+                    elif key == -1 and not state["waiting"] and state["last_dir"] != 0:
                         await websocket.send(json.dumps({"type": "move", "direction": 0}))
+                        state["last_dir"] = 0
+
                     await asyncio.sleep(1 / 60)
             except websockets.exceptions.ConnectionClosed:
                 state["running"] = False
@@ -165,7 +174,8 @@ async def pong_loop(stdscr, room_name, token):
                 await asyncio.sleep(1 / 60)
 
         await asyncio.gather(receiver(), sender(), renderer())
-        await asyncio.sleep(2)
+        print("\n🏁 Session terminée.")
+        await asyncio.sleep(1)
 
 def start_curses(room_name, token):
     curses.wrapper(lambda stdscr: asyncio.run(pong_loop(stdscr, room_name, token)))
