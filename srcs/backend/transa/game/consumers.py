@@ -3,7 +3,7 @@ from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from game.utils import get_user_profile, create_match, finish_match
 import logging
-
+import random, math, time
 
 logger = logging.getLogger(__name__)
 
@@ -287,7 +287,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             # Rally acceleration every second
             if now - room["last_rally_time"] >= 1.0:
-                rally_boost = 0.3
+                rally_boost = 0.15
                 speed = math.hypot(ball["vx"], ball["vy"]) + rally_boost
                 angle = math.atan2(ball["vy"], ball["vx"])
                 ball["vx"] = speed * math.cos(angle)
@@ -333,5 +333,23 @@ class GameConsumer(AsyncWebsocketConsumer):
         room["_last_timer"] = 60
         room["started"] = True
 
+
+
     async def reset_ball(self, room):
-        room["ball"] = {"x": 250, "y": 150, "vx": -room["ball"]["vx"], "vy": 3}
+        ball = room["ball"]
+
+        # Centre la balle au milieu du canvas
+        ball["x"] = 250 - 4  # si 8x8
+        ball["y"] = 150 - 4
+
+        # Génère un angle raisonnable (ni trop horizontal, ni trop vertical)
+        while True:
+            angle = random.uniform(0, 2 * math.pi)
+            if abs(math.cos(angle)) >= 0.25 and abs(math.sin(angle)) >= 0.15:
+                break
+
+        speed = 3  # 💡 vitesse de départ
+        ball["vx"] = speed * math.cos(angle)
+        ball["vy"] = speed * math.sin(angle)
+
+        room["last_rally_time"] = time.time()
