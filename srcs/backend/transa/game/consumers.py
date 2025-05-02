@@ -13,7 +13,7 @@ class GameConsumer(AsyncWebsocketConsumer):
     profiles = {}
 
     def __init__(self, *args, **kwargs):
-        super().__init__(args, kwargs)
+        super().__init__(*args, **kwargs)
         self.user_profile = None
 
     async def setup(self):
@@ -181,6 +181,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         if room:
             room["started"] = False
             score = room["score"]
+            is_draw = False
 
             if "match" not in room or room["match"] is None:
                 await self.send(text_data=json.dumps({"type": "end"}))

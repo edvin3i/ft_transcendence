@@ -15,11 +15,10 @@ class TournamentSerializer(serializers.ModelSerializer):
 
     # creator = serializers.PrimaryKeyRelatedField(read_only=True) # just ID of user
     creator = UserProfileSerializer(read_only=True)  # full data of user profile
-    current_players_count = serializers.IntegerField(read_only=True)
+    # current_players_count = serializers.IntegerField(read_only=True)
+    current_players_count = serializers.SerializerMethodField()
     max_players = serializers.IntegerField(min_value=2)
-    participants = UserProfileSerializer(
-        source="participants__player", many=True, read_only=True
-    )
+    participants = serializers.SerializerMethodField()
     matches = MatchSerializer(many=True, read_only=True)
 
     class Meta:
@@ -30,7 +29,17 @@ class TournamentSerializer(serializers.ModelSerializer):
             'is_started', 'is_finished',
         ]
 
+    def get_current_players_count(self, obj):
+        return obj.participants.count()
+
+    def get_participants(self, obj):
+        qs = TournamentParticipant.objects.filter(tournament=obj).select_related('player')
+        return UserProfileSerializer([tp.player for tp in qs], many=True).data
+
     def validate_max_players(self, value):
+        if value < 2:
+            raise ValidationError("Max users number must be >= 2")
+
         if value & (value - 1) != 0:
             raise ValidationError("Max users count must be power of 2")
         return value
