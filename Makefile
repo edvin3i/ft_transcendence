@@ -62,7 +62,11 @@ fclean:
 		docker network prune -f
 		$(RM) $(DATA_DIR)
 
-.PHONY: create_dirs build up down start stop list clean fclean
+cli:
+	@echo "\e[36mLaunching CLI Pong client...\e[0m"
+	@python3 cli/pong_cli.py
+
+.PHONY: create_dirs build up down start stop list clean fclean cli
 
 # sudo echo "127.0.0.1        gbreana.42.fr" >> /etc/hosts
 # sudo echo "127.0.0.1        db.gbreana.42.fr" >> /etc/hosts
