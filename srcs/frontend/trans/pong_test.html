@@ -5,76 +5,142 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pong Game TEST</title>
   <style>
-    body {
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #f0f0f0;
-      font-family: Arial, sans-serif;
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  font-family: Arial, sans-serif;
+  background-image: url('./assets/2Dtable.png');
+}
+
+#frameContainer {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#fullFrameOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 103%;
+  height: 100%;
+  object-fit: fill;
+  z-index: 10;
+  pointer-events: none; /* make sure you can interact with buttons/canvas */
+}
+
+#uiLayer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#controls {
+  position: absolute;
+  top: 20px;
+  display: flex;
+  gap: 20px;
+  font-size: 20px;
+  z-index: 20;
+}
+	
+button {
+	  padding: 5px 15px;
+	  font-size: 16px;
+	  cursor: pointer;
+	  position: flex;
+}
+	canvas {
+
+  	  background-size: fill;
+  	  border: none;
+
     }
 
-    #controls {
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      font-size: 20px;
-    }
-
-    canvas {
-      border: 2px solid black;
-      background-color: white;
-    }
-
-    button {
-      padding: 5px 15px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  </style>
+	</style>
 </head>
 <body>
-  
-  <div style="position: absolute; top: 10px; left: 10px;">
-    <button id="backToNavBtn">← Back to main menu.</button>
-  </div>
+	<div id="frameContainer">
+	
+		<div id="uiLayer">
+		 
+			<div id="controls">
+			<button id="startBtn">Start / Restart</button>
+			<span id="timer">00:00</span>
+		  </div>
 
-  <div id="controls">
-    <button id="startBtn">Start / Restart</button>
-    <span id="timer">00:00</span>
-  </div>
-  <canvas id="pongCanvas"></canvas>
+		<img id="fullFrameOverlay" src="./assets/frame.png" alt="Frame Overlay" />
+		
+		
+		<canvas id="pongCanvas"></canvas>
+		
+		<div style="position: absolute; top: 10px; left: 10px;">
+			<button id="backToNavBtn">← Back to main menu.</button>
+		</div>
+	</div>
+</div>
 
-  <script>
-    const canvas = document.getElementById("pongCanvas");
-    const ctx = canvas.getContext("2d");
+<script>
+		const canvas = document.getElementById("pongCanvas");
+		const ctx = canvas.getContext("2d");
+		
+////////////////////// GAME VARIABLES ////////////////////////	
+    let gameInterval = null; // -->
+    let timerInterval = null; //
+    let secondsElapsed = 0; //
+	let rallyTime = 0; //
+	let rallyInterval = null; //
 
-    let gameInterval = null;
-    let timerInterval = null;
-    let secondsElapsed = 0;
-
-    let paddleWidth = 8;
-    let paddleHeight = 0;
-    const paddleHeightRatio = 0.25; // 20% of canvas height
-    let ballSize = 10;
+    let paddleWidth = 120; //
+    let paddleHeight = 10; // 
+    const paddleHeightRatio = 0.25; // 20% of canvas height //
+	const maxBounceAngle = Math.PI / 3; // 60 degrees //
+    let ballSize = 60; // <--
 
     let player1Y, player2Y, ballX, ballY;
-    let ballSpeedX, ballSpeedY;
     let player1Speed, player2Speed;
     let player1Score, player2Score;
+	
+	let defaultBallSpeed = 4; //
+    let ballSpeedX, ballSpeedY; //
+	let speedIncrement = 0.3; //
+////////////////////// ASSETS ///////////////////////////////
+const paddle1Img = new Image();
+paddle1Img.src = './assets/paddle1.png';
 
+const paddle2Img = new Image();
+paddle2Img.src = './assets/paddle2.png';
+
+const ballImg = new Image();
+ballImg.src = './assets/2Dball.png';
 /////////////////////// PAUSE VARIABLES /////////////////////
+	let gameStarted = false; // -->
     let pauseOverlay = null;
     let isPaused = false;
     let pauseTimestamp = null;
     let timerStartTimestamp = null;
     let resumeBtn = null;
     let isResuming = false;
-    let isResizing = false;
-/////////////////////////////////////////////////////////////
+    let isResizing = false; // <--
+///////////////////////// AI VARIABLES ////////////////////////////////////
+	let useAI = true; // ← Set to false to play 2-player manually
+	const aiMaxSpeed = 4; // how fast the AI paddle can move
+	const aiReactionDelay = 13; // in frames
+	let aiDelayCounter = 0;
+	let aiTargetY = null;
+	let aiThinkInterval = null;
+
+///////////////////////////////////////////////////////////////////////////
 
     const paddle1 = { x: 0, y: 0, width: paddleWidth, height: paddleHeight };
     const paddle2 = { x: 0, y: 0, width: paddleWidth, height: paddleHeight };
@@ -86,34 +152,53 @@
     }
 
     function startTimer(reset = true) {
-  if (reset) {
-    secondsElapsed = 0;
-    timerStartTimestamp = Date.now();
-  } else {
-    const pauseDuration = Date.now() - pauseTimestamp;
-    timerStartTimestamp += pauseDuration;
-  }
+	  if (reset) {
+	    secondsElapsed = 0;
+	    timerStartTimestamp = Date.now();
+	  } else {
+	    const pauseDuration = Date.now() - pauseTimestamp;
+	    timerStartTimestamp += pauseDuration;
+	  }
 
-  document.getElementById("timer").textContent = formatTime(secondsElapsed);
+	  document.getElementById("timer").textContent = formatTime(secondsElapsed);
+	  	timer.style.color = "White";
+		timer.style.fontSize = "large bold";
+		timer.style.fontSize = "25px";
+	  clearInterval(timerInterval);
+	  const tick = () => {
+	    const now = Date.now();
+	    secondsElapsed = Math.floor((now - timerStartTimestamp) / 1000);
+	    document.getElementById("timer").textContent = formatTime(secondsElapsed);
+	  };
+	  timerInterval = setInterval(tick, 200); // Tick every 200ms for better responsiveness
+	}
 
-  clearInterval(timerInterval);
-  const tick = () => {
-    const now = Date.now();
-    secondsElapsed = Math.floor((now - timerStartTimestamp) / 1000);
-    document.getElementById("timer").textContent = formatTime(secondsElapsed);
-  };
-  timerInterval = setInterval(tick, 200); // Tick every 200ms for better responsiveness
+	function startRallyTimer() {
+  rallyTime = 0;
+  clearInterval(rallyInterval); // just in case
+  rallyInterval = setInterval(() => {
+    rallyTime += 1;
+
+    if (ballSpeedX > 0) ballSpeedX += speedIncrement;
+    else ballSpeedX -= speedIncrement;
+
+    if (ballSpeedY > 0) ballSpeedY += speedIncrement;
+    else ballSpeedY -= speedIncrement;
+  }, 1000);
 }
 
 
 
     function stopTimer() {
       clearInterval(timerInterval);
+	  clearInterval(aiThinkInterval);
+	  aiThinkInterval = null;
+
     }
 
     function resizeCanvas() {
-      canvas.width = window.innerWidth * 0.8;
-      canvas.height = window.innerHeight * 0.8;
+      canvas.width = window.innerWidth * 0.95;
+      canvas.height = window.innerHeight * 0.95;
       paddleHeight = canvas.height * paddleHeightRatio;
       paddle1.height = paddleHeight;
       paddle2.height = paddleHeight;
@@ -121,18 +206,23 @@
 
 ////////////////////////////// PAUSE FUNCTIONS //////////////////////////////////////
     
-    function pauseGame(reason = '') {
-      if (!isPaused && !isResuming) {
-        cancelAnimationFrame(gameInterval);
-        stopTimer();
-        pauseTimestamp = Date.now();
-        isPaused = true;
-        showPauseOverlay(reason);
-      }
-    }
+	function pauseGame(reason = '') {
+	  if (!gameStarted || isPaused || isResuming) return;
+	  cancelAnimationFrame(gameInterval);
+	  stopTimer();
+	  clearInterval(rallyInterval); //stop rally speed increase
+	  rallyInterval = null;
+	  pauseTimestamp = Date.now();
+	  isPaused = true;
+	  showPauseOverlay(reason);
+	  clearInterval(aiThinkInterval);
+	  aiThinkInterval = null;
+
+	}
+
     
     function resumeGame() {
-      if (isResuming) return; //Prevent overlapping resumes
+	if (!gameStarted || isResuming) return;	//Prevent overlapping resumes
       isResuming = true;
     
       let countdown = 3;
@@ -148,6 +238,7 @@
           isPaused = false;
           isResuming = false; // Reset flag
           startTimer(false); // Resume timer without resetting
+		  startRallyTimer();
           gameLoop();
         }
       }, 1000);
@@ -213,87 +304,155 @@
     
 ///////////////////////////////////////////////////
     
-    window.addEventListener("resize", () => {
-      resizeCanvas();
-    });
+	function predictBallY() {
+	  // Clone ball state
+	  let simX = ballX;
+	  let simY = ballY;
+	  let simVX = ballSpeedX;
+	  let simVY = ballSpeedY;
 
-function resetBall() {
-  ballX = canvas.width / 2 - ballSize / 2;
-  ballY = canvas.height / 2 - ballSize / 2;
-  ballSpeedX = ballSpeedX > 0 ? 4 : -4; // preserve direction if already set
-  ballSpeedY = 4;
+	  // Simulate until it reaches paddle2.x
+	  while (true) {
+	    simX += simVX;
+	    simY += simVY;
+	    // Bounce off top/bottom
+	    if (simY <= 0 || simY + ballSize >= canvas.height) {
+	      simVY *= -1;
+	    }
+	    // If the ball reaches or passes AI paddle
+	    if (simVX > 0 && simX + ballSize >= paddle2.x) {
+	      break;
+	    }
+	    // If the ball goes out on the left side (player scored), just return center
+	    if (simX < 0) return canvas.height / 2;
+	  }
+	  // Return predicted center Y
+	  return simY + ballSize / 2;
+	}
+
+
+
+	function resetBallSpeed() {
+	  clearInterval(rallyInterval);
+
+	  let angleRad;
+
+	  // Keep trying until we get an angle not too close to 0, 90, 180, 270°
+	  while (true) {
+	    angleRad = Math.random() * 2 * Math.PI; // 0 to 2π radians
+	    const x = Math.abs(Math.cos(angleRad));
+	    const y = Math.abs(Math.sin(angleRad));
+
+	    // Avoid angles that are *too* close to pure vertical or horizontal
+	    if (x > 0.25 && y > 0.15) break;
+	  }
+
+	  ballSpeedX = defaultBallSpeed * Math.cos(angleRad);
+	  ballSpeedY = defaultBallSpeed * Math.sin(angleRad);
+
+	  startRallyTimer();
+	}
+
+
+	function resetBall() {
+		resetBallSpeed();
+	  	ballX = canvas.width / 2 - ballSize / 2;
+	 	ballY = canvas.height / 2 - ballSize / 2;
+	}
+
+	function movePaddles() {
+		player1Y += player1Speed;
+
+	// Clamp player1 paddle
+	  if (player1Y < 0) player1Y = 0;
+	  if (player1Y + paddleHeight > canvas.height) player1Y = canvas.height - paddleHeight;
+
+	  // AI logic or player 2
+	  if (useAI && aiTargetY !== null) {
+  const paddleCenter = player2Y + paddleHeight / 2;
+  const deltaY = aiTargetY - paddleCenter;
+  player2Speed = Math.sign(deltaY) * Math.min(aiMaxSpeed, Math.abs(deltaY));
 }
 
-function movePaddles() {
-  player1Y += player1Speed;
-  player2Y += player2Speed;
+	  player2Y += player2Speed;
 
-  if (player1Y < 0) player1Y = 0;
-  if (player1Y + paddleHeight > canvas.height) player1Y = canvas.height - paddleHeight;
-  if (player2Y < 0) player2Y = 0;
-  if (player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
+	  // Clamp player2 paddle
+	  if (player2Y < 0) 
+	  	player2Y = 0;
+	  if (player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
+	  // Assign Y values to paddles
+	 	 paddle1.y = player1Y;
+	  paddle2.y = player2Y;
+	}
 
-  paddle1.y = player1Y;
-  paddle2.y = player2Y;
-}
 
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  paddle2.x = canvas.width - paddleWidth;
+	function draw() {
+	  ctx.clearRect(0, 0, canvas.width, canvas.height);
+	  paddle2.x = canvas.width - paddleWidth;
 
-  ctx.fillStyle = "#000";
-  ctx.fillRect(paddle1.x, paddle1.y, paddle1.width, paddle1.height);
-  ctx.fillRect(paddle2.x, paddle2.y, paddle2.width, paddle2.height);
+	  ctx.drawImage(paddle1Img, paddle1.x, paddle1.y, paddle1.width, paddle1.height);
+	  ctx.drawImage(paddle2Img, paddle2.x, paddle2.y, paddle2.width, paddle2.height);
 
-  ctx.fillRect(ballX, ballY, ballSize, ballSize);
+	  ctx.drawImage(ballImg, ballX, ballY, ballSize, ballSize);
 
-  ctx.font = "30px Arial";
-  ctx.fillText(player1Score, canvas.width / 4, 30);
-  ctx.fillText(player2Score, 3 * canvas.width / 4, 30);
-}
+	  ctx.font = "bold 50px Serif";
+	  ctx.fillStyle = "white";
+	  ctx.fillText(player1Score, canvas.width / 3.5, 60);
+	  ctx.fillText(player2Score, 3 * canvas.width / 4.5, 60);
+	}
 
-function moveBall() {
-  ballX += ballSpeedX;
-  ballY += ballSpeedY;
+	function moveBall() {
+		ballX += ballSpeedX;
+		ballY += ballSpeedY;
+	
+		if (ballY <= 0 || ballY + ballSize >= canvas.height) {
+	    ballSpeedY = -ballSpeedY;
+	  	}
+  
+		if (ballX <= paddle1.x + paddleWidth && ballY + ballSize >= paddle1.y && ballY <= paddle1.y + paddleHeight) {
+			  const paddleCenter = paddle1.y + paddleHeight / 2;
+			  const ballCenter = ballY + ballSize / 2;
+			  const relativeIntersectY = ballCenter - paddleCenter;
+			  const normalized = relativeIntersectY / (paddleHeight / 2);
+			  const bounceAngle = normalized * maxBounceAngle;
 
-  if (ballY <= 0 || ballY + ballSize >= canvas.height) {
-    ballSpeedY = -ballSpeedY;
-  }
+			  const speed = Math.sqrt(ballSpeedX ** 2 + ballSpeedY ** 2);
+			  ballSpeedX = speed * Math.cos(bounceAngle);
+			  ballSpeedY = speed * Math.sin(bounceAngle);
+		}
 
-  if (
-    ballX <= paddle1.x + paddleWidth &&
-    ballY + ballSize >= paddle1.y &&
-    ballY <= paddle1.y + paddleHeight
-  ) {
-    ballSpeedX = -ballSpeedX;
-  }
+  
+		if (ballX + ballSize >= paddle2.x && ballY + ballSize >= paddle2.y && ballY <= paddle2.y + paddleHeight) {
+		  const paddleCenter = paddle2.y + paddleHeight / 2;
+		  const ballCenter = ballY + ballSize / 2;
+		  const relativeIntersectY = ballCenter - paddleCenter;
+		  const normalized = relativeIntersectY / (paddleHeight / 2);
+		  const bounceAngle = normalized * maxBounceAngle;
+		
+		  const speed = Math.sqrt(ballSpeedX ** 2 + ballSpeedY ** 2);
+		  ballSpeedX = -speed * Math.cos(bounceAngle);
+		  ballSpeedY = speed * Math.sin(bounceAngle);
+		}
 
-  if (
-    ballX + ballSize >= paddle2.x &&
-    ballY + ballSize >= paddle2.y &&
-    ballY <= paddle2.y + paddleHeight
-  ) {
-    ballSpeedX = -ballSpeedX;
-  }
+  
+		if (ballX <= 0) {
+		    player2Score++;
+		    resetBall();
+		  }
+	  
+		if (ballX + ballSize >= canvas.width) {
+		    player1Score++;
+		    resetBall();
+		}
+	}
 
-  if (ballX <= 0) {
-    player2Score++;
-    resetBall();
-  }
-
-  if (ballX + ballSize >= canvas.width) {
-    player1Score++;
-    resetBall();
-  }
-}
-
-function gameLoop() {
-  if (isPaused) return;
-  movePaddles();
-  moveBall();
-  draw();
-  gameInterval = requestAnimationFrame(gameLoop);
-}
+	function gameLoop() {
+	  if (isPaused) return;
+	  movePaddles();
+	  moveBall();
+	  draw();
+	  gameInterval = requestAnimationFrame(gameLoop);
+	}
 
     function startGame() {
       resizeCanvas();
@@ -302,53 +461,82 @@ function gameLoop() {
       player2Y = canvas.height / 2 - paddleHeight / 2;
       ballX = canvas.width / 2 - ballSize / 2;
       ballY = canvas.height / 2 - ballSize / 2;
-      ballSpeedX = 4;
-      ballSpeedY = 4;
       player1Speed = 0;
       player2Speed = 0;
       player1Score = 0;
       player2Score = 0;
-      
+      gameStarted = true;
+	  aiThinkInterval = setInterval(() => 
+	  {
+	  	if (!useAI || isPaused || !gameStarted)
+	  		return;
+        aiTargetY = predictBallY(); // updates prediction
+	  }, 
+	  	1000); // every 1000ms = 1s
+	  resetBall()
+	  startRallyTimer();
       gameLoop();
     }
-      
-      document.addEventListener("keydown", function (event) {
-        if (event.key === "w") player1Speed = -5;
-        if (event.key === "s") player1Speed = 5;
-        if (event.key === "ArrowUp") player2Speed = -5;
-        if (event.key === "ArrowDown") player2Speed = 5;
-      });
-      
-      document.addEventListener("keyup", function (event) {
-        if (event.key === "w" || event.key === "s") player1Speed = 0;
-        if (event.key === "ArrowUp" || event.key === "ArrowDown") player2Speed = 0;
-      });
-      
+/////////////////////////// INPUT KEYS LISTENERS ////////////////////////////////////////////
+	document.addEventListener("keydown", function (event) {
+	  // Toggle AI and pause
+	  if (event.key === "a") {
+	    useAI = !useAI;
+	    console.log("AI Player is now", useAI ? "ENABLED" : "DISABLED");
+
+	    if (gameStarted && !isPaused && !isResuming) {
+	      pauseGame(`AI is now ${useAI ? 'enabled' : 'disabled'}`);
+	    }
+	    return;
+	  }
+	  // Player 1 movement
+	  if (event.key === "w") player1Speed = -5;
+	  if (event.key === "s") player1Speed = 5;
+	  // Player 2 (only if AI is disabled)
+	  if (!useAI) {
+	    if (event.key === "ArrowUp") player2Speed = -5;
+	    if (event.key === "ArrowDown") player2Speed = 5;
+	  }
+	});
+
+	document.addEventListener("keyup", function (event) {
+	  // Player 1
+	  if (event.key === "w" || event.key === "s") player1Speed = 0;
+	  // Player 2 (only if AI is disabled)
+	  if (!useAI && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+	    player2Speed = 0;
+	  }
+	});
+
     /////////////////////////PAUSE KEY AND RESIZE ////////////////////////////////////////
     
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") {
-        if (isResuming) return; // Don't interrupt countdown
-        if (isPaused) {
-          hidePauseOverlay();
-          resumeGame();
-        } else {
-          pauseGame("Paused");
-        }
-      }
-    });
-    
+	document.addEventListener("keydown", function (event) {
+	  if (event.key === "Escape") {
+	    if (!gameStarted || isResuming) return;
+	    if (isPaused) {
+	      hidePauseOverlay();
+	      resumeGame();
+	    } else {
+	      pauseGame("Paused");
+	    }
+	  }
+	});
+
     let resizeTimeout;
-    window.addEventListener("resize", () => {
-      pauseGame("Paused due to resize");
     
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        resizeCanvas();
-        resetBall();
-        draw(); // ✅ Re-render paddles + ball immediately
-      }, 300);
-    });
+    window.addEventListener("resize", () => {
+ 	if (!gameStarted) {
+    	resizeCanvas(); // still allow resizing the canvas for layout
+		return;
+  	}
+	pauseGame("Paused due to resize");
+	clearTimeout(resizeTimeout);
+	resizeTimeout = setTimeout(() => {
+    resizeCanvas();
+    draw();
+  	}, 300);
+});
+
     ///////////////////////////////////////////////////////////////////////////////
 
     document.getElementById("startBtn").addEventListener("click", () => {
@@ -357,20 +545,6 @@ function gameLoop() {
       startGame();
       startTimer();
     });
-
-///////////////////////// BACK TO MAIN MENU EVENT LISTENNER /////////////////////////////////////////    
-
-    document.getElementById("backToNavBtn").addEventListener("click", () => {
-      if (history.pushState) {
-        history.pushState({page: 'gamePage'}, '', '');
-        window.dispatchEvent(new PopStateEvent('popstate', { state: { page: 'gamePage' } }));
-      } else {
-        window.location.href = '/'; // fallback
-      }
-    });
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
   </script>
 </body>
 </html>

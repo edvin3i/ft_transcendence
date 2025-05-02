@@ -1,6 +1,7 @@
 import {playPong} from './pong.js'
 import {openTournamentPage} from './tournament.js'
 import {playMoshpit} from './moshpitRemote.js'
+import { playPong3D } from './pong3d.js'
 
 function gamePage()
 {
@@ -12,37 +13,41 @@ function gamePage()
 				<button id="remoteButton" class="btn btn-primary">Remote 🌐</button>
 				<button id="tournamentButton" class="btn btn-primary">Tournament 🏆</button>
 				<button id="moshpitButton" class="btn btn-primary">Moshpit 👾</button>
+				<button id="threeDButton" class="btn btn-primary">3D Mode 🧠</button>
 			</div>
 		</div>
 	`;
 }
 
-export function openGamePage()
-{
+
+// 🚀 Entry point to render the main game selection screen
+export function openGamePage() {
 	document.getElementById('app').innerHTML = gamePage();
 
-	const localButton = document.getElementById('localButton');
-	localButton.addEventListener('click', openLocalGamePage);
-
-	const remoteButton = document.getElementById('remoteButton');
-	remoteButton.addEventListener('click', openRemoteGamePage);
-
-	const tournamentButton = document.getElementById('tournamentButton');
-	tournamentButton.addEventListener('click', openTournamentPage);
-
-	const moshpitButton = document.getElementById('moshpitButton');
-	moshpitButton.addEventListener('click', openMoshpitPage);
+	// Bind each button to its respective page
+	document.getElementById('localButton').addEventListener('click', openLocalGamePage);
+	document.getElementById('remoteButton').addEventListener('click', openRemoteGamePage);
+	document.getElementById('tournamentButton').addEventListener('click', openTournamentPage);
+	document.getElementById('moshpitButton').addEventListener('click', openMoshpitPage);
+	document.getElementById('threeDButton').addEventListener('click', open3DPage);
 }
 
 function localGamePage()
 {
 	return `
-		<div class="text-center">
-			<h2>Local Pong Game</h2>
-			<p id="playerNames" style="font-weight:bold;"></p>
-			<p id="playerLabel" style="font-weight:bold; margin-bottom:10px;"></p>
-			<canvas id="pongCanvas" width="500" height="300"></canvas>
-			<p>Use W and S for Player 1 (left) and Arrow keys for Player 2 (right)</p>
+		<div id="frameContainer">
+			<div id="uiLayer">
+				<div id="controls">
+					<button id="startBtn">Start / Restart</button>
+					<span id="timer">00:00</span>
+					<button id="toggleAI">Toggle AI</button>
+				</div>
+				<img id="fullFrameOverlay" src="assets/frame.png" alt="Frame Overlay" />
+				<canvas id="pongCanvas"></canvas>
+				<div style="position: absolute; top: 10px; left: 10px;">
+					<button onclick="history.back()">← Back to main menu</button>
+				</div>
+			</div>
 		</div>
 	`;
 }
@@ -120,4 +125,9 @@ function openMoshpitPage()
 	document.getElementById('app').innerHTML = moshpitPage();
 
 	playMoshpit();
+}
+
+function open3DPage() {
+	document.getElementById('app').innerHTML = ''; // clear current view
+	playPong3D();
 }
