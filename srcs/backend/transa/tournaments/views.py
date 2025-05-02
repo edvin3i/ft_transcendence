@@ -5,9 +5,12 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from django.db import transaction, IntegrityError
+from uprofiles.serializers import UserSimpleSerializer
 from tournaments.models import Tournament, TournamentParticipant
 from tournaments.serializers import TournamentSerializer
-from tournaments.service import generate_tour_bracket
+from tournaments.service import generate_tour_bracket, build_bracket_json
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 class TournamentsListAPIView(generics.ListAPIView):
@@ -28,7 +31,7 @@ class TournamentCreateAPIView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(creator=self.request.user.profile)
+        serializer.save(creator=self.request.user.userprofile)
 
 
 class TournamentDeleteAPIView(generics.DestroyAPIView):
@@ -61,7 +64,13 @@ class TournamentJoinAPIView(APIView):
                 # try to create participant; IntegrityError if doublicate
                 TournamentParticipant.objects.create(
                     tournament=tour,
-                    player=request.user.profile
+                    player=request.user.userprofile
+                )
+
+                payload = UserSimpleSerializer(request.user.userprofile).data
+                async_to_sync(get_channel_layer().group_send)(
+                    f"tour_{pk}",
+                    {"type": "participant_update", "player": payload},
                 )
 
                 tour.current_players_count += 1
@@ -111,7 +120,8 @@ class TournamentStartAPIView(APIView):
                 {"detail": f"{str(e)}"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        bracket = build_bracket_json(tour)
         return Response(
-            {"detail": "Tournament is running."},
+            {"bracket": bracket},
             status=status.HTTP_200_OK,
         )

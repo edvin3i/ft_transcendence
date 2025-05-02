@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 from .models import TournamentParticipant, Tournament
-from uprofiles.serializers import UserProfileSerializer
+from uprofiles.serializers import UserSimpleSerializer
 from game.serializers import MatchSerializer
 
 
@@ -14,7 +14,7 @@ class TournamentSerializer(serializers.ModelSerializer):
     """
 
     # creator = serializers.PrimaryKeyRelatedField(read_only=True) # just ID of user
-    creator = UserProfileSerializer(read_only=True)  # full data of user profile
+    creator = UserSimpleSerializer(read_only=True)  # full data of user profile
     # current_players_count = serializers.IntegerField(read_only=True)
     current_players_count = serializers.SerializerMethodField()
     max_players = serializers.IntegerField(min_value=2)
@@ -34,7 +34,11 @@ class TournamentSerializer(serializers.ModelSerializer):
 
     def get_participants(self, obj):
         qs = TournamentParticipant.objects.filter(tournament=obj).select_related('player')
-        return UserProfileSerializer([tp.player for tp in qs], many=True).data
+        return UserSimpleSerializer(
+            [tp.player for tp in qs],
+            context=self.context,
+            many=True,
+        ).data
 
     def validate_max_players(self, value):
         if value < 2:

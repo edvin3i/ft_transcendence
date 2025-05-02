@@ -3,6 +3,7 @@ from django.db import transaction
 from game.models import Match
 from rest_framework.exceptions import ValidationError
 from tournaments.models import Tournament, TournamentParticipant
+from collections import defaultdict
 
 
 def get_next_power_of_two(n):
@@ -70,3 +71,30 @@ def generate_tour_bracket(tour: Tournament):
 
     tour.is_started = True
     tour.save(update_fields=["is_started"])
+
+
+def build_bracket_json(tour):
+    """
+    Retrieves all matches of the tournament, grouped by round_number,
+    and turns them into a list of lists:
+    bracket[round-1] = [ {id, player1_id, player2_id, prev1, prev2}, ... ]
+    """
+    matches = tour.matches.order_by('round_number', 'id').select_related('player1', 'player2', 'winner')
+    rounds = defaultdict(list)
+    for m in matches:
+        rounds[m.round_number].append({
+            "match_id": m.id,
+            "player1": m.player1.user.username if m.player1 else None,
+            "player1_id": m.player1_id,
+            "player2": m.player2.user.username if m.player2 else None,
+            "player2_id": m.player2_id,
+            "prev_match_1": m.prev_match_1_id,
+            "prev_match_2": m.prev_match_2_id,
+            "winner_id": m.winner_id,
+            "is_finished": m.is_finished,
+            "score_p1": m.score_p1,
+            "score_p2": m.score_p2,
+        })
+    total_rounds = max(rounds.keys()) if rounds else 0
+    bracket = [ rounds[r] for r in range(1, total_rounds + 1) ]
+    return bracket

@@ -1,4 +1,4 @@
-let socket = null;
+let chatWs = null;
 let openRooms = new Set();
 let currentRoom = "general"; // par défaut
 
@@ -41,8 +41,8 @@ export function showChat()
 
 export function closeChat()
 {
-	if (socket)
-		socket.close();
+	if (chatWs)
+		chatWs.close();
 }
 
 function getPrivateRoomName(userA, userB) {
@@ -101,24 +101,24 @@ function openChat(room = "general") {
 	});
 	currentRoom = room;
 
-	if (socket) {
-		socket.onopen = null;
-		socket.onmessage = null;
-		socket.onclose = null;
-		socket.close();
+	if (chatWs) {
+		chatWs.onopen = null;
+		chatWs.onmessage = null;
+		chatWs.onclose = null;
+		chatWs.close();
 	}
 
 	document.getElementById("current-room-name").textContent = room;
 	document.getElementById("chat-log").innerHTML = "";
 
 	console.log("💬 Connecting to:", wsUrl);
-	socket = new WebSocket(wsUrl);
+	chatWs = new WebSocket(wsUrl);
 
-	socket.onopen = () => {
+	chatWs.onopen = () => {
 		console.log("✅ WebSocket connected:", wsUrl);
 	};
 
-	socket.onmessage = function (e) {
+	chatWs.onmessage = function (e) {
 		const data = JSON.parse(e.data);
 
 		if (data.type === "open_dm") {
@@ -162,7 +162,7 @@ function openChat(room = "general") {
 			senderSpan.addEventListener("click", () => {
 				const input = document.getElementById("chat-message-input");
 				if (input) {
-					socket.send(JSON.stringify({ message: `/dm ${sender}` }));
+					chatWs.send(JSON.stringify({ message: `/dm ${sender}` }));
 				}
 			});
 		}
@@ -177,7 +177,7 @@ function openChat(room = "general") {
 		chatLog.scrollTop = chatLog.scrollHeight;	
 	};
 
-	socket.onclose = function (event) {
+	chatWs.onclose = function (event) {
 		console.warn("❌ WebSocket closed:", event);
 		if (!event.wasClean && event.code === 1006) {
 			console.warn("🛑 Likely invalid/expired token");
@@ -187,7 +187,7 @@ function openChat(room = "general") {
 	document.getElementById("send").onclick = () => {
 		const input = document.getElementById("chat-message-input");
 		if (input.value.trim() !== "") {
-			socket.send(JSON.stringify({ message: input.value }));
+			chatWs.send(JSON.stringify({ message: input.value }));
 			input.value = "";
 		}
 	};

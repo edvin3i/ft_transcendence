@@ -1,6 +1,7 @@
 import {playPong} from './pong.js'
 import {playTournament} from './tournament.js'
 import {playMoshpit} from './moshpitRemote.js'
+import {openOnlineTournamentPage} from './tournamentOnline.js'
 
 function gamePage()
 {
@@ -11,6 +12,7 @@ function gamePage()
 				<button id="localButton" class="btn btn-primary">Local 🎮</button>
 				<button id="remoteButton" class="btn btn-primary">Remote 🌐</button>
 				<button id="tournamentButton" class="btn btn-primary">Tournament 🏆</button>
+				<button id="tournamentOnlineButton" class="btn btn-primary">Online Tournament 🏆</button>
 				<button id="moshpitButton" class="btn btn-primary">Moshpit 👾</button>
 			</div>
 		</div>
@@ -29,6 +31,9 @@ export function openGamePage()
 	
 	const tournamentButton = document.getElementById('tournamentButton');
 	tournamentButton.addEventListener('click', openTournamentPage);
+
+	const onlineTournamentButton = document.getElementById('tournamentOnlineButton');
+	onlineTournamentButton.addEventListener('click', openOnlineTournamentPage);
 
 	const moshpitButton = document.getElementById('moshpitButton');
 	moshpitButton.addEventListener('click', openMoshpitPage);
