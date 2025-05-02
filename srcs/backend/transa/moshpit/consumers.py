@@ -56,7 +56,7 @@ class MoshpitConsumer(AsyncWebsocketConsumer):
 		)
 		await self.accept()
 
-		required_players = 4#number of awaaited players
+		required_players = 2#number of awaaited players
 		if len(match['players']) == required_players and not match['started']:
 			match['started'] = True
 			match['loop_task'] = asyncio.create_task(self._game_loop())
@@ -103,7 +103,12 @@ class MoshpitConsumer(AsyncWebsocketConsumer):
 		if action == 'move':
 			# direction: 'left' or 'right'
 			dir_str = data.get('direction')
-			direction = -1 if dir_str == 'left' else 1
+			if dir_str == 'left':
+				direction = -1
+			elif dir_str == 'right':
+				direction = 1
+			elif dir_str == 'stop':
+				direction = 0
 			_matches[self.match_id]['game'].set_player_direction(self.player_id, direction)
 
 		elif action == 'request_game_state':

@@ -6,7 +6,7 @@ let context;
 let centerX;
 let centerY;
 
-const radius = 200; // à adapter selon ton besoin
+const radius = 290; // à adapter selon ton besoin
 const paddleSize = Math.PI / 6; // exemple : 15° d'arc
 
 // --- CLASSE PRINCIPALE ---
@@ -102,6 +102,13 @@ export function playMoshpit() {
 			moshpitRemote.movePlayer("right");
 		}
 	});
+
+	window.addEventListener("keyup", (e) => {
+		if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+			moshpitRemote.movePlayer("stop");
+		}
+	}
+	);
 }
 
 // --- DESSIN ---
