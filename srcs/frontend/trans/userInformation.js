@@ -57,52 +57,6 @@ async function changeUserInformation()
 	const username = document.getElementById('username').value;
 	const email = document.getElementById('email').value;
 
-	/*
-	// waiting for Vanya's backend change START
-	if (username === localStorage.getItem('username'))
-	{
-		const token = await checkToken();
-
-		const response = await 
-			fetch(`api/users/me/update/`, 
-		{
-			method: 'PATCH',
-			headers: 
-			{
-				'Authorization': `Bearer ${token}`,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({user: 
-			{
-				email: email
-			}})
-		});
-	
-		const data = await response.json();
-
-		if (response.ok)
-		{
-			await setUserInformation();
-			openProfilePage();
-		}
-		else if (data.user.email)
-		{
-			document.getElementById('email').focus();
-			document.getElementById('userInformationChangeResult').innerHTML = 
-				`The email '${email}' is already in use`;
-		}
-		else
-		{
-			document.getElementById('username').blur();
-			document.getElementById('email').blur();
-			document.getElementById('userInformationChangeResult').innerHTML = 
-				"An error occurred while updating your information";
-		}
-		return;
-	}
-	// waiting for Vanya's backend change END
-	*/
-
 	const token = await checkToken();
 
 	const response = await fetch(`api/users/me/update/`, 
