@@ -15,6 +15,8 @@ class MoshpitGame:
         self.ball_radius = 8
         self.speed_increment = 0.3
         self.player_speed = 0.03
+        self.finished = False
+        self.winner = None
 
         self._init_ball()
 
@@ -27,7 +29,7 @@ class MoshpitGame:
             'x': self.center_x,
             'y': self.center_y,
             'angle': random.uniform(0, 2 * math.pi),
-            'speed': 0.3,
+            'speed': 1,
         }
 
     def _normalize(self, angle):
@@ -52,8 +54,6 @@ class MoshpitGame:
             p = self.players[pid]
             p['angle'] = angle
             half = self.paddle_size / 2
-            # p['min_angle'] = self._normalize(angle - half)
-            # p['max_angle'] = self._normalize(angle + half)
             p['min_angle'] = self._normalize(angle - angle_step / 2)
             p['max_angle'] = self._normalize(angle + angle_step / 2)
             p['direction'] = 0
@@ -75,10 +75,21 @@ class MoshpitGame:
         # Re-space all players
         self._reposition_players()
 
+
+    def end_game(self):
+        self.ball['speed'] = 0
+        self.finished = True
+        alive = [pid for pid, p in self.players.items() if p['alive']]
+        self.winner = alive[0] if alive else None
+        print(f"🎉 Fin de partie, vainqueur : {self.winner}")
+
+
     def remove_player(self, player_id):
         """Eliminate a player and reposition remaining paddles."""
         if player_id in self.players:
             self.eliminated.append(self.players.pop(player_id))
+            if len(self.players) == 1:
+                self.end_game()
             self._init_ball()
             self._reposition_players()
 
@@ -192,5 +203,7 @@ class MoshpitGame:
                 'x': self.ball['x'],
                 'y': self.ball['y'],
                 'radius': self.ball_radius,
-            }
+            },
+            'finished': self.finished,
+            'winner': self.winner,
         }
