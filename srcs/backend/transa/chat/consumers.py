@@ -204,10 +204,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 {
                     "type": "chat_message",
                     "username": username,
+                    "user_id": user.id,
                     "message": message,
                     "timestamp": datetime.now().strftime("%H:%M:%S"),
                 },
             )
+
 
         except Exception as e:
             logger.error(f"[❌ ERROR] receive() failed: {e}")
@@ -225,6 +227,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             text_data=json.dumps(
                 {
                     "username": sender,
+                    "user_id": event.get("user_id"),
                     "message": message,
                     "timestamp": event.get("timestamp"),
                 }

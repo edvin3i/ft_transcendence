@@ -1,3 +1,5 @@
+import { openUserProfilePage } from './userProfile.js';
+
 let socket = null;
 let openRooms = new Set();
 let currentRoom = "general"; // par défaut
@@ -158,39 +160,38 @@ function openChat(room = "general") {
 
 		const timestamp = data.timestamp ? `[${data.timestamp}]` : "";
 		const sender = data.username || "Anonymous";
+		const senderId = data.user_id;
 		const message = data.message;
-		
+
 		const p = document.createElement("p");
-		
-		// Timestamp
+
 		const tsSpan = document.createElement("span");
 		tsSpan.classList.add("text-info");
 		tsSpan.textContent = timestamp + " ";
 		p.appendChild(tsSpan);
-		
-		// Sender
+
 		const senderSpan = document.createElement("strong");
 		senderSpan.textContent = sender;
 		senderSpan.style.cursor = "pointer";
-		
-		if (sender !== "SYSTEM" && sender !== localStorage.getItem("username")) {
-			senderSpan.title = "Click to DM";
+
+		if (
+			sender !== "SYSTEM" &&
+			sender !== localStorage.getItem("username") &&
+			senderId
+		) {
+			senderSpan.title = "Click to view profile";
 			senderSpan.addEventListener("click", () => {
-				const input = document.getElementById("chat-message-input");
-				if (input) {
-					socket.send(JSON.stringify({ message: `/dm ${sender}` }));
-				}
+				openUserProfilePage(senderId); // 👈 utilise l’ID ici
 			});
 		}
+
 		p.appendChild(senderSpan);
-		
-		// Separator + message
 		const textNode = document.createTextNode(` : ${message}`);
 		p.appendChild(textNode);
-		
-		// Display
+
 		chatLog.appendChild(p);
-		chatLog.scrollTop = chatLog.scrollHeight;	
+		chatLog.scrollTop = chatLog.scrollHeight;
+	
 	};
 
 	socket.onclose = function (event) {
