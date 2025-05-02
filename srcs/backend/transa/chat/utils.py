@@ -1,7 +1,7 @@
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from friends.models import Friendship
-import redis # for sync client
+import redis  # for sync client
 
 redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
 
@@ -81,5 +81,6 @@ def are_friends(user1, user2_name):
         ).exists()
     )
 
+
 def is_online(user_id):
-    return redis_client.exists(f"user_online:{user_id}") == 0
+    return redis_client.exists(f"user_online:{user_id}") == 1
