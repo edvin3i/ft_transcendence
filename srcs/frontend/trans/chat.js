@@ -139,6 +139,8 @@ function openChat(room = "general") {
 	socket.onmessage = function (e) {
 		const data = JSON.parse(e.data);
 
+		console.log("📥 Message reçu du WebSocket:", data);
+		
 		if (data.type === "open_dm") {
 			const room = data.room;
 			if (!openRooms.has(room)) {
@@ -181,7 +183,7 @@ function openChat(room = "general") {
 		) {
 			senderSpan.title = "Click to view profile";
 			senderSpan.addEventListener("click", () => {
-				openUserProfilePage(senderId); // 👈 utilise l’ID ici
+				openUserProfilePage(senderId-1); // 👈 utilise l’ID ici
 			});
 		}
 
