@@ -314,6 +314,7 @@ function addTournamentEventListeners() {
 				mod.openTournamentPage();
 			});
 			*/
+			resetTournament();
 			openTournamentPage();
 		});
 	}
@@ -334,6 +335,9 @@ export function resetTournament() {
 
 	const input = document.getElementById("playerAlias");
 	if (input) input.value = "";
+
+	const counter = document.getElementById("playerCount");
+	if (counter) counter.textContent = "0 / 8 players maximum";
 
 	document.getElementById("historyList").innerHTML = "";
 	document.getElementById("bracketContainer").innerHTML = "";
