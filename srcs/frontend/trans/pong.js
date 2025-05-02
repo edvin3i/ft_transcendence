@@ -66,10 +66,24 @@ export function playPong({ remote = false, room = "myroom" , onGameEnd = null} =
         score2 = data.score[1];
       }
 
+      if (data.type === "started") {
+        if (status) status.innerText = ""; // match started, clear waiting
+      }      
+
       if (data.type === "end") {
         if (status) status.innerText = "Game ended.";
+      
+        // 🎉 Nouveau bloc : afficher le gagnant
+        if (data.winner === "left") {
+          nameLabel.innerText = `🏆 Player 1 wins!`;
+        } else if (data.winner === "right") {
+          nameLabel.innerText = `🏆 Player 2 wins!`;
+        } else if (data.winner === "draw") {
+          nameLabel.innerText = `🤝 It's a draw!`;
+        }
+      
         socket.close();
-      }
+      }      
 
       if (data.type === "timer") {
         if (timerDisplay) timerDisplay.innerText = `⏱️ Time left: ${data.value}s`;

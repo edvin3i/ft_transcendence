@@ -215,7 +215,18 @@ class GameConsumer(AsyncWebsocketConsumer):
                 is_draw = True
             await finish_match(room["match"], score[0], score[1], winner, is_draw)
 
-        await self.send(text_data=json.dumps({"type": "end"}))
+        result = {"type": "end"}
+        if "match" in room and room["match"] is not None:
+            score = room["score"]
+            if score[0] > score[1]:
+                result["winner"] = "left"
+            elif score[1] > score[0]:
+                result["winner"] = "right"
+            else:
+                result["winner"] = "draw"
+
+        await self.send(text_data=json.dumps(result))
+
 
     async def game_loop(self, room):
         while room in GameConsumer.rooms.values() and room["started"]:
