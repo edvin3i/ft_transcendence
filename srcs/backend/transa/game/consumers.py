@@ -27,19 +27,17 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         user = self.scope["user"]
         if not user or not user.is_authenticated:
-            logger.warning(
-                "[❌ CONNECT BLOCKED] Unauthenticated user tried to connect."
-            )
+            logger.warning("[❌ CONNECT BLOCKED] Unauthenticated user tried to connect.")
             await self.close()
             return
-        logger.info(
-            f"[🔌 CONNECT] USER IN WEBSOCKET CONNECT: {user} {user.id} {user.is_authenticated}"
-        )
+
+        logger.info(f"[🔌 CONNECT] USER: {user} ID: {user.id} AUTH: {user.is_authenticated}")
 
         self.user_profile = await get_user_profile(user.id)
         username = await sync_to_async(lambda: self.user_profile.user.username)()
         GameConsumer.profiles[self.channel_name] = self.user_profile
 
+        # Get or create room
         room = GameConsumer.rooms.setdefault(
             self.room_name,
             {
@@ -56,20 +54,43 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "loop_task": None,
             },
         )
+
+        # 🔥 Clean up stale players
+        stale_channels = [ch for ch in list(room["players"].keys()) if ch not in GameConsumer.profiles]
+        for ch in stale_channels:
+            room["players"].pop(ch, None)
+            room["names"].pop(ch, None)
+            logger.warning(f"[🧹 CLEANUP] Removed stale channel {ch} from room {self.room_name}")
+
+        # ✅ Reset room if not exactly 1 player present
+        if len(room["players"]) != 1:
+            logger.info(f"[🔁 RESET] Resetting room {self.room_name} (player count: {len(room['players'])})")
+            task = room.get("loop_task")
+            if task and not task.done():
+                task.cancel()
+
+            GameConsumer.rooms[self.room_name] = {
+                "players": {},
+                "names": {},
+                "ball": {"x": 250, "y": 150, "vx": 3, "vy": 3},
+                "paddle1_y": 100,
+                "paddle2_y": 100,
+                "directions": [0, 0],
+                "score": [0, 0],
+                "timer": 60,
+                "_last_timer": 60,
+                "started": False,
+                "loop_task": None,
+            }
+            room = GameConsumer.rooms[self.room_name]
+
         room["names"][self.channel_name] = username
 
-        if self.channel_name not in room["players"]:
-            if len(room["players"]) >= 2:
-                await self.close()
-                return
-            self.player_id = len(room["players"])
-            room["players"][self.channel_name] = self.player_id
-        else:
-            self.player_id = room["players"][self.channel_name]
+        # Register this player
+        self.player_id = len(room["players"])
+        room["players"][self.channel_name] = self.player_id
 
-        await self.send(
-            text_data=json.dumps({"type": "init", "playerId": self.player_id})
-        )
+        await self.send(text_data=json.dumps({"type": "init", "playerId": self.player_id}))
 
         if len(room["players"]) == 2 and not room["started"]:
             room["started"] = True
@@ -86,9 +107,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 match = await create_match(p1, p2)
                 room["match"] = match
                 await self.start_game_loop(room)
-
         else:
             await self.send(text_data=json.dumps({"type": "waiting"}))
+
 
     async def disconnect(self, code):
         room = GameConsumer.rooms.get(self.room_name)
