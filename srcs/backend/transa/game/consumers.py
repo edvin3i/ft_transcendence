@@ -232,11 +232,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         import math, time
 
         room["last_rally_time"] = time.time()
-        paddle_height = 60
+        paddle_height = 80
         canvas_height = 300
         canvas_width = 500
-        paddle_thickness = 8
-        ball_size = 8
+        paddle_thickness = 12
+        ball_size = 16
 
         def bounce(ball_y, paddle_y, paddle_height, vx_sign):
             intersect = (ball_y - (paddle_y + paddle_height / 2)) / (paddle_height / 2)
