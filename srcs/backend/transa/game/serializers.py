@@ -28,6 +28,8 @@ class MatchSerializer(serializers.ModelSerializer):
         model = Match
         fields = "__all__"
 
+    read_only_fields = ["winner", "is_finished", "prev_match_1", "prev_match_2"]
+
     def validate(self, data):
         if data.get("player1") == data.get("player2"):
             raise serializers.ValidationError("Game must have different players.")

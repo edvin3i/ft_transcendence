@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 
 import os
 
+
 # ⚠️ DOIT être tout en haut, avant tout import Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'transa.settings')
 
@@ -25,14 +26,18 @@ import moshpit.routing
 from transa.middleware import JWTAuthMiddlewareStack
 import chat.routing
 import game.routing
-
+import tournaments.routing
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": JWTAuthMiddlewareStack(
         URLRouter(
-            chat.routing.websocket_urlpatterns + game.routing.websocket_urlpatterns + moshpit.routing.websocket_urlpatterns 
+            chat.routing.websocket_urlpatterns +
+            game.routing.websocket_urlpatterns +
+            moshpit.routing.websocket_urlpatterns +
+            tournaments.routing.websocket_urlpatterns
         )
     ),
 })
+
 

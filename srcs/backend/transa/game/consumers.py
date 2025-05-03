@@ -13,7 +13,7 @@ class GameConsumer(AsyncWebsocketConsumer):
     profiles = {}
 
     def __init__(self, *args, **kwargs):
-        super().__init__(args, kwargs)
+        super().__init__(*args, **kwargs)
         self.user_profile = None
 
     async def setup(self):
@@ -23,7 +23,9 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.setup()
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        logger.info(f"GameConsumer CONNECTING TO ROOM: {self.room_name}")
         await self.accept()
+        logger.info(f"GameConsumer CONNECTION ACCEPTED: {self.room_name}")
 
         user = self.scope["user"]
         if not user or not user.is_authenticated:
@@ -94,6 +96,17 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         if len(room["players"]) == 2 and not room["started"]:
             room["started"] = True
+
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {"type": "update_state",
+                 # первый «пустой» state, чтобы разбудить фронт
+                 "ball": room["ball"],
+                 "paddle1_y": room["paddle1_y"],
+                 "paddle2_y": room["paddle2_y"],
+                 "score": room["score"],
+                 }
+            )
 
             p1 = self.user_profile
             p2 = None
@@ -202,6 +215,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         if room:
             room["started"] = False
             score = room["score"]
+            is_draw = False
 
             if "match" not in room or room["match"] is None:
                 await self.send(text_data=json.dumps({"type": "end"}))

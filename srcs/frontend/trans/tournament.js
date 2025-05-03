@@ -1,5 +1,4 @@
-function tournamentPage()
-{
+function tournamentPage() {
 	return `
 		<div class="text-center">
 			<h2>Tournament Mode 🏆</h2>
@@ -15,9 +14,8 @@ function tournamentPage()
 				<h3 id="playerNames">Match</h3>
 				<canvas id="pongCanvas" width="500" height="300"></canvas>
 			</div>
-			
+
 			<p><button id="nextMatchBtn" style="display: none;">▶️ Next Match</button></p>
-			
 			<p><button id="restartBtn" style="display: none;">✨ New Tournament</button></p>
 
 			<!-- START: Hidden results section -->
@@ -37,48 +35,47 @@ function tournamentPage()
 	`;
 }
 
-export function openTournamentPage()
-{
+export function openTournamentPage() {
 	document.getElementById('app').innerHTML = tournamentPage();
-
 	playTournament();
 }
 
-// tournament.js — version with manual Next Match, full reset, clean bracket and winner display
-
 // Global state variables
-let players = [];                  // List of players
-let currentMatchIndex = 0;         // Current match index within the round
-let currentRoundIndex = 0;         // Current round index
-let bracketStructure = [];         // 2D array representing rounds and matches
+let players = [];
+let currentMatchIndex = 0;
+let currentRoundIndex = 0;
+let bracketStructure = [];
 
-function playTournament() {
+export function playTournament() {
+	resetTournament();
+	// Si une fonction externe de binding est utilisée :
+	if (typeof addTournamentEventListeners === 'function') {
+		addTournamentEventListeners();
+	}
+
+	const addBtn = document.getElementById('addPlayerBtn');
+	const input = document.getElementById('playerAlias');
+	const startBtn = document.getElementById('startTournamentBtn');
+	const nextBtn = document.getElementById('nextMatchBtn');
+	const restartBtn = document.getElementById('restartBtn');
+
+	addBtn.addEventListener('click', addPlayer);
+	startBtn.addEventListener('click', startTournament);
+
+	input.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter') addBtn.click();
+	});
+
+	nextBtn.addEventListener('click', () => {
+		nextBtn.style.display = 'none';
+		startMatch();
+	});
+
+	restartBtn.addEventListener('click', () => {
 		resetTournament();
-
-		const addBtn = document.getElementById('addPlayerBtn');
-		const input = document.getElementById('playerAlias');
-		const startBtn = document.getElementById('startTournamentBtn');
-		const nextBtn = document.getElementById('nextMatchBtn');
-		const restartBtn = document.getElementById('restartBtn');
-
-		addBtn.addEventListener('click', addPlayer);
-		startBtn.addEventListener('click', startTournament);
-
-		input.addEventListener('keydown', (e) => {
-			if (e.key === 'Enter') addBtn.click(); // Enable Enter to add player
-		});
-
-		nextBtn.addEventListener('click', () => {
-			nextBtn.style.display = 'none';
-			startMatch(); // Launch next match manually
-		});
-
-		restartBtn.addEventListener('click', () => {
-			resetTournament(); // Restart with cleared state
-		});
+	});
 }
 
-// Render the list of player names to the DOM
 function renderPlayerList() {
 	const list = document.getElementById("playerList");
 	const counter = document.getElementById("playerCount");
@@ -93,6 +90,7 @@ function renderPlayerList() {
 		counter.textContent = `${players.length} / 8 players maximum`;
 	}
 }
+
 
 // Add a player name from input field and update the display
 export function addPlayer() {

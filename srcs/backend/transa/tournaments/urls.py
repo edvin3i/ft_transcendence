@@ -28,4 +28,12 @@ urlpatterns = [
         views.TournamentDeleteAPIView.as_view(),
         name="tournament_delete",
     ),
+    path(
+        "join/<int:pk>/", views.TournamentJoinAPIView.as_view(), name="tournament_join"
+    ),
+    path(
+        "start/<int:pk>/",
+        views.TournamentStartAPIView.as_view(),
+        name="tournament_start",
+    ),
 ]

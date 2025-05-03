@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 import { openUserProfilePage } from './userProfile.js';
 
 let socket = null;
+=======
+let chatWs = null;
+>>>>>>> feature/remote_tour
 let openRooms = new Set();
 let currentRoom = "general"; // par défaut
 
@@ -43,8 +47,8 @@ export function showChat()
 
 export function closeChat()
 {
-	if (socket)
-		socket.close();
+	if (chatWs)
+		chatWs.close();
 }
 
 function getPrivateRoomName(userA, userB) {
@@ -103,23 +107,20 @@ function openChat(room = "general") {
 	});
 	currentRoom = room;
 
-	if (socket) {
-		socket.onopen = null;
-		socket.onmessage = null;
-		socket.onclose = null;
-		socket.close();
+	if (chatWs) {
+		chatWs.onopen = null;
+		chatWs.onmessage = null;
+		chatWs.onclose = null;
+		chatWs.close();
 	}
 
 	document.getElementById("current-room-name").textContent = room;
 	document.getElementById("chat-log").innerHTML = "";
 
 	console.log("💬 Connecting to:", wsUrl);
-	socket = new WebSocket(wsUrl);
-
+	chatWs = new WebSocket(wsUrl);
 	let pinginterval;
-
-	socket.onopen = () => 
-	{
+	chatWs.onopen = () => {
 		console.log("✅ WebSocket connected:", wsUrl);
 		pinginterval = setInterval(() => 
 		{
@@ -134,9 +135,7 @@ function openChat(room = "general") {
 		}, 3000);
 	};
 
-
-
-	socket.onmessage = function (e) {
+	chatWs.onmessage = function (e) {
 		const data = JSON.parse(e.data);
 
 		console.log("📥 Message reçu du WebSocket:", data);
@@ -196,7 +195,7 @@ function openChat(room = "general") {
 	
 	};
 
-	socket.onclose = function (event) {
+	chatWs.onclose = function (event) {
 		console.warn("❌ WebSocket closed:", event);
 		clearInterval(pinginterval);
 		if (!event.wasClean && event.code === 1006) {
@@ -211,7 +210,7 @@ function openChat(room = "general") {
 	document.getElementById("send").onclick = () => {
 		const input = document.getElementById("chat-message-input");
 		if (input.value.trim() !== "") {
-			socket.send(JSON.stringify({ message: input.value }));
+			chatWs.send(JSON.stringify({ message: input.value }));
 			input.value = "";
 		}
 	};

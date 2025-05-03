@@ -35,4 +35,10 @@ urlpatterns = [
         OpenRoomsAPIView.as_view(),
         name="open_rooms",
     ),
+    path(
+        "report/<int:pk>/",
+        views.MatchReportAPIView.as_view(),
+        name="match_report",
+    ),
+
 ]

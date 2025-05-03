@@ -1,7 +1,8 @@
-import {playPong} from './pong.js'
-import {openTournamentPage} from './tournament.js'
-import {playMoshpit} from './moshpitRemote.js'
-import { playPong3D } from './pong3d.js'
+import { playPong } from './pong.js';
+import { playPong3D } from './pong3d.js';
+import { playMoshpit } from './moshpitRemote.js';
+import { playTournament, openTournamentPage } from './tournament.js';
+import { openOnlineTournamentPage } from './tournamentOnline.js';
 
 function gamePage()
 {
@@ -12,6 +13,7 @@ function gamePage()
 				<button id="localButton" class="btn btn-primary">Local 🎮</button>
 				<button id="remoteButton" class="btn btn-primary">Remote 🌐</button>
 				<button id="tournamentButton" class="btn btn-primary">Tournament 🏆</button>
+				<button id="tournamentOnlineButton" class="btn btn-primary">Online Tournament 🏆</button>
 				<button id="moshpitButton" class="btn btn-primary">Moshpit 👾</button>
 				<button id="threeDButton" class="btn btn-primary">3D Mode 🧠</button>
 			</div>
@@ -23,14 +25,16 @@ function gamePage()
 // 🚀 Entry point to render the main game selection screen
 export function openGamePage() {
 	document.getElementById('app').innerHTML = gamePage();
-
+  
 	// Bind each button to its respective page
-	document.getElementById('localButton').addEventListener('click', openLocalGamePage);
-	document.getElementById('remoteButton').addEventListener('click', openRemoteGamePage);
-	document.getElementById('tournamentButton').addEventListener('click', openTournamentPage);
-	document.getElementById('moshpitButton').addEventListener('click', openMoshpitPage);
-	document.getElementById('threeDButton').addEventListener('click', open3DPage);
-}
+	document.getElementById('localButton')?.addEventListener('click', openLocalGamePage);
+	document.getElementById('remoteButton')?.addEventListener('click', openRemoteGamePage);
+	document.getElementById('tournamentButton')?.addEventListener('click', openTournamentPage);
+	document.getElementById('tournamentOnlineButton')?.addEventListener('click', openOnlineTournamentPage);
+	document.getElementById('moshpitButton')?.addEventListener('click', openMoshpitPage);
+	document.getElementById('threeDButton')?.addEventListener('click', open3DPage);
+  }
+  
 
 function localGamePage()
 {

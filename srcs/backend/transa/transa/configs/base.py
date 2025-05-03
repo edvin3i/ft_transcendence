@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     # WebSockets applications
     "channels",
     "chat.apps.ChatConfig",
-    # "remote",
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
