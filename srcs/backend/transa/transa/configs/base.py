@@ -120,6 +120,10 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+# Base allowed hosts get from env
+
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',')
+
 # CORS header setup
 CORS_ALLOWED_ORIGINS = [
     "https://localhost",
