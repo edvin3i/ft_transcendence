@@ -114,37 +114,37 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
 	  document.addEventListener("keyup", handleRemoteKeyUp);
 	  
 
-    document.addEventListener("keydown", (e) => {
-      if (playerId === null) return;
+    // document.addEventListener("keydown", (e) => {
+    //   if (playerId === null) return;
 
-      if (playerId === 0 && (e.key === "w" || e.key === "s")) {
-        const dir = e.key === "w" ? -1 : 1;
-        if (keyState !== dir) {
-          keyState = dir;
-          sendDirection(dir);
-        }
-      }
+    //   if (playerId === 0 && (e.key === "w" || e.key === "s")) {
+    //     const dir = e.key === "w" ? -1 : 1;
+    //     if (keyState !== dir) {
+    //       keyState = dir;
+    //       sendDirection(dir);
+    //     }
+    //   }
 
-      if (playerId === 1 && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
-        const dir = e.key === "ArrowUp" ? -1 : 1;
-        if (keyState !== dir) {
-          keyState = dir;
-          sendDirection(dir);
-        }
-      }
-    });
+    //   if (playerId === 1 && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+    //     const dir = e.key === "ArrowUp" ? -1 : 1;
+    //     if (keyState !== dir) {
+    //       keyState = dir;
+    //       sendDirection(dir);
+    //     }
+    //   }
+    // });
 
-    document.addEventListener("keyup", (e) => {
-      if (
-        (playerId === 0 && (e.key === "w" || e.key === "s")) ||
-        (playerId === 1 && (e.key === "ArrowUp" || e.key === "ArrowDown"))
-      ) {
-        if (keyState !== 0) {
-          keyState = 0;
-          sendDirection(0);
-        }
-      }
-    });
+    // document.addEventListener("keyup", (e) => {
+    //   if (
+    //     (playerId === 0 && (e.key === "w" || e.key === "s")) ||
+    //     (playerId === 1 && (e.key === "ArrowUp" || e.key === "ArrowDown"))
+    //   ) {
+    //     if (keyState !== 0) {
+    //       keyState = 0;
+    //       sendDirection(0);
+    //     }
+    //   }
+    // });
 
     // End Game button
     // if (endBtn) {
@@ -244,6 +244,7 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
 	let rallyInterval = null;
 		
 	let gameStarted = false;
+	let gameStopped = false
 	let pauseOverlay = null;
 	let isPaused = false;
 	let pauseTimestamp = null;
@@ -345,7 +346,7 @@ function pauseGame(reason = '') {
 
 
 function resumeGame() {
-	if (!gameStarted || isResuming) return; // Prevent overlapping resumes
+	if (!gameStarted || gameStopped || isResuming) return; // Prevent overlapping resumes
 	isResuming = true;
   
 	let countdown = 3;
@@ -353,7 +354,7 @@ function resumeGame() {
   
 	const countdownInterval = setInterval(() => {
 	  countdown--;
-	  if (countdown > 0) {
+	  if (countdown > 0 && !gameStopped) {
 		showPauseOverlay(`Resuming in ${countdown}...`);
 	  } else {
 		clearInterval(countdownInterval);
@@ -381,55 +382,55 @@ function resumeGame() {
 
 
 
-function showPauseOverlay(message) {
+  function showPauseOverlay(message) {
 	if (!pauseOverlay) {
 		pauseOverlay = document.createElement("div");
-	pauseOverlay.style.position = "absolute";
-	pauseOverlay.style.top = "50%";
-	pauseOverlay.style.left = "50%";
-	pauseOverlay.style.transform = "translate(-50%, -50%)";
-	pauseOverlay.style.fontSize = "32px";
-	pauseOverlay.style.fontWeight = "bold";
-	pauseOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-	pauseOverlay.style.color = "white";
-	pauseOverlay.style.padding = "30px 50px";
-	pauseOverlay.style.borderRadius = "12px";
-	pauseOverlay.style.zIndex = "10";
-	pauseOverlay.style.textAlign = "center";
-	
-	const text = document.createElement("div");
-	text.id = "pauseText";
-	
-	resumeBtn = document.createElement("button");
-	resumeBtn.textContent = "Resume";
-	resumeBtn.style.marginTop = "20px";
-	resumeBtn.style.padding = "10px 20px";
-	resumeBtn.style.fontSize = "20px";
-	resumeBtn.style.cursor = "pointer";
-	resumeBtn.addEventListener("click", () => {
-	  if (isResuming) return;
-	  hidePauseOverlay();
-	  resumeGame();
-	});
-	
-	pauseOverlay.appendChild(text);
-	pauseOverlay.appendChild(resumeBtn);
-	document.body.appendChild(pauseOverlay);
+		pauseOverlay.style.position = "absolute";
+		pauseOverlay.style.top = "50%";
+		pauseOverlay.style.left = "50%";
+		pauseOverlay.style.transform = "translate(-50%, -50%)";
+		pauseOverlay.style.fontSize = "32px";
+		pauseOverlay.style.fontWeight = "bold";
+		pauseOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+		pauseOverlay.style.color = "white";
+		pauseOverlay.style.padding = "30px 50px";
+		pauseOverlay.style.borderRadius = "12px";
+		pauseOverlay.style.zIndex = "10";
+		pauseOverlay.style.textAlign = "center";
+
+		pauseOverlay.style.display = "flex";
+		pauseOverlay.style.flexDirection = "column";
+		pauseOverlay.style.alignItems = "center";
+		pauseOverlay.style.justifyContent = "center";
+		
+		const text = document.createElement("div");
+		text.id = "pauseText";
+
+		resumeBtn = document.createElement("button");
+		resumeBtn.textContent = "Resume";
+		resumeBtn.style.marginTop = "20px";
+		resumeBtn.style.padding = "10px 20px";
+		resumeBtn.style.fontSize = "20px";
+		resumeBtn.style.cursor = "pointer";
+		resumeBtn.addEventListener("click", () => {
+			if (isResuming) return;
+			hidePauseOverlay();
+			resumeGame();
+		});
+		
+		pauseOverlay.appendChild(text);
+		pauseOverlay.appendChild(resumeBtn);
+		document.body.appendChild(pauseOverlay);
+	}
+
+	// Always update text on every call
+	const textElement = pauseOverlay.querySelector("#pauseText");
+	if (textElement) {
+		textElement.textContent = message;
+	}
+
+	pauseOverlay.style.display = "flex";
 }
-
-document.getElementById("pauseText").textContent = message;
-
-// Only show resume button if not in countdown
-if (isResuming) {
-	resumeBtn.style.display = "none";
-} else {
-	resumeBtn.style.display = "block";
-  }
-  
-  pauseOverlay.style.display = "block";
-}
-
-
 
 function hidePauseOverlay() {
 	if (pauseOverlay) {
@@ -784,20 +785,23 @@ document.getElementById("startBtn").addEventListener("click", () => {
   if (!remote) {
 	resizeCanvas(); // RESIZE WHEN LOADING THE .JS FILE SO IT'S ALWAYS FITTING WINDOW'S SIZE BEFORE GAME START.
   }
+
   stopPong = function () {
 	cancelAnimationFrame(gameInterval);
+	stopTimer();
 	clearInterval(timerInterval);
 	clearInterval(rallyInterval);
 	clearInterval(aiThinkInterval);
-  
+
 	gameInterval = null;
 	timerInterval = null;
 	rallyInterval = null;
 	aiThinkInterval = null;
-  
+	gameStopped = true;
 	isPaused = false;
 	isResuming = false;
 	gameStarted = false;
+	let countdown = 3
   
 	hidePauseOverlay?.();
   };
