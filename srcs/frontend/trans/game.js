@@ -48,9 +48,6 @@ function localGamePage()
 				</div>
 				<img id="fullFrameOverlay" src="assets/frame.png" alt="Frame Overlay" />
 				<canvas id="pongCanvas"></canvas>
-				<div style="position: absolute; top: 10px; left: 10px;">
-					<button onclick="history.back()">← Back to main menu</button>
-				</div>
 			</div>
 		</div>
 	`;
