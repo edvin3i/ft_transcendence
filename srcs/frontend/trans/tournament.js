@@ -185,26 +185,41 @@ export function startMatch() {
 		return;
 	}
 
-	// Show players before launching pong game
 	const [player1, player2] = match;
-	document.getElementById("playerNames").textContent = `Next match: ${player1} vs ${player2}`;
+	const playerNamesEl = document.getElementById("playerNames");
 
-	setTimeout(() => {
-		document.getElementById("playerNames").textContent = `${player1} vs ${player2}`;
-		import('./pong.js').then(({ playPong }) => {
-			playPong({
-				remote: 1,
-				onGameEnd: (winnerSide) => {
-					const winner = winnerSide === "left" ? player1 : player2;
-					placeWinner(winner, player1, player2);
-					currentMatchIndex++;
-					renderBracket();
-					showNextOrRestartButton();
-				}
-			});
-		});
-	}, 2000);
+	// Affiche les noms
+	playerNamesEl.textContent = `Next match: ${player1} vs ${player2}`;
+
+	// Décompte : 3, 2, 1, GO!
+	let countdown = 3;
+	const countdownInterval = setInterval(() => {
+		if (countdown > 0) {
+			playerNamesEl.textContent = `${player1} vs ${player2} — Starting in ${countdown}...`;
+			countdown--;
+		} else {
+			clearInterval(countdownInterval);
+			playerNamesEl.textContent = `${player1} vs ${player2} — GO!`;
+
+			setTimeout(() => {
+				playerNamesEl.textContent = `${player1} vs ${player2}`;
+				import('./pong.js').then(({ playPong }) => {
+					playPong({
+						remote: 1,
+						onGameEnd: (winnerSide) => {
+							const winner = winnerSide === "left" ? player1 : player2;
+							placeWinner(winner, player1, player2);
+							currentMatchIndex++;
+							renderBracket();
+							showNextOrRestartButton();
+						}
+					});
+				});
+			}, 500); // petite pause sur "GO!" avant de démarrer
+		}
+	}, 1000); // 1 seconde entre chaque nombre
 }
+
 
 // Place winner in next round's correct slot
 function placeWinner(winner, player1, player2) {
