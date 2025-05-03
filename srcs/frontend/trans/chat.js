@@ -1,10 +1,7 @@
-<<<<<<< HEAD
 import { openUserProfilePage } from './userProfile.js';
 
 let socket = null;
-=======
 let chatWs = null;
->>>>>>> feature/remote_tour
 let openRooms = new Set();
 let currentRoom = "general"; // par défaut
 

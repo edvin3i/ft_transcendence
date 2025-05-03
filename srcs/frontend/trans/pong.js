@@ -1,195 +1,189 @@
 export let stopPong = () => {};
 export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai = false } = {}) {
 
-  const canvas = document.getElementById("pongCanvas");
-  const status = document.getElementById("pongStatus");
-  const label = document.getElementById("playerLabel");
-  const nameLabel = document.getElementById("playerNames");
-  const timerDisplay = document.getElementById("gameTimer");
-  const endBtn = document.getElementById("endGameButton");
-  const resetBtn = document.getElementById("resetGameButton");
-
-  if (!canvas) {
-    console.error("❌ Canvas not found!");
-    return;
-  }
-
-  canvas.width = 500;
-  canvas.height = 300;
-  const ctx = canvas.getContext("2d");
-
-  if (remote) {
-    // const socket = new WebSocket(`wss://${window.location.host}/ws/game/${room}/`);
-    const token = localStorage.getItem("accessToken");
-    const socket = new WebSocket(`wss://${window.location.host}/ws/game/${room}/?token=${token}`);
-    let playerId = null;
-    let paddle1Y = 0, paddle2Y = 0;
-    let ballX = 0, ballY = 0;
-    let score1 = 0, score2 = 0;
-    let keyState = 0;
-
-    // On successful connection, send player name
-    const username = localStorage.getItem("username") || "Anonymous";
-    socket.onopen = () => {
-      socket.send(JSON.stringify({ type: "set_name", name: username }));
-    };
-
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-
-      if (data.type === "init") {
-        playerId = data.playerId;
-        //if (label) label.innerText = `You are Player ${playerId + 1}`;
-        if (label && playerId === 0) label.innerText = `${playerId + 1} (left)`;
-        if (label && playerId === 1) label.innerText = `${playerId + 1} (right)`;
-        if (status) status.innerText = "";
-      }
-
-      if (data.type === "waiting") {
-        if (status) status.innerText = "Waiting for opponent...";
-      }
-
-      if (data.type === "state") {
-        paddle1Y = data.paddle1_y;
-        paddle2Y = data.paddle2_y;
-        ballX = data.ball.x;
-        ballY = data.ball.y;
-        score1 = data.score[0];
-        score2 = data.score[1];
-      }
-
-      if (data.type === "end") {
-        if (status) status.innerText = "Game ended.";
-        socket.close();
-      }
-
-      if (data.type === "timer") {
-        if (timerDisplay) timerDisplay.innerText = `⏱️ Time left: ${data.value}s`;
-      }
-
-      if (data.type === "names") {
-        if (nameLabel) nameLabel.innerText = `🟦 ${data.names[0]} vs 🟥 ${data.names[1]}`;
-      }
-    };
-
-    const sendDirection = (direction) => {
-      if (playerId !== null) {
-        socket.send(JSON.stringify({ type: "move", direction, player: playerId }));
-      }
-    };
-
-	function handleRemoteKeyDown(e) {
+	const canvas = document.getElementById("pongCanvas");
+	const status = document.getElementById("pongStatus");
+	const label = document.getElementById("playerLabel");
+	const nameLabel = document.getElementById("playerNames");
+	const timerDisplay = document.getElementById("gameTimer");
+	const endBtn = document.getElementById("endGameButton");
+	const resetBtn = document.getElementById("resetGameButton");
+  
+	if (!canvas) {
+	  console.error("❌ Canvas not found!");
+	  return;
+	}
+  
+	canvas.width = 500;
+	canvas.height = 300;
+	const ctx = canvas.getContext("2d");
+	
+	if (remote) {
+	  const token = localStorage.getItem("accessToken");
+	  const socket = new WebSocket(`wss://${window.location.host}/ws/game/${room}/?token=${token}`);
+	
+	  const paddleWidth = 12;
+	  const paddleHeight = 80;
+	  const ballSize = 16;
+	
+	  const paddle1Img = new Image(); paddle1Img.src = './assets/paddle1.png';
+	  const paddle2Img = new Image(); paddle2Img.src = './assets/paddle2.png';
+	  const ballImg = new Image();    ballImg.src = './assets/2Dball.png';
+	
+	  let playerId = null;
+	  let paddle1Y = 0, paddle2Y = 0;
+	  let ballX = 0, ballY = 0;
+	  let score1 = 0, score2 = 0;
+	  let keyState = 0;
+	
+	  const username = localStorage.getItem("username") || "Anonymous";
+	
+	  socket.onopen = () => {
+		socket.send(JSON.stringify({ type: "set_name", name: username }));
+	  };
+	
+	  socket.onmessage = (event) => {
+		const data = JSON.parse(event.data);
+	
+		if (data.type === "init") {
+		  playerId = data.playerId;
+		  label.innerText = playerId === 0 ? "1 (left)" : "2 (right)";
+		  status.innerText = "";
+		}
+	
+		if (data.type === "waiting") {
+		  status.innerText = "Waiting for opponent...";
+		}
+	
+		if (data.type === "state") {
+		  paddle1Y = data.paddle1_y;
+		  paddle2Y = data.paddle2_y;
+		  ballX = data.ball.x;
+		  ballY = data.ball.y;
+		  score1 = data.score[0];
+		  score2 = data.score[1];
+		}
+	
+		if (data.type === "started") {
+		  status.innerText = "";
+		}
+	
+		if (data.type === "names") {
+		  nameLabel.innerText = `🟦 ${data.names[0]} vs 🟥 ${data.names[1]}`;
+		}
+	
+		if (data.type === "timer") {
+		  timerDisplay.innerText = `⏱️ Time left: ${data.value}s`;
+		}
+	
+		if (data.type === "end") {
+		  status.innerText = "Game ended.";
+		  if (data.winner === "left") {
+			nameLabel.innerText = `🏆 Player 1 wins!`;
+		  } else if (data.winner === "right") {
+			nameLabel.innerText = `🏆 Player 2 wins!`;
+		  } else {
+			nameLabel.innerText = `🤝 It's a draw!`;
+		  }
+		  socket.close();
+		}
+	  };
+	
+	  const sendDirection = (dir) => {
+		if (playerId !== null) {
+		  socket.send(JSON.stringify({ type: "move", direction: dir, player: playerId }));
+		}
+	  };
+	
+	  document.addEventListener("keydown", (e) => {
 		if (playerId === null) return;
-	  
-		if (playerId === 0 && (e.key === "w" || e.key === "s")) {
-		  const dir = e.key === "w" ? -1 : 1;
+	
+		const isP1 = playerId === 0;
+		const isP2 = playerId === 1;
+	
+		const dirMap = {
+		  w: -1,
+		  s: 1,
+		  ArrowUp: -1,
+		  ArrowDown: 1,
+		};
+	
+		const dir = dirMap[e.key];
+	
+		if ((isP1 && (e.key === "w" || e.key === "s")) ||
+			(isP2 && (e.key === "ArrowUp" || e.key === "ArrowDown"))) {
 		  if (keyState !== dir) {
 			keyState = dir;
 			sendDirection(dir);
 		  }
 		}
-	  
-		if (playerId === 1 && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
-		  const dir = e.key === "ArrowUp" ? -1 : 1;
-		  if (keyState !== dir) {
-			keyState = dir;
-			sendDirection(dir);
-		  }
+	  });
+	
+	  document.addEventListener("keyup", (e) => {
+		const valid = ["w", "s", "ArrowUp", "ArrowDown"];
+		if (valid.includes(e.key) && keyState !== 0) {
+		  keyState = 0;
+		  sendDirection(0);
 		}
-	  }
-	  
-	  function handleRemoteKeyUp(e) {
-		if (
-		  (playerId === 0 && (e.key === "w" || e.key === "s")) ||
-		  (playerId === 1 && (e.key === "ArrowUp" || e.key === "ArrowDown"))
-		) {
-		  if (keyState !== 0) {
-			keyState = 0;
-			sendDirection(0);
-		  }
+	  });
+	
+	  function drawRemote() {
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	
+		// 🎨 Terrain
+		ctx.fillStyle = "black";
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+	
+		ctx.strokeStyle = "white";
+		ctx.lineWidth = 4;
+		ctx.strokeRect(0, 0, canvas.width, canvas.height);
+	
+		ctx.beginPath();
+		for (let y = 0; y < canvas.height; y += 20) {
+		  ctx.moveTo(canvas.width / 2, y);
+		  ctx.lineTo(canvas.width / 2, y + 10);
 		}
+		ctx.stroke();
+	
+		// 🏓 Entités
+		ctx.drawImage(paddle1Img, 0, paddle1Y, paddleWidth, paddleHeight);
+		ctx.drawImage(paddle2Img, canvas.width - paddleWidth, paddle2Y, paddleWidth, paddleHeight);
+		ctx.drawImage(ballImg, ballX, ballY, ballSize, ballSize);
+	
+		// 🎯 Score
+		ctx.fillStyle = "white";
+		ctx.font = "30px Arial";
+		ctx.textAlign = "center";
+		ctx.textBaseline = "top";
+		ctx.fillText(score1, canvas.width / 4, 10);
+		ctx.fillText(score2, 3 * canvas.width / 4, 10);
+	
+		requestAnimationFrame(drawRemote);
 	  }
-	  
-	  document.addEventListener("keydown", handleRemoteKeyDown);
-	  document.addEventListener("keyup", handleRemoteKeyUp);
-	  
+	
+	  drawRemote();
+	
+	  window.addEventListener("beforeunload", () => {
+		if (socket.readyState === WebSocket.OPEN) {
+		  socket.send(JSON.stringify({ type: "end" }));
+		  socket.close();
+		}
+	  });
+	
+	  document.addEventListener("visibilitychange", () => {
+		if (document.hidden && socket.readyState === WebSocket.OPEN) {
+		  socket.send(JSON.stringify({ type: "end" }));
+		  socket.close();
+		  ctx.clearRect(0, 0, canvas.width, canvas.height);
+		  status.innerText = "Left the match";
+		  nameLabel.innerText = "";
+		  timerDisplay.innerText = "";
+		  label.innerText = "";
+		}
+	  });
+	}
 
-    // document.addEventListener("keydown", (e) => {
-    //   if (playerId === null) return;
-
-    //   if (playerId === 0 && (e.key === "w" || e.key === "s")) {
-    //     const dir = e.key === "w" ? -1 : 1;
-    //     if (keyState !== dir) {
-    //       keyState = dir;
-    //       sendDirection(dir);
-    //     }
-    //   }
-
-    //   if (playerId === 1 && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
-    //     const dir = e.key === "ArrowUp" ? -1 : 1;
-    //     if (keyState !== dir) {
-    //       keyState = dir;
-    //       sendDirection(dir);
-    //     }
-    //   }
-    // });
-
-    // document.addEventListener("keyup", (e) => {
-    //   if (
-    //     (playerId === 0 && (e.key === "w" || e.key === "s")) ||
-    //     (playerId === 1 && (e.key === "ArrowUp" || e.key === "ArrowDown"))
-    //   ) {
-    //     if (keyState !== 0) {
-    //       keyState = 0;
-    //       sendDirection(0);
-    //     }
-    //   }
-    // });
-
-    // End Game button
-    // if (endBtn) {
-    //   endBtn.style.display = "inline-block";
-    //   endBtn.onclick = () => {
-    //     socket.send(JSON.stringify({ type: "end" }));
-    //     if (status) status.innerText = "Game ended.";
-    //   };
-    // }
-
-    // // Reset Game button
-    // if (resetBtn) {
-    //   resetBtn.style.display = "inline-block";
-    //   resetBtn.onclick = () => {
-    //     socket.send(JSON.stringify({ type: "reset" }));
-    //     if (status) status.innerText = "Game restarted.";
-    //   };
-    // }
-
-    function drawRemote() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillRect(0, paddle1Y, 8, 60);
-      ctx.fillRect(canvas.width - 8, paddle2Y, 8, 60);
-      ctx.fillRect(ballX, ballY, 8, 8);
-      ctx.font = "30px Arial";
-      ctx.fillText(score1, canvas.width / 4, 30);
-      ctx.fillText(score2, 3 * canvas.width / 4, 30);
-      requestAnimationFrame(drawRemote);
-    }
-
-    drawRemote();
-
-	stopPong = function () {
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.close();
-  }
-
-  document.removeEventListener("keydown", handleRemoteKeyDown);
-  document.removeEventListener("keyup", handleRemoteKeyUp);
-
-  if (status) status.innerText = "Game disconnected.";
-};
-
-
-  } else {
+   else {
 	
     // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
     ////////////////////////////////////////////////////////////////////// LOCAL MODE - ENRICHED PONG////////////////////////////////////////////////////////////////////////////////////
