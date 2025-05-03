@@ -60,7 +60,7 @@ function openLocalGamePage()
 {
 	document.getElementById('app').innerHTML = localGamePage();
 
-	playPong({remote: false});
+	playPong({remote: 2});
 }
 
 function enterRoomPage()
@@ -111,7 +111,7 @@ function startRemoteGame()
 
 	document.getElementById('app').innerHTML = remoteGamePage();
 
-	playPong({remote: true, room: room});
+	playPong({remote: 0, room: room});
 }
 
 function moshpitPage()
