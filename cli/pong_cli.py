@@ -9,10 +9,15 @@ import urllib3
 from getpass import getpass
 import jwt
 
+
+DJANGO_EXT_PORT = os.getenv('DJANGO_EXT_PORT', 4443)
+
+print(f" =================== {DJANGO_EXT_PORT} ===================")
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 TOKENS_FILE = "cli/.tokens.json"
-BASE_URL = "https://localhost"
+BASE_URL = f"https://localhost:{DJANGO_EXT_PORT}"
 WIDTH, HEIGHT = 50, 20
 
 state = {
@@ -107,7 +112,7 @@ async def pong_loop(stdscr, room_name, token):
     stdscr.addstr(0, 2, f"🎮 Pong - Room: {room_name}")
     stdscr.refresh()
 
-    uri = f"wss://localhost/ws/game/{room_name}/?token={token}"
+    uri = f"wss://localhost:{DJANGO_EXT_PORT}/ws/game/{room_name}/?token={token}"
     ssl_context = ssl._create_unverified_context()
     user = get_user_info(token)
 

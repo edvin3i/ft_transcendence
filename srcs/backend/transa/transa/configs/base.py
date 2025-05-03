@@ -124,6 +124,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',')
 
+# External port
+DJANGO_EXT_PORT = os.getenv('DJANGO_EXT_PORT', 443)
+
 # CORS header setup
 CORS_ALLOWED_ORIGINS = [
     "https://localhost",
