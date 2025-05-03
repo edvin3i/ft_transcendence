@@ -1,4 +1,3 @@
-# Imports
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,18 +8,20 @@ from game.models import Match
 from game.serializers import MatchSerializer
 from .consumers import GameConsumer
 
-# Class-based views (API endpoints)
-
 # 1. Match CRUD
 class MatchesListAPIView(generics.ListAPIView):
-    queryset = Match.objects.all()
     serializer_class = MatchSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return Match.objects.filter(is_finished=True)
+
 class MatchDetailAPIView(generics.RetrieveAPIView):
-    queryset = Match.objects.all()
     serializer_class = MatchSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Match.objects.filter(is_finished=True)
 
 class MatchCreateAPIView(generics.CreateAPIView):
     queryset = Match.objects.all()
