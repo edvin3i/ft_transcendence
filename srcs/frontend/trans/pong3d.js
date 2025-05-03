@@ -15,7 +15,11 @@ export function playPong3D() {
 	const renderer = new THREE.WebGLRenderer({ antialias: true });
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	document.getElementById('app').appendChild(renderer.domElement);
-	
+	renderer.domElement.scrollIntoView({
+		behavior: 'smooth',
+		block: 'center',
+		inline: 'center'
+	  });
 	// === Score Tracking ===
 	let score1 = 0;
 	let score2 = 0;
