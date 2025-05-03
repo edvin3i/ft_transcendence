@@ -3,9 +3,9 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.m
 export function playPong3D() {
 	// Clear existing UI
 	document.getElementById('app').innerHTML = '';
-
+	
 	let animationId = null;
-
+	
 	// === Setup Scene ===
 	const scene = new THREE.Scene();
 	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
@@ -15,7 +15,7 @@ export function playPong3D() {
 	const renderer = new THREE.WebGLRenderer({ antialias: true });
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	document.getElementById('app').appendChild(renderer.domElement);
-
+	
 	// === Score Tracking ===
 	let score1 = 0;
 	let score2 = 0;

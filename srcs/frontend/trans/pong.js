@@ -21,10 +21,19 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 	if (remote === 0) {
 		canvas.width = 500;
 		canvas.height = 300;
+		canvas.scrollIntoView({
+			behavior: "smooth",
+			block: "center",
+			inline: "center"
+		  });
 	}
 	else {
 		canvas.width = window.innerWidth * 0.95;
-		canvas.height = window.innerHeight * 0.95;
+		canvas.height = window.innerHeight * 0.95;canvas.scrollIntoView({
+			behavior: "smooth",
+			block: "center",
+			inline: "center"
+		  });
 	}
 	const ctx = canvas.getContext("2d");
 	
