@@ -2,50 +2,58 @@ import {startOAuth42, openLogInPage, logIn} from './logIn.js'
 
 function accountCreationPage()
 {
-	return `
-		<div class="text-center" id="accountCreationHeader">
-			<button id="oauth42Button">42</button>
-			<p>---or---</p>
-		</div>
-		<form class="text-center" id="accountCreationForm" method="POST">
-			<div>
-				<label for="username">username:</label>
-				<input  type="text"
-						id="username"
-						placeholder="username"
-						minlength="3"
-						maxlength="20"
-						pattern="[a-zA-Z0-9_]+"
-						title="Username can only contain letters, numbers, and underscores, and must be 3-20 characters long."
-						required/>
-			</div>
-			<div>
-				<label for="email">email:</label>
-				<input type="email"
-						id="email"
-						placeholder="username@email.com"
-						pattern="^[a-zA-Z0-9._%+\\-]+@([a-zA-Z0-9\\-]+\\.)+[a-zA-Z]{2,}$"
-						title="user@email.com"
-						required/>
-			</div>
-			<div>
-				<label for="password">password:</label>
-				<input  type="password"
-						id="password"
-						placeholder="********"
-						minlength="8"
-						pattern="^(?!\d+$).*$"
-						required/>
-			</div>
-			<button type="submit">Create account</button>
-		</form>
-		<p id="accountCreationResult" class="mt-3 text-center"></p>
-		<div class="text-center">
-			<p style="display: inline;">Already have an account?</p>
-			<button style="display: inline;" id="logInButton">Log in</button>
-		</div>
-	`;
+    return `
+    <div class="neon-panel">
+      <div class="text-center" id="accountCreationHeader">
+        <button id="oauth42Button">42</button>
+        <p>---or---</p>
+      </div>
+      <form class="text-center" id="accountCreationForm" method="POST">
+        <div class="form-group mb-3">
+          <label for="username">username:</label>
+          <input
+            type="text"
+            id="username"
+            placeholder="username"
+            minlength="3"
+            maxlength="20"
+            pattern="[a-zA-Z0-9_]+"
+            title="Username can only contain letters, numbers, and underscores, and must be 3-20 characters long."
+            required
+          />
+        </div>
+        <div class="form-group mb-3">
+          <label for="email">email:</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="user@example.com"
+            pattern="^[a-zA-Z0-9._%+\-]+@([a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,}$"
+            required
+          />
+        </div>
+        <div class="form-group mb-3">
+          <label for="password">password:</label>
+          <input
+            type="password"
+            id="password"
+            placeholder="********"
+            minlength="8"
+            pattern="^(?!\d+$).*$"
+            required
+          />
+        </div>
+        <button type="submit">Create account</button>
+      </form>
+      <p id="accountCreationResult" class="mt-3 text-center"></p>
+      <div class="text-center mt-3">
+        <span>Already have an account?</span>
+        <button id="logInButton">Log in</button>
+      </div>
+    </div>
+    `;
 }
+
 			
 export function openAccountCreationPage(page, push)
 {

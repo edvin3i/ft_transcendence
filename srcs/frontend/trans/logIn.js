@@ -15,6 +15,7 @@ function authenticationHeader()
 function logInPage()
 {
 	return `
+		<div class="neon-panel">
 		<div class="text-center">
 			<button id="oauth42Button" class="btn btn-dark mb-3">42</button>
 		</div>
@@ -46,6 +47,7 @@ function logInPage()
 		<div class="text-center mt-3">
 			<p style="display: inline;">Don't have an account?</p>
 			<button style="display: inline;" id="createAccountButton" class="btn btn-link">Create account</button>
+		</div>
 		</div>
 	`;
 }
