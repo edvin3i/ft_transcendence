@@ -10,9 +10,15 @@ function getAuthHeaders() {
 }
 
 function getCurrentUserId() {
-  const id = localStorage.getItem('userId');
-  return id ? parseInt(id, 10) : null;
+  const idStr = localStorage.getItem('id');
+  console.log('🔍 getCurrentUserId() -> raw from localStorage:', idStr);
+
+  const parsedId = idStr ? parseInt(idStr, 10) : null;
+  console.log('✅ Parsed user ID:', parsedId);
+
+  return (parsedId - 1);
 }
+
 
 /*───────────────────────────────────────────────────────────*/
 import { playPong } from './pong.js';
@@ -109,9 +115,21 @@ function showDetails(id) {
   fetch(`/api/tournaments/details/${id}/`, { headers: getAuthHeaders() })
     .then(r => r.json())
     .then(t => {
+      // Log des infos clés
+      console.log("🧠 Tournament details loaded:");
+      console.log("🎯 Tournament ID:", t.id);
+      console.log("🏆 Tournament Creator ID from backend:", t.creator.id);
+      console.log("👤 Current User ID:", getCurrentUserId());
+
       // set state and store creator for later checks
       tourId = t.id;
       localStorage.setItem('creatorUserId', t.creator.id);
+
+      // log de confirmation
+      console.log("✅ Stored in localStorage: creatorUserId =", localStorage.getItem('creatorUserId'));
+
+      // ... (reste du code inchangé)
+
 
       // always connect WS for live updates (reconnect if needed)
       closeTourWs();
@@ -162,7 +180,9 @@ function showDetails(id) {
       t.current_players_count === t.max_players &&
       !t.is_started &&
       creatorId === meId;
-      startBtn.style.display = canStart ? '' : 'none';
+      startBtn.style.display = '';
+      startBtn.disabled = !canStart;
+
       startBtn.onclick = () => startTournament(id);
     })
     .catch(e => alert('Details error: ' + e));
@@ -384,7 +404,6 @@ function startLocalPong(matchId) {
 function addParticipant(p) {
   const ul = document.getElementById('participantList');
 
-  /* check if this player is already in the list */
   if (!ul.querySelector(`[data-pid="${p.id}"]`)) {
     ul.insertAdjacentHTML(
       'beforeend',
@@ -392,16 +411,19 @@ function addParticipant(p) {
     );
   }
 
-  /* recalc unique count */
   const uniqueCnt = ul.querySelectorAll('li').length;
   const pCount    = document.getElementById('participantCount');
   const max       = Number(pCount.dataset.max);
   pCount.textContent = `Players: ${uniqueCnt}/${max}`;
 
-  /* show Start if I'm creator and roster is full */
+  // Affiche toujours le bouton, mais contrôle son état
   const meId      = getCurrentUserId();
   const creatorId = Number(localStorage.getItem('creatorUserId'));
-  if (uniqueCnt === max && meId === creatorId) {
-    document.getElementById('startBtn').style.display = '';
-  }
+  const startBtn  = document.getElementById('startBtn');
+
+  startBtn.style.display = ''; // Toujours visible
+  const canStart = uniqueCnt === max && meId === creatorId;
+  startBtn.disabled = !canStart; // Désactivé si conditions non remplies
+  console.log('Can start:', uniqueCnt === max, meId === creatorId);
 }
+
