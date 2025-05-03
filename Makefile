@@ -64,15 +64,15 @@ fclean:
 
 cli:
 	@echo "\e[36mLaunching CLI Pong client...\e[0m"
-	@python3 cli/pong_cli.py
+	@python3 srcs/backend/transa/cli/pong_cli.py
 
 cli-login:
 	@echo "\e[36m🔐 Logging in and saving tokens...\e[0m"
-	@python3 -c 'import cli.pong_cli as p; p.login_and_save_tokens(input("Username: "), __import__("getpass").getpass("Password: "))'
+	@python3 -c 'import srcs.backend.transa.cli.pong_cli as p; p.login_and_save_tokens(input("Username: "), __import__("getpass").getpass("Password: "))'
 
 cli-reset:
 	@echo "\e[33m🗑️  Deleting CLI token file...\e[0m"
-	@rm -f cli/.tokens.json
+	@rm -f srcs/backend/transa/cli/.tokens.json
 
 cli-help:
 	@echo "\n🕹️  CLI Commands:"
