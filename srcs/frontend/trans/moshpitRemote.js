@@ -22,7 +22,8 @@ class MoshpitRemote {
 		const token = localStorage.getItem("accessToken");
 		const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 
-		this.socket = new WebSocket(`${protocol}://${window.location.host}/ws/moshpit/${this.matchId}/?token=${token}`);
+		this.socket = new WebSocket(`${protocol}://${window.location.host}/ws/moshpit/?token=${token}`);
+		// this.socket = new WebSocket(`${protocol}://${window.location.host}/ws/moshpit/${this.matchId}/?token=${token}`);# non-fix endpoint
 
 		this.socket.onopen = () => {
 			console.log("✅ Connexion WebSocket établie pour le match", this.matchId);
