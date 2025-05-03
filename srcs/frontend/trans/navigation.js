@@ -3,6 +3,7 @@ import {openLogInPage} from './logIn.js'
 import {openProfilePage} from './profile.js'
 import {openFriendsPage} from './friends.js'
 import {openGamePage} from './game.js'
+import { stopPong } from './pong.js';
 
 const homePage = 'profilePage';
 
@@ -65,25 +66,25 @@ export function showNavigationHeader()
 	logOutButton.addEventListener('click', logOut);
 }
 
-export function openPage(page, push = 1)
-{
+export function openPage(page, push = 1) {
 	const token = localStorage.getItem('accessToken');
+  
+	if (!token) {
+	  openLogInPage(page, push);
+	} else {
+	  if (push) {
+		history.pushState({ page: page }, '', '');
+	  }
+	  stopPong?.(); //Stop local Pong if it's running
+	  if (window.stopPong3D) window.stopPong3D(); //Stop 3DPong if it's running
 
-	if (!token)
-		openLogInPage(page, push);
-	else
-	{
-		if (push)
-			history.pushState({page: page}, '', '');
-		
-		if (page === 'profilePage')
-			openProfilePage();
-		else if (page === 'friendsPage')
-			openFriendsPage();
-		else if (page === 'gamePage')
-			openGamePage();
+  
+	  if (page === 'profilePage') openProfilePage();
+	  else if (page === 'friendsPage') openFriendsPage();
+	  else if (page === 'gamePage') openGamePage();
 	}
-}
+  }
+  
 
 function logOut()
 {

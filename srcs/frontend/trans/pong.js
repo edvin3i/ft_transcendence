@@ -1,3 +1,4 @@
+export let stopPong = () => {};
 export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai = false } = {}) {
 
   const canvas = document.getElementById("pongCanvas");
@@ -77,6 +78,42 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
       }
     };
 
+	function handleRemoteKeyDown(e) {
+		if (playerId === null) return;
+	  
+		if (playerId === 0 && (e.key === "w" || e.key === "s")) {
+		  const dir = e.key === "w" ? -1 : 1;
+		  if (keyState !== dir) {
+			keyState = dir;
+			sendDirection(dir);
+		  }
+		}
+	  
+		if (playerId === 1 && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+		  const dir = e.key === "ArrowUp" ? -1 : 1;
+		  if (keyState !== dir) {
+			keyState = dir;
+			sendDirection(dir);
+		  }
+		}
+	  }
+	  
+	  function handleRemoteKeyUp(e) {
+		if (
+		  (playerId === 0 && (e.key === "w" || e.key === "s")) ||
+		  (playerId === 1 && (e.key === "ArrowUp" || e.key === "ArrowDown"))
+		) {
+		  if (keyState !== 0) {
+			keyState = 0;
+			sendDirection(0);
+		  }
+		}
+	  }
+	  
+	  document.addEventListener("keydown", handleRemoteKeyDown);
+	  document.addEventListener("keyup", handleRemoteKeyUp);
+	  
+
     document.addEventListener("keydown", (e) => {
       if (playerId === null) return;
 
@@ -140,11 +177,22 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
 
     drawRemote();
 
+	stopPong = function () {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.close();
+  }
+
+  document.removeEventListener("keydown", handleRemoteKeyDown);
+  document.removeEventListener("keyup", handleRemoteKeyUp);
+
+  if (status) status.innerText = "Game disconnected.";
+};
+
+
   } else {
 	
     // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
     ////////////////////////////////////////////////////////////////////// LOCAL MODE - ENRICHED PONG////////////////////////////////////////////////////////////////////////////////////
-	
     // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
 	
 	////////////////////// GAME VARIABLES ////////////////////////	
@@ -614,7 +662,7 @@ gameLoop();
 document.addEventListener("keydown", function (event) {
 	// Toggle AI and pause
 	if (event.key === "a") {
-		if (isPaused || isResuming) return;
+		if (isPaused || isResuming || !gameStarted) return;
 	  
 		useAI = !useAI;
 		console.log("AI Player is now", useAI ? "ENABLED" : "DISABLED");
@@ -656,7 +704,7 @@ document.addEventListener("keyup", function (event) {
 const toggleBtn = document.getElementById("toggleAI");
 if (toggleBtn) {
 	toggleBtn.addEventListener("click", () => {
-		if (isPaused || isResuming) return;
+		if (isPaused || isResuming || !gameStarted) return;
 	  
 		useAI = !useAI;
 		console.log("AI is now", useAI ? "ENABLED" : "DISABLED");
@@ -736,5 +784,23 @@ document.getElementById("startBtn").addEventListener("click", () => {
   if (!remote) {
 	resizeCanvas(); // RESIZE WHEN LOADING THE .JS FILE SO IT'S ALWAYS FITTING WINDOW'S SIZE BEFORE GAME START.
   }
-  }
+  stopPong = function () {
+	cancelAnimationFrame(gameInterval);
+	clearInterval(timerInterval);
+	clearInterval(rallyInterval);
+	clearInterval(aiThinkInterval);
+  
+	gameInterval = null;
+	timerInterval = null;
+	rallyInterval = null;
+	aiThinkInterval = null;
+  
+	isPaused = false;
+	isResuming = false;
+	gameStarted = false;
+  
+	hidePauseOverlay?.();
+  };
+
+}
 }

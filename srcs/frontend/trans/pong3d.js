@@ -4,6 +4,8 @@ export function playPong3D() {
 	// Clear existing UI
 	document.getElementById('app').innerHTML = '';
 
+	let animationId = null;
+
 	// === Setup Scene ===
 	const scene = new THREE.Scene();
 	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
@@ -13,6 +15,25 @@ export function playPong3D() {
 	const renderer = new THREE.WebGLRenderer({ antialias: true });
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	document.getElementById('app').appendChild(renderer.domElement);
+
+	// === Score Tracking ===
+	let score1 = 0;
+	let score2 = 0;
+
+	// Score Display UI
+	const scoreDiv = document.createElement('div');
+	scoreDiv.style.position = 'absolute';
+	scoreDiv.style.top = '190px';
+	scoreDiv.style.left = '50%';
+	scoreDiv.style.transform = 'translateX(-50%)';
+	scoreDiv.style.color = 'white';
+	scoreDiv.style.fontSize = '40px';
+	scoreDiv.style.fontFamily = 'Serif, serif';
+	document.getElementById('app').appendChild(scoreDiv);
+	function updateScoreDisplay() {
+		scoreDiv.innerHTML = `${score1} : ${score2}`;
+	}
+	updateScoreDisplay();
 
 	// === Sound Effect ===
 	const growlSound = new Audio('./assets/growl.mp3');
@@ -64,6 +85,9 @@ export function playPong3D() {
 	scene.add(light);
 
 	// === Paddles ===
+	paddleTexture.wrapS = paddleTexture.wrapT = THREE.RepeatWrapping;
+	paddleTexture.repeat.set(1, 1);
+
 	const paddleGeom = new THREE.CapsuleGeometry(10, 100, 4, 8);
 	const paddleMat = new THREE.MeshStandardMaterial({ map: paddleTexture });
 
@@ -90,8 +114,17 @@ export function playPong3D() {
 	const paddleSpeed = 8;
 	let keys = {};
 
-	document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-	document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+	function handleKeyDown(e) {
+		keys[e.key.toLowerCase()] = true;
+	  }
+	  
+	  function handleKeyUp(e) {
+		keys[e.key.toLowerCase()] = false;
+	  }
+	  
+	  document.addEventListener('keydown', handleKeyDown);
+	  document.addEventListener('keyup', handleKeyUp);
+	  
 
 	function movePaddles() {
 		if (keys['a']) paddle1.position.z -= paddleSpeed;
@@ -166,15 +199,30 @@ export function playPong3D() {
 		checkCollision(paddle2);
 
 		if (ball.position.x < -450 || ball.position.x > 450) {
+			// Play sound when player scores
 			if (ball.position.x > 450) {
 				growlSound.currentTime = 0;
 				growlSound.play();
 			}
+			// Update scores
+			if (ball.position.x > 450) score1++; else score2++;
+			updateScoreDisplay();
+
+			// Check for win: first to 3 with at least 2-point lead
+			if ((score1 >= 3 || score2 >= 3) && Math.abs(score1 - score2) >= 2) {
+				const winner = score1 > score2 ? 'You win' : 'AI wins';
+				alert(`${winner} the game!`);
+				score1 = 0;
+				score2 = 0;
+				updateScoreDisplay();
+			}
+
 			resetBall();
 		}
 
 		renderer.render(scene, camera);
-		requestAnimationFrame(animate);
+		animationId = requestAnimationFrame(animate);
+
 	}
 
 	animate();
@@ -184,4 +232,15 @@ export function playPong3D() {
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	});
+
+	window.stopPong3D = function () {
+		if (animationId) cancelAnimationFrame(animationId);
+	  
+		document.removeEventListener('keydown', handleKeyDown);
+		document.removeEventListener('keyup', handleKeyUp);
+	  
+		const app = document.getElementById('app');
+		if (app) app.innerHTML = ''; // Clear the canvas and score display
+	  };
+	  
 }
