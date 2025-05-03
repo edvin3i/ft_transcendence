@@ -16,7 +16,7 @@ print(f" =================== {DJANGO_EXT_PORT} ===================")
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-TOKENS_FILE = "cli/.tokens.json"
+TOKENS_FILE = "srcs/backend/transa/cli/.tokens.json"
 BASE_URL = f"https://localhost:{DJANGO_EXT_PORT}"
 WIDTH, HEIGHT = 50, 20
 
