@@ -191,7 +191,7 @@ export function startMatch() {
 		document.getElementById("playerNames").textContent = `${player1} vs ${player2}`;
 		import('./pong.js').then(({ playPong }) => {
 			playPong({
-				remote: false,
+				remote: 1,
 				onGameEnd: (winnerSide) => {
 					const winner = winnerSide === "left" ? player1 : player2;
 					placeWinner(winner, player1, player2);

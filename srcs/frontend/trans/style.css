@@ -135,6 +135,7 @@ body
 	z-index: 10;
 	pointer-events: none;
 }
+<<<<<<< HEAD
 
 
 .neon-panel
@@ -365,3 +366,5 @@ body
   padding: 1rem;            /* опционально — внутренние отступы вокруг */
 }
 
+=======
+>>>>>>> 7c65993 (Ulysse's work)
