@@ -37,8 +37,16 @@ class MoshpitConsumer(AsyncWebsocketConsumer):
             self.user_profile = await get_user_profile(user.id)
             self.player_id = await sync_to_async(lambda: self.user_profile.user.username)()
 
-            # self.player_id = str(validated_token['user_id'])
-            # print(f"✅ Joueur authentifié : ID {self.player_id}")
+            for room in _rooms.values():
+                if self.player_id in room['players']:
+                    await self.send_error("Tu es déjà dans une partie en cours ! 🤖⛔")
+                    return
+
+            for match in _matches.values():
+                if self.player_id in match['players']:
+                    await self.send_error("Tu es déjà dans une partie en cours ! 🤖⛔")
+                    return
+
         except TokenError as e:
             print("❌ Token JWT invalide :", e)
             await self.close()
@@ -75,6 +83,13 @@ class MoshpitConsumer(AsyncWebsocketConsumer):
         else:
             await self.send(text_data=json.dumps({"type": "waiting", "message": "En attente d'autres joueurs..."}))
 
+    async def send_error(self, message):
+        await self.send(text_data=json.dumps({
+            "type": "error",
+            "message": message
+        }))
+        await self.close()
+
     async def start_game(self):
         match_id = str(uuid.uuid4())
         self.match_id = match_id  # Pour accéder plus tard
@@ -109,11 +124,13 @@ class MoshpitConsumer(AsyncWebsocketConsumer):
                     'type': 'start_match',
                     'match_id': match_id,
                     'player_id': info['username'],
-                    'color': info['color']
+                    'color': info['color'],
+                    'players': players_info
                 }
             )
 
         # 🎮 Envoie du 1er état de jeu
+        # _matches[match_id]['started'] = True
         await self.send_game_state(match_id)
 
 
@@ -123,14 +140,20 @@ class MoshpitConsumer(AsyncWebsocketConsumer):
             'type': 'start_match',
             'match_id': event['match_id'],
             'player_id': event['player_id'],
-            'color': event['color']
+            'color': event['color'],
+            'players': event['players']
         }))
 
     async def run_game_loop(self, match_id):
+        firstTurn = 0
         match = _matches[match_id]
         game = match['game']  # ✅ Récupérer l'instance du jeu
 
         while match['started']:
+            if firstTurn == 0:
+                await asyncio.sleep(4.1)
+                firstTurn = 1
+
             if not match['players']:  # Leave if no players
                 match['started'] = False
                 break

@@ -9,6 +9,24 @@ let centerY;
 const radius = 290; // à adapter selon ton besoin
 const paddleSize = Math.PI / 6; // exemple : 15° d'arc
 
+function moshpitPage()
+{
+	return `
+		<div class="container">
+			<h2 class="text-center">Moshpit</h2>
+			<canvas id="moshpitRemoteCanvas" width="600" height="600"></canvas>
+			<div id="countdown-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); color:white; text-align:center; padding-top:100px; z-index:9999;"></div>
+		</div>
+	`;
+}
+
+export function openMoshpitPage()
+{
+	document.getElementById('app').innerHTML = moshpitPage();
+
+	playMoshpit();
+}
+
 // --- CLASSE PRINCIPALE ---
 class MoshpitRemote {
 	constructor() {
@@ -37,6 +55,11 @@ class MoshpitRemote {
 				this.playerId = data.player_id;
 				console.log("✅ Match démarré avec ID :", this.matchId);
 				this.sendGameStateRequest(); // demander l'état dès que prêt
+				startCountdown(data.players);
+			}
+			if (data.type === 'error'){
+                alert(data.message); // 😎 simple et rapide
+                return;
 			}
 			if (data.type === 'game_update')
 				this.updateGameState(data.game_state);
@@ -72,6 +95,7 @@ class MoshpitRemote {
 		this.gameState = state;
 		if (this.gameState.finished) {
 			victoryScreen(this.gameState.winner);
+			this.socket.close();
 			return ;
 		}
 		drawGameCircle(this.gameState);
@@ -194,6 +218,35 @@ function drawGameCircle(gameState) {
 	drawBall(gameState.ball);
 	drawAllPaddles(gameState.players);
 }
+////////COUNTDOWN////////////////
+
+function startCountdown(players) {
+	const overlay = document.getElementById('countdown-overlay');
+	overlay.innerHTML = `
+		<h2>Match Commence !</h2>
+		<ul style="list-style: none; font-size: 24px; padding: 0;">
+			${players.map(p => `<li style="color: ${p.color}; font-weight: bold;">${p.username}</li>`).join('')}
+		</ul>
+		<div id="countdown" style="font-size: 60px; margin-top: 20px;">3</div>
+	`;
+	overlay.style.display = 'block';
+
+	let count = 3;
+	const countdownEl = document.getElementById('countdown');
+	const interval = setInterval(() => {
+		count--;
+		if (count === 0) {
+			countdownEl.textContent = "GO!";
+		} else if (count < 0) {
+			clearInterval(interval);
+			overlay.style.display = 'none';
+			// tu peux appeler une fonction ici si tu veux déclencher quelque chose
+		} else {
+			countdownEl.textContent = count;
+		}
+	}, 1000);
+}
+
 
 // function showCountdown(players) {
 //     const overlay = document.createElement("div");

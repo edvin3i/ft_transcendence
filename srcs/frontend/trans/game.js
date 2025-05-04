@@ -1,8 +1,9 @@
 import { playPong } from './pong.js';
 import { playPong3D } from './pong3d.js';
-import { playMoshpit } from './moshpitRemote.js';
+// import { playMoshpit } from './moshpitRemote.js';
 import { playTournament, openTournamentPage } from './tournament.js';
 import { openOnlineTournamentPage } from './tournamentOnline.js';
+import { openMoshpitPage } from './moshpitRemote.js';
 
 function gamePage()
 {
@@ -114,22 +115,7 @@ function startRemoteGame()
 	playPong({remote: true, room: room});
 }
 
-function moshpitPage()
-{
-	return `
-		<div class="container">
-			<h2 class="text-center">Moshpit</h2>
-			<canvas id="moshpitRemoteCanvas" width="600" height="600"></canvas>
-		</div>
-	`;
-}
 
-function openMoshpitPage()
-{
-	document.getElementById('app').innerHTML = moshpitPage();
-
-	playMoshpit();
-}
 
 function open3DPage() {
 	document.getElementById('app').innerHTML = ''; // clear current view
