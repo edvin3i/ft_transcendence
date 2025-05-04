@@ -76,7 +76,7 @@ async function getFriendsList()
 			friendsList.appendChild(p);
 
 			const onlineStatus = document.getElementById('onlineStatus');
-			if (await getOnlineStatus(friendId-1) === true)
+			if (await getOnlineStatus(friendId) === true)
 				onlineStatus.style.display = 'inline-block';
 		}
 	}
