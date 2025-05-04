@@ -1,3 +1,11 @@
+import { stopPong } from "./pong.js";
+
+function preventArrowScrollDuringMatch(e) {
+	if (["ArrowUp", "ArrowDown"].includes(e.key)) {
+		e.preventDefault();
+	}
+}
+
 function tournamentPage()
 {
 	return `
@@ -170,6 +178,7 @@ export function startTournament() {
 
 // Start a single match or skip to next round if needed
 export function startMatch() {
+	window.addEventListener("keydown", preventArrowScrollDuringMatch, { passive: false });
 	const round = bracketStructure[currentRoundIndex];
 	if (!round || currentMatchIndex >= round.length) {
 		currentRoundIndex++;
@@ -211,12 +220,14 @@ export function startMatch() {
 					playPong({
 						remote: 1,
 						onGameEnd: (winnerSide) => {
+							window.removeEventListener("keydown", preventArrowScrollDuringMatch); // ✅ clean up scroll blocker
+						
 							const winner = winnerSide === "left" ? player1 : player2;
 							placeWinner(winner, player1, player2);
 							currentMatchIndex++;
 							renderBracket();
 							showNextOrRestartButton();
-						}
+						}						
 					});
 				});
 			}, 500); // petite pause sur "GO!" avant de démarrer
@@ -344,26 +355,43 @@ function addTournamentEventListeners() {
 
 // External reset that clears the UI and memory
 export function resetTournament() {
+	
 	players = [];
 	currentMatchIndex = 0;
 	currentRoundIndex = 0;
 	bracketStructure = [];
 
 	const list = document.getElementById("playerList");
-	if (list) list.innerHTML = "";
+if (list) list.innerHTML = "";
 
-	const input = document.getElementById("playerAlias");
-	if (input) input.value = "";
+const input = document.getElementById("playerAlias");
+if (input) input.value = "";
 
-	const counter = document.getElementById("playerCount");
-	if (counter) counter.textContent = "0 / 8 players maximum";
+const counter = document.getElementById("playerCount");
+if (counter) counter.textContent = "0 / 8 players maximum";
 
-	document.getElementById("historyList").innerHTML = "";
-	document.getElementById("bracketContainer").innerHTML = "";
-	document.getElementById("playerNames").textContent = "";
-	document.getElementById("gameArea").style.display = "none";
-	document.getElementById("registration").style.display = "block";
-	document.getElementById("nextMatchBtn").style.display = "none";
-	document.getElementById("restartBtn").style.display = "none";
-	document.getElementById("tournamentResults").style.display = "none";
+const historyList = document.getElementById("historyList");
+if (historyList) historyList.innerHTML = "";
+
+const bracket = document.getElementById("bracketContainer");
+if (bracket) bracket.innerHTML = "";
+
+const names = document.getElementById("playerNames");
+if (names) names.textContent = "";
+
+const gameArea = document.getElementById("gameArea");
+if (gameArea) gameArea.style.display = "none";
+
+const registration = document.getElementById("registration");
+if (registration) registration.style.display = "block";
+
+const nextBtn = document.getElementById("nextMatchBtn");
+if (nextBtn) nextBtn.style.display = "none";
+
+const restartBtn = document.getElementById("restartBtn");
+if (restartBtn) restartBtn.style.display = "none";
+
+const results = document.getElementById("tournamentResults");
+if (results) results.style.display = "none";
+
 }

@@ -10,8 +10,18 @@ export async function playPong({ remote = false, room = "myroom", onGameEnd = nu
 
 export let stopPong = () => {};
 
+function preventArrowScrollDuringTournament(e) {
+	if (["ArrowUp", "ArrowDown"].includes(e.key)) {
+		e.preventDefault();
+	}
+}
+
 export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = false } = {}) {
 >>>>>>> 7c65993 (Ulysse's work)
+
+	if (remote === 1) {
+		window.addEventListener("keydown", preventArrowScrollDuringTournament, { passive: false });
+	}
 
 	const canvas = document.getElementById("tournamentCanvas") || document.getElementById("pongCanvas");
 	const status = document.getElementById("pongStatus");
@@ -28,7 +38,7 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 	if (remote === 0) {
 		canvas.width = 500;
 		canvas.height = 300;
-		canvas.scrollIntoView({
+		pongCanvas.scrollIntoView({
 			behavior: "smooth",
 			block: "center",
 			inline: "center"
@@ -247,45 +257,70 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 	  // -------------------------------------------------------------------------------------------------------------------------- //
 	  ////////////////////////////////////////// LOCAL TOURNAMENT MODE ///////////////////////////////////////////////////////////////
 	  // -------------------------------------------------------------------------------------------------------------------------- //
+	  const ctx = canvas.getContext("2d");
+
+	  ////////////////////// GAME VARIABLES ////////////////////////	
+	  // --- PLAYERS --- ///
+	  let player1Y, player2Y, ballX, ballY;
+	  let player1Speed = 0, player2Speed = 0;
+	  let player1Score = 0, player2Score = 0;
 	
+	  // --- PADDLES --- //
+	  let paddleWidth = 120;
+	  let paddleHeight = 10;
+	  const paddleHeightRatio = 0.25; // 20% of canvas height
+	  const maxBounceAngle = Math.PI / 3; // 60 degrees
+	  const paddleHitbox = {
+	  	offsetX: paddleWidth * 0.25,  // 25% empty space left/right
+	  	offsetY: paddleHeight * 0.05, // 5% empty space top/bottom
+	  	width: paddleWidth * 0.5,
+	  	height: paddleHeight * 0.9
+	  };
+	    
+	  // --- BALL --- //
+	  let ballSize = 60; // <--
+	  let defaultBallSpeed = 4;
+	  let ballSpeedX, ballSpeedY;
+	  let speedIncrement = 0.3;
+	  
+	  const ballHitboxShrink = 0.2; // shrink 20% total = 10% per side
+	  const adjustedBallSize = ballSize * (1 - ballHitboxShrink);
+	  const adjustedBallX = ballX + ballSize * (ballHitboxShrink / 2);
+	  const adjustedBallY = ballY + ballSize * (ballHitboxShrink / 2);
+
+	  ////////////////////// ASSETS ///////////////////////////////
+	  const paddle1Img = new Image();
+	  paddle1Img.src = './assets/paddle1.png';
+	  
+	  const paddle2Img = new Image();
+	  paddle2Img.src = './assets/paddle2.png';
+	  
+	  const ballImg = new Image();
+	  ballImg.src = './assets/2Dball.png';
+	  
+	  /////////////////////// PAUSE VARIABLES /////////////////////
+
 	  let isPaused = false;
 	  let pauseOverlay = null;
 	  let isResuming = false;
   
 	  canvas.width = window.innerWidth * 0.70;
 	  canvas.height = window.innerHeight * 0.65;
-	
-	  const ctx = canvas.getContext("2d");
-	
-	  // Game constants
-	  const paddleWidth = 120;
-	  const paddleHeightRatio = 0.25;
-	  let paddleHeight = canvas.height * paddleHeightRatio;
-	  const ballSize = 60;
-	  const defaultBallSpeed = 4;
-	  const maxBounceAngle = Math.PI / 3;
-	  const speedIncrement = 0.3;
+
 	  const aiMaxSpeed = 4;
-	
-	  // Game state
+	  let aiTargetY = null;
 	  let useAI = ai;
-	  let gameEnded = false;
-	  let rallyInterval = null;
 	  let aiThinkInterval = null;
 	
+	  // Game state
+	  let gameInterval = null;
+	  let gameEnded = false;
+	  let rallyInterval = null;
+	
 	  // Entities
-	  let paddle1 = { x: 0, y: 0, width: paddleWidth, height: paddleHeight };
+	  let paddle1 = { x: 50, y: 0, width: paddleWidth, height: paddleHeight };
 	  let paddle2 = { x: 0, y: 0, width: paddleWidth, height: paddleHeight };
-	  let player1Y, player2Y;
-	  let player1Speed = 0, player2Speed = 0;
-	  let player1Score = 0, player2Score = 0;
-	  let ballX, ballY, ballSpeedX = 0, ballSpeedY = 0;
-	  let aiTargetY = null;
-	
-	  const paddle1Img = new Image(); paddle1Img.src = './assets/paddle1.png';
-	  const paddle2Img = new Image(); paddle2Img.src = './assets/paddle2.png';
-	  const ballImg = new Image();    ballImg.src = './assets/2Dball.png';
-	
+
 	  // IA Toggle button
 	  const toggleBtn = document.getElementById("toggleAI");
 	  if (toggleBtn) {
@@ -294,7 +329,8 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 		  console.log("AI is now", useAI ? "ENABLED" : "DISABLED");
 		});
 	  }
-	
+
+
 	  // Restart button
 	  const startBtn = document.getElementById("startBtn");
 	  if (startBtn) {
@@ -303,86 +339,7 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 		  startGame();
 		});
 	  }
-	
-	  function pauseGame(reason = "Paused") {
-		if (isPaused || isResuming || gameEnded) return;
-		isPaused = true;
-		clearInterval(aiThinkInterval);
-		aiThinkInterval = null;
-		clearInterval(rallyInterval);
-		rallyInterval = null;
-		showPauseOverlay(reason);
-	  }
-	  
-	  function resumeGame() {
-		if (!isPaused || isResuming || gameEnded) return;
-		isResuming = true;
-	  
-		let countdown = 3;
-		showPauseOverlay(`Resuming in ${countdown}...`, false);
-	  
-		const countdownInterval = setInterval(() => {
-		  countdown--;
-		  if (countdown > 0) {
-			showPauseOverlay(`Resuming in ${countdown}...`, false);
-		  } else {
-			clearInterval(countdownInterval);
-			hidePauseOverlay();
-			isPaused = false;
-			isResuming = false;
-			startRallyTimer();
-			aiThinkInterval = setInterval(() => {
-			  if (!useAI || gameEnded || isPaused) return;
-			  aiTargetY = predictBallY();
-			}, 1000);
-			gameLoop();
-		  }
-		}, 1000);
-	  }
-	  
-	  function showPauseOverlay(message, showResume = true) {
-		if (!pauseOverlay) {
-		  pauseOverlay = document.createElement("div");
-		  pauseOverlay.style.position = "absolute";
-		  pauseOverlay.style.top = "50%";
-		  pauseOverlay.style.left = "50%";
-		  pauseOverlay.style.transform = "translate(-50%, -50%)";
-		  pauseOverlay.style.fontSize = "32px";
-		  pauseOverlay.style.fontWeight = "bold";
-		  pauseOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-		  pauseOverlay.style.color = "white";
-		  pauseOverlay.style.padding = "30px 50px";
-		  pauseOverlay.style.borderRadius = "12px";
-		  pauseOverlay.style.zIndex = "100";
-		  pauseOverlay.style.textAlign = "center";
-	  
-		  const text = document.createElement("div");
-		  text.id = "pauseText";
-		  pauseOverlay.appendChild(text);
-	  
-		  const resumeBtn = document.createElement("button");
-		  resumeBtn.textContent = "Resume";
-		  resumeBtn.style.marginTop = "20px";
-		  resumeBtn.style.padding = "10px 20px";
-		  resumeBtn.style.fontSize = "20px";
-		  resumeBtn.style.cursor = "pointer";
-		  resumeBtn.addEventListener("click", resumeGame);
-		  resumeBtn.id = "resumeBtn";
-	  
-		  pauseOverlay.appendChild(resumeBtn);
-		  document.body.appendChild(pauseOverlay);
-		}
-	  
-		document.getElementById("pauseText").textContent = message;
-		document.getElementById("resumeBtn").style.display = showResume ? "block" : "none";
-		pauseOverlay.style.display = "block";
-	  }
-	  
-	  function hidePauseOverlay() {
-		if (pauseOverlay) pauseOverlay.style.display = "none";
-	  }
-	  
-  
+		  
 	  function predictBallY() {
 		let simX = ballX, simY = ballY, simVX = ballSpeedX, simVY = ballSpeedY;
 		while (true) {
@@ -405,14 +362,24 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 	
 	  function resetBallSpeed() {
 		clearInterval(rallyInterval);
-		let angle;
-		do {
-		  angle = Math.random() * 2 * Math.PI;
-		} while (Math.abs(Math.cos(angle)) < 0.25 || Math.abs(Math.sin(angle)) < 0.15);
-		ballSpeedX = defaultBallSpeed * Math.cos(angle);
-		ballSpeedY = defaultBallSpeed * Math.sin(angle);
+		
+		let angleRad;
+		
+		// Keep trying until we get an angle not too close to 0, 90, 180, 270°
+		while (true) {
+			angleRad = Math.random() * 2 * Math.PI; // 0 to 2π radians
+			const x = Math.abs(Math.cos(angleRad));
+			const y = Math.abs(Math.sin(angleRad));
+			
+			// Avoid angles that are *too* close to pure vertical or horizontal
+			if (x > 0.25 && y > 0.15) break;
+		}
+		
+		ballSpeedX = defaultBallSpeed * Math.cos(angleRad);
+		ballSpeedY = defaultBallSpeed * Math.sin(angleRad);
+		
 		startRallyTimer();
-	  }
+	}
 	
 	  function resetBall() {
 		resetBallSpeed();
@@ -422,24 +389,32 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 	
 	  function movePaddles() {
 		player1Y += player1Speed;
-		player1Y = Math.max(0, Math.min(canvas.height - paddleHeight, player1Y));
-	
+		
+		// Clamp player1 paddle
+		if (player1Y < 0) player1Y = 0;
+		if (player1Y + paddleHeight > canvas.height) player1Y = canvas.height - paddleHeight;
+		
+		// AI logic or player 2
 		if (useAI && aiTargetY !== null) {
-		  const paddleCenter = player2Y + paddleHeight / 2;
-		  const deltaY = aiTargetY - paddleCenter;
-		  player2Speed = Math.sign(deltaY) * Math.min(aiMaxSpeed, Math.abs(deltaY));
+			const paddleCenter = player2Y + paddleHeight / 2;
+			const deltaY = aiTargetY - paddleCenter;
+			player2Speed = Math.sign(deltaY) * Math.min(aiMaxSpeed, Math.abs(deltaY));
 		}
-	
+		
 		player2Y += player2Speed;
-		player2Y = Math.max(0, Math.min(canvas.height - paddleHeight, player2Y));
-	
+		
+		// Clamp player2 paddle
+		if (player2Y < 0) 
+			player2Y = 0;
+		if (player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
+		// Assign Y values to paddles
 		paddle1.y = player1Y;
 		paddle2.y = player2Y;
-	  }
+	}
 	
 	  function draw() {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		paddle2.x = canvas.width - paddleWidth;
+		paddle2.x = canvas.width - paddleWidth - 50;
 		ctx.drawImage(paddle1Img, paddle1.x, paddle1.y, paddle1.width, paddle1.height);
 		ctx.drawImage(paddle2Img, paddle2.x, paddle2.y, paddle2.width, paddle2.height);
 		ctx.drawImage(ballImg, ballX, ballY, ballSize, ballSize);
@@ -475,31 +450,82 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 	  
   
 	  function moveBall() {
+		// Move the ball
 		ballX += ballSpeedX;
 		ballY += ballSpeedY;
+	  
+		// Shrink ball hitbox by 20%
+		const ballHitboxShrink = 0.2;
+		const adjustedBallSize = ballSize * (1 - ballHitboxShrink);
+		const adjustedBallX = ballX + ballSize * (ballHitboxShrink / 2);
+		const adjustedBallY = ballY + ballSize * (ballHitboxShrink / 2);
+	  
+	// Top wall collision
+	if (ballY <= 0) {
+	  ballY = 0; // snap outside
+	  ballSpeedY = Math.abs(ballSpeedY); // force downward
+	}
 	
-		if (ballY <= 0 || ballY + ballSize >= canvas.height) ballSpeedY *= -1;
+	// Bottom wall collision
+	if (ballY + ballSize >= canvas.height) {
+	  ballY = canvas.height - ballSize; // snap outside
+	  ballSpeedY = -Math.abs(ballSpeedY); // force upward
+	}
 	
-		// Left paddle
-		if (ballX <= paddle1.x + paddleWidth &&
-			ballY + ballSize >= paddle1.y && ballY <= paddle1.y + paddleHeight) {
-		  const intersect = (ballY + ballSize / 2 - (paddle1.y + paddleHeight / 2)) / (paddleHeight / 2);
-		  const bounceAngle = intersect * maxBounceAngle;
-		  const speed = Math.hypot(ballSpeedX, ballSpeedY);
+	  
+		// Paddle hitbox parameters
+		const paddleHitbox = {
+		  offsetX: paddleWidth * 0.25,
+		  offsetY: paddleHeight * 0.05,
+		  width: paddleWidth * 0.5,
+		  height: paddleHeight * 0.9,
+		};
+	  
+		// Left paddle (Player 1) collision
+		const p1x = paddle1.x + paddleHitbox.offsetX;
+		const p1y = paddle1.y + paddleHitbox.offsetY;
+		const p1w = paddleHitbox.width;
+		const p1h = paddleHitbox.height;
+	  
+		if (
+		  adjustedBallX <= p1x + p1w &&
+		  adjustedBallX + adjustedBallSize >= p1x &&
+		  adjustedBallY + adjustedBallSize >= p1y &&
+		  adjustedBallY <= p1y + p1h
+		) {
+		  const paddleCenter = paddle1.y + paddleHeight / 2;
+		  const ballCenter = ballY + ballSize / 2;
+		  const relativeIntersectY = ballCenter - paddleCenter;
+		  const normalized = relativeIntersectY / (paddleHeight / 2);
+		  const bounceAngle = normalized * maxBounceAngle;
+	  
+		  const speed = Math.sqrt(ballSpeedX ** 2 + ballSpeedY ** 2);
 		  ballSpeedX = speed * Math.cos(bounceAngle);
 		  ballSpeedY = speed * Math.sin(bounceAngle);
 		}
-	
-		// Right paddle
-		if (ballX + ballSize >= paddle2.x &&
-			ballY + ballSize >= paddle2.y && ballY <= paddle2.y + paddleHeight) {
-		  const intersect = (ballY + ballSize / 2 - (paddle2.y + paddleHeight / 2)) / (paddleHeight / 2);
-		  const bounceAngle = intersect * maxBounceAngle;
-		  const speed = Math.hypot(ballSpeedX, ballSpeedY);
+	  
+		// Right paddle (Player 2 or AI) collision
+		const p2x = paddle2.x + paddleHitbox.offsetX;
+		const p2y = paddle2.y + paddleHitbox.offsetY;
+		const p2w = paddleHitbox.width;
+		const p2h = paddleHitbox.height;
+	  
+		if (
+		  adjustedBallX + adjustedBallSize >= p2x &&
+		  adjustedBallX <= p2x + p2w &&
+		  adjustedBallY + adjustedBallSize >= p2y &&
+		  adjustedBallY <= p2y + p2h
+		) {
+		  const paddleCenter = paddle2.y + paddleHeight / 2;
+		  const ballCenter = ballY + ballSize / 2;
+		  const relativeIntersectY = ballCenter - paddleCenter;
+		  const normalized = relativeIntersectY / (paddleHeight / 2);
+		  const bounceAngle = normalized * maxBounceAngle;
+	  
+		  const speed = Math.sqrt(ballSpeedX ** 2 + ballSpeedY ** 2);
 		  ballSpeedX = -speed * Math.cos(bounceAngle);
 		  ballSpeedY = speed * Math.sin(bounceAngle);
 		}
-	
 		if (ballX <= 0) {
 		  player2Score++;
 		  if (player2Score === 2) {
@@ -528,19 +554,21 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 		movePaddles();
 		moveBall();
 		draw();
-		requestAnimationFrame(gameLoop);
+		gameInterval = requestAnimationFrame(gameLoop);
 	  }
 	
 	  function stopGame() {
 		gameEnded = true;
 		clearInterval(rallyInterval);
 		clearInterval(aiThinkInterval);
+		cancelAnimationFrame(gameInterval);
+		gameInterval = null;
 		rallyInterval = null;
 		aiThinkInterval = null;
 	  }
 	
 	  function startGame() {
-		// ✅ Stop all previous intervals
+		// Stop all previous intervals
 		clearInterval(rallyInterval);
 		clearInterval(aiThinkInterval);
 		rallyInterval = null;
@@ -571,29 +599,38 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 	  startGame();
 	
 	  // Keyboard controls
-	  document.addEventListener("keydown", (e) => {
-		if (e.key === "w") player1Speed = -5;
-		if (e.key === "s") player1Speed = 5;
-		if (!useAI) {
-		  if (e.key === "ArrowUp") player2Speed = -5;
-		  if (e.key === "ArrowDown") player2Speed = 5;
-		}
-	  });
+	  const handleKeyDown = (e) => {
+		console.log("KEYDOWN:", e.key);  // ← voyez si 'w' et 's' remontent
+		  if (e.key === 'w') player1Speed = -5;
+		  if (e.key === 's') player1Speed = 5;
+		  if (!useAI && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+			  player2Speed = e.key === 'ArrowUp' ? -5 : 5;
+			}
+		};
+		const handleKeyUp = (e) => {
+			if (['w','s','ArrowUp','ArrowDown'].includes(e.key)) {
+				player1Speed = 0;
+				if (!useAI) player2Speed = 0;
+			}
+		};
+		
+		document.addEventListener('keydown', handleKeyDown);
+		document.addEventListener('keyup', handleKeyUp);
 	
-	  document.addEventListener("keyup", (e) => {
-		if (e.key === "w" || e.key === "s") player1Speed = 0;
-		if (!useAI && (e.key === "ArrowUp" || e.key === "ArrowDown")) player2Speed = 0;
-	  });
-  
-	  document.addEventListener("keydown", (e) => {
-		if (e.key === "Escape") {
-		  if (isPaused) {
-			resumeGame();
-		  } else {
-			pauseGame("Paused");
-		  }
-		}
-	  });
+		stopPong = function () {
+		  gameEnded = true;
+		  clearInterval(rallyInterval);
+		  clearInterval(aiThinkInterval);
+		  cancelAnimationFrame(gameInterval);
+
+		  window.removeEventListener("keydown", preventArrowScrollDuringTournament, { passive: false });
+		  document.removeEventListener('keydown', handleKeyDown);
+		  document.removeEventListener('keyup', handleKeyUp);
+		  gameInterval = null;
+		  rallyInterval = null;
+		  aiThinkInterval = null;
+		};
+
 	} else {
 	
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -1192,24 +1229,27 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 	  });
 	  
 	  stopPong = function () {
-		  cancelAnimationFrame(gameInterval);
-		  stopTimer();
-		  clearInterval(timerInterval);
-		  clearInterval(rallyInterval);
-		  clearInterval(aiThinkInterval);
-		  
-		  gameInterval = null;
-		  timerInterval = null;
-		  rallyInterval = null;
-		  aiThinkInterval = null;
-		  gameStopped = true;
-		  isPaused = false;
-		  isResuming = false;
-		  gameStarted = false;
-		  let countdown = 3
-		  
-		  hidePauseOverlay?.();
-		};
+		cancelAnimationFrame(gameInterval);
+		stopTimer();
+		clearInterval(timerInterval);
+		clearInterval(rallyInterval);
+		clearInterval(aiThinkInterval);
+		gameEnded = true;
+		gameInterval = null;
+		timerInterval = null;
+		rallyInterval = null;
+		aiThinkInterval = null;
+		gameStopped = true;
+		isPaused = false;
+		isResuming = false;
+		gameStarted = false;
+	
+		hidePauseOverlay?.();
+	
+		//Remove the arrow scroll blocker
+		window.removeEventListener("keydown", preventArrowScrollDuringTournament);
+	};
+	
 		
 	}
 }
