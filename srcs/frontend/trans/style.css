@@ -13,11 +13,11 @@ header, footer
 	-webkit-backdrop-filter: blur(8px) brightness(0.9);
 	backdrop-filter: blur(8px) brightness(0.9);
 
-	border: 2px solid #ff00ff;
+	border: 2px solid #292629;
     box-shadow:
-    0 0 8px #ff00ff,
-    0 0 16px #ff00ff,
-    inset 0 0 6px #ff00ff;
+    0 0 8px #292629,
+    0 0 16px #292629,
+    inset 0 0 6px #292629;
 
     color: #39ff14;
     text-align: center;
