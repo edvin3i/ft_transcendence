@@ -13,10 +13,11 @@ function tournamentPage()
 
 			<div id="gameArea" style="display:none;">
 				<h3 id="playerNames">Match</h3>
-				<div id="frameContainer">
-	<canvas id="pongCanvas" width="500" height="300"></canvas>
-	<img id="fullFrameOverlay" src="./assets/frame.png" alt="Frame overlay" />
-</div>
+				<div id="tournamentFrameContainer">
+					<canvas id="tournamentCanvas" width="500" height="300"></canvas>
+					<img id="tournamentFrameOverlay" src="./assets/frame.png" alt="Tournament Frame" />
+				</div>
+
 			</div>
 			
 			<p><button id="nextMatchBtn" style="display: none;">▶️ Next Match</button></p>

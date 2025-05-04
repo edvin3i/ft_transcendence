@@ -143,6 +143,7 @@ canvas {
 	pointer-events: none;
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 
 .neon-panel
@@ -375,3 +376,30 @@ canvas {
 
 =======
 >>>>>>> 7c65993 (Ulysse's work)
+=======
+
+#tournamentFrameContainer {
+	position: relative;
+	display: inline-block;
+	width: fit-content;
+	height: fit-content;
+	margin: 0 auto;
+}
+
+#tournamentCanvas {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+#tournamentFrameOverlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: fill;
+	pointer-events: none;
+	z-index: 10;
+}
+>>>>>>> 85d03b6 (FRAME IS GOOD, PLUS QUE LES FIX DU LOCAL TOUR- HITBOX ETC)
