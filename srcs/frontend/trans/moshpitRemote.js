@@ -11,9 +11,9 @@ const paddleSize = Math.PI / 6; // exemple : 15° d'arc
 
 // --- CLASSE PRINCIPALE ---
 class MoshpitRemote {
-	constructor(matchId, playerId) {
-		this.matchId = matchId;
-		this.playerId = playerId;
+	constructor() {
+		this.matchId = null;//matchId;non-fix endpoint
+		this.playerId = null//playerId;
 		this.socket = null;
 		this.gameState = null;
 	}
@@ -22,7 +22,8 @@ class MoshpitRemote {
 		const token = localStorage.getItem("accessToken");
 		const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 
-		this.socket = new WebSocket(`${protocol}://${window.location.host}/ws/moshpit/${this.matchId}/?token=${token}`);
+		this.socket = new WebSocket(`${protocol}://${window.location.host}/ws/moshpit/?token=${token}`);
+		// this.socket = new WebSocket(`${protocol}://${window.location.host}/ws/moshpit/${this.matchId}/?token=${token}`);# non-fix endpoint
 
 		this.socket.onopen = () => {
 			console.log("✅ Connexion WebSocket établie pour le match", this.matchId);
@@ -31,7 +32,12 @@ class MoshpitRemote {
 
 		this.socket.onmessage = (event) => {
 			const data = JSON.parse(event.data);
-			// console.log("📨 Message reçu : ", data);
+			if (data.type === 'start_match') {//ajouter pour fix endpoint
+				this.matchId = data.match_id;
+				this.playerId = data.player_id;
+				console.log("✅ Match démarré avec ID :", this.matchId);
+				this.sendGameStateRequest(); // demander l'état dès que prêt
+			}
 			if (data.type === 'game_update')
 				this.updateGameState(data.game_state);
 			else if (data.type === 'waiting') {
@@ -69,16 +75,10 @@ class MoshpitRemote {
 			return ;
 		}
 		drawGameCircle(this.gameState);
-		// this.updateDisplay();
 	}
 
-	// updateDisplay() {
-	// 	if (this.gameState) {
-	// 		drawGameCircle(this.gameState);
-	// 	}
-	// }
-
 	movePlayer(direction) {
+		console.log("Envoi du mouvement :", direction);
 		this.sendAction('move', { direction });
 	}
 
@@ -94,10 +94,10 @@ export function playMoshpit() {
 	centerX = canvas.width / 2;
 	centerY = canvas.height / 2;
 
-	const matchId = 1;
-	const playerId = 123;
+	// const matchId = 1;non-fix endpoint
+	// const playerId = 123;
 
-	const moshpitRemote = new MoshpitRemote(matchId, playerId);
+	const moshpitRemote = new MoshpitRemote();
 	moshpitRemote.connect();
 
 	window.addEventListener("keydown", (e) => {

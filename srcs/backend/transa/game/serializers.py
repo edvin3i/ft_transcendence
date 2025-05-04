@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Match
+from game.models import Match
 from uprofiles.models import UserProfile
 from uprofiles.serializers import UserSimpleSerializer
 

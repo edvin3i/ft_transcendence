@@ -29,7 +29,7 @@ class MoshpitGame:
             'x': self.center_x,
             'y': self.center_y,
             'angle': random.uniform(0, 2 * math.pi),
-            'speed': 1,
+            'speed': 0.3,
         }
 
     def _normalize(self, angle):
@@ -81,7 +81,6 @@ class MoshpitGame:
         self.finished = True
         alive = [pid for pid, p in self.players.items() if p['alive']]
         self.winner = alive[0] if alive else None
-        print(f"🎉 Fin de partie, vainqueur : {self.winner}")
 
 
     def remove_player(self, player_id):
@@ -102,7 +101,6 @@ class MoshpitGame:
         dx = self.ball['x'] - self.center_x
         dy = self.ball['y'] - self.center_y
         dist = math.hypot(dx, dy)
-        print(f"⚠️ Distance au mur: {dist:.2f} (rayon {self.radius})")
         return dist >= (self.radius - self.ball_radius)
 
     def _paddle_at(self, angle):
@@ -145,13 +143,11 @@ class MoshpitGame:
     def _check_collision(self):
         if not self._is_wall_collision():
             return
-        print(f"⚠️ Collision avec le mur (angle {self.ball['angle']:.2f})")
         dx = self.ball['x'] - self.center_x
         dy = self.ball['y'] - self.center_y
         angle = self._normalize(math.atan2(dy, dx))
         paddle = self._paddle_at(angle)
         if paddle:
-            print(f"⚡️ Collision avec la raquette {paddle['color']} (angle {angle:.2f})")
             # bounce
             p_center = paddle['angle']
             offset = angle - p_center
@@ -160,7 +156,6 @@ class MoshpitGame:
             self.ball['angle'] = self._normalize(math.pi + self.ball['angle'] + offset * 4)
             self.ball['speed'] += self.speed_increment
         else:
-            print(f"❌ Pas de raquette à l'angle {angle:.2f} (miss)")
             self._handle_miss(angle)
 
     def update(self):
