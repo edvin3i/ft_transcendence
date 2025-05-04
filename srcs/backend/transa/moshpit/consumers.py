@@ -98,7 +98,7 @@ class MoshpitConsumer(AsyncWebsocketConsumer):
             'game': game,
             'players': [p['username'] for p in players_info],  # On stocke les noms seulement
             'loop_task': loop_task,
-            'started': False
+            'started': True
         }
 
         # 📨 Envoie personnalisé à chaque joueur

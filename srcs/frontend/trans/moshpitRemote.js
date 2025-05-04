@@ -36,7 +36,6 @@ class MoshpitRemote {
 				this.matchId = data.match_id;
 				this.playerId = data.player_id;
 				console.log("✅ Match démarré avec ID :", this.matchId);
-				// showCountdown(data.players); 
 				this.sendGameStateRequest(); // demander l'état dès que prêt
 			}
 			if (data.type === 'game_update')
