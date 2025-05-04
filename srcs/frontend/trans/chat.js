@@ -1,5 +1,8 @@
-import {checkToken} from './token.js'
+import {checkToken} from './token.js';
 import {openPage} from './navigation.js';
+import { remoteGamePage } from './game.js';
+import { playPong } from './pong.js';
+
 
 let socket = null;
 let chatWs = null;
@@ -186,8 +189,19 @@ async function openChat(room = "general") {
 		}
 
 		p.appendChild(senderSpan);
-		const textNode = document.createTextNode(` : ${message}`);
-		p.appendChild(textNode);
+		const messageSpan = document.createElement("span");
+		if (data.is_html) {
+			const wrapper = document.createElement("span");
+			wrapper.innerHTML = ` : ${data.message}`;
+			messageSpan.appendChild(wrapper);
+			p.appendChild(messageSpan);
+			p.setAttribute("data-invite-id", wrapper.querySelector('.game-invite-link')?.dataset.inviteId || "");
+
+		} else {
+			messageSpan.textContent = ` : ${data.message}`;
+		}
+		p.appendChild(messageSpan);
+		
 
 		chatLog.appendChild(p);
 		chatLog.scrollTop = chatLog.scrollHeight;
@@ -219,6 +233,26 @@ async function openChat(room = "general") {
 			document.getElementById("send").click();
 		}
 	});
+
+	document.addEventListener("click", function (e) {
+		if (e.target && e.target.classList.contains("game-invite-link")) {
+			e.preventDefault();
+			const roomName = e.target.getAttribute("data-room");
+			const inviteId = e.target.getAttribute("data-invite-id");
+	
+			if (roomName) {
+				startRemoteGameFromLink(roomName);
+			}
+	
+			// Supprimer le message du DOM
+			const messageEl = document.querySelector(`p[data-invite-id='${inviteId}']`);
+			if (messageEl) {
+				messageEl.remove();
+			}
+		}
+	});
+	
+	
 }
 
 function createChatTab(room) {
@@ -285,4 +319,9 @@ function switchRoom(room) {
 	});
 	currentRoom = room;
 	openChat(room);
+}
+
+function startRemoteGameFromLink(roomName) {
+	document.getElementById("app").innerHTML = remoteGamePage();
+	playPong({ remote: true, room: roomName });
 }

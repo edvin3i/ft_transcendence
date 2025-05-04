@@ -3,6 +3,9 @@ import { playPong3D } from './pong3d.js';
 import { playMoshpit } from './moshpitRemote.js';
 import { playTournament, openTournamentPage } from './tournament.js';
 import { openOnlineTournamentPage } from './tournamentOnline.js';
+export { remoteGamePage };
+
+
 
 function gamePage()
 {

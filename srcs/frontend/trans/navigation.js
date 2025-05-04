@@ -14,7 +14,9 @@ window.addEventListener('popstate', handleNavigation);
 
 function openApp()
 {
-	history.replaceState({page: homePage}, '', '');
+	const params = new URLSearchParams(window.location.search);
+	const gameRoom = params.get("room");
+	history.replaceState({page: homePage}, '', window.location.pathname); // ⚠️ nettoie l'URL
 
 	const token = localStorage.getItem('accessToken');
 
@@ -24,8 +26,16 @@ function openApp()
 		showChat();
 	}
 
-	openPage(homePage, 0);
+	if (gameRoom) {
+		import('./game.js').then(module => {
+			document.getElementById('app').innerHTML = module.remoteGamePage();
+			module.playPong({ remote: true, room: gameRoom });
+		});
+	} else {
+		openPage(homePage, 0);
+	}
 }
+
 
 function handleNavigation(event)
 {
