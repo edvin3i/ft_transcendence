@@ -191,7 +191,12 @@ async function openChat(room = "general") {
 		p.appendChild(senderSpan);
 		const messageSpan = document.createElement("span");
 		if (data.is_html) {
-			messageSpan.innerHTML = ` : ${data.message}`;
+			const wrapper = document.createElement("span");
+			wrapper.innerHTML = ` : ${data.message}`;
+			messageSpan.appendChild(wrapper);
+			p.appendChild(messageSpan);
+			p.setAttribute("data-invite-id", wrapper.querySelector('.game-invite-link')?.dataset.inviteId || "");
+
 		} else {
 			messageSpan.textContent = ` : ${data.message}`;
 		}
@@ -233,11 +238,20 @@ async function openChat(room = "general") {
 		if (e.target && e.target.classList.contains("game-invite-link")) {
 			e.preventDefault();
 			const roomName = e.target.getAttribute("data-room");
+			const inviteId = e.target.getAttribute("data-invite-id");
+	
 			if (roomName) {
 				startRemoteGameFromLink(roomName);
 			}
+	
+			// Supprimer le message du DOM
+			const messageEl = document.querySelector(`p[data-invite-id='${inviteId}']`);
+			if (messageEl) {
+				messageEl.remove();
+			}
 		}
 	});
+	
 	
 }
 

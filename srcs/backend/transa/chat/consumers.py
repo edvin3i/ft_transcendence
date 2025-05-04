@@ -8,6 +8,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from datetime import datetime
+import uuid
 
 import logging
 
@@ -166,12 +167,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         }))
                         return
 
-                    invite_link = f"/game?room={room_name}"
+                    # Génère un ID unique pour le lien
+                    invite_id = str(uuid.uuid4())[:8]
+
                     html_message = (
                         f"{username} invited {target} to a game 🎮 → "
-                        f"<a href='#' class='game-invite-link' data-room='{room_name}'>Join Game</a>"
+                        f"<a href='#' class='game-invite-link' data-room='{room_name}' data-invite-id='{invite_id}'>Join Game</a>"
                     )
 
+                    # Envoie uniquement à l'invitant et l'invité
                     for recipient in {username, target}:
                         await self.channel_layer.group_send(
                             f"user_notify_{recipient}",
