@@ -1,5 +1,5 @@
-import { openUserProfilePage } from './userProfile.js';
 import {checkToken} from './token.js'
+import {openPage} from './navigation.js';
 
 let socket = null;
 let chatWs = null;
@@ -180,8 +180,8 @@ async function openChat(room = "general") {
 		) {
 			senderSpan.title = "Click to view profile";
 			senderSpan.addEventListener("click", () => {
-				// openPage(senderId-1);
-				openUserProfilePage(senderId-1); // 👈 utilise l’ID ici
+		//		openUserProfilePage(senderId-1); // 👈 utilise l’ID ici
+				openPage('userProfilePage', 1, senderId-1); // 👈 utilise l’ID ici
 			});
 		}
 

@@ -1,6 +1,7 @@
 import {showChat, closeChat} from './chat.js'
 import {openLogInPage} from './logIn.js'
 import {openProfilePage} from './profile.js'
+import {openUserProfilePage} from './userProfile.js'
 import {openFriendsPage} from './friends.js'
 import {openGamePage} from './game.js'
 import { stopPong } from './pong.js';
@@ -28,8 +29,9 @@ function openApp()
 function handleNavigation(event)
 {
 	const page = event.state.page;
+	const id = event.state.id;
 
-	openPage(page, 0);
+	openPage(page, 0, id);
 }
 
 function navigationHeader()
@@ -66,24 +68,32 @@ export function showNavigationHeader()
 	logOutButton.addEventListener('click', logOut);
 }
 
-export function openPage(page, push = 1) {
+export function openPage(page, push = 1, id = -1)
+{
 	const token = localStorage.getItem('accessToken');
   
-	if (!token) {
-	  openLogInPage(page, push);
-	} else {
-	  if (push) {
-		history.pushState({ page: page }, '', '');
-	  }
-	  stopPong?.(); //Stop local Pong if it's running
-	  if (window.stopPong3D) window.stopPong3D(); //Stop 3DPong if it's running
+	if (!token)
+		openLogInPage(page, push);
+	else
+	{
+		if (push)
+			history.pushState({page: page, id: id}, '', '');
 
-  
-	  if (page === 'profilePage') openProfilePage();
-	  else if (page === 'friendsPage') openFriendsPage();
-	  else if (page === 'gamePage') openGamePage();
+		console.log(stopPong);
+		stopPong?.();
+		if (window.stopPong3D)
+			window.stopPong3D();
+
+		if (page === 'profilePage')
+			openProfilePage();
+		else if (page === 'friendsPage')
+			openFriendsPage();
+		else if (page === 'gamePage')
+			openGamePage();
+		else if (page === 'userProfilePage')
+			openUserProfilePage(id);
 	}
-  }
+}
   
 
 function logOut()
