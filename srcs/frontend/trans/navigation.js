@@ -4,6 +4,7 @@ import {openProfilePage} from './profile.js'
 import {openFriendsPage} from './friends.js'
 import {openGamePage} from './game.js'
 import { stopPong } from './pong.js';
+import { resetTournament} from './tournament.js';
 
 const homePage = 'profilePage';
 
@@ -76,6 +77,7 @@ export function openPage(page, push = 1) {
 		history.pushState({ page: page }, '', '');
 	  }
 	  stopPong?.(); //Stop local Pong if it's running
+	  resetTournament?.();
 	  if (window.stopPong3D) window.stopPong3D(); //Stop 3DPong if it's running
 
   
