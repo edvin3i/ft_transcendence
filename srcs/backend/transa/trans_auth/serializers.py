@@ -84,7 +84,6 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
                 "avatar_url": ft_avatar_url,
             },
         )
-        # если профиль уже был — обновляем только то, что нужно
         user_profile.ft_id = user_profile.ft_id or ft_id
         user_profile.avatar_url = ft_avatar_url
         user_profile.save()
