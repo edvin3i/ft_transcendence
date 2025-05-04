@@ -1,4 +1,5 @@
 import { openUserProfilePage } from './userProfile.js';
+import {checkToken} from './token.js'
 
 let socket = null;
 let chatWs = null;
@@ -87,10 +88,10 @@ function addChatEventListeners()
 	openChat(); // 👈 Lancement ici, une fois que tout est prêt
 }
 
-function openChat(room = "general") {
+async function openChat(room = "general") {
 	let receivedHistory = false;
 	const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-	const token = localStorage.getItem("accessToken");
+	const token = await checkToken();
 	const wsUrl = `${protocol}://${window.location.host}/ws/chat/${room}/?token=${token}`;
 
 	if (!openRooms.has(room)) {
@@ -179,6 +180,7 @@ function openChat(room = "general") {
 		) {
 			senderSpan.title = "Click to view profile";
 			senderSpan.addEventListener("click", () => {
+				// openPage(senderId-1);
 				openUserProfilePage(senderId-1); // 👈 utilise l’ID ici
 			});
 		}
