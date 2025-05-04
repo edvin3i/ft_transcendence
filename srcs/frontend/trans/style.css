@@ -355,3 +355,13 @@ body
   text-align: center;
   margin: 0.5rem 0;
 }
+/* wrapper for two panels side-by-side */
+.panels-wrapper {
+  display: flex;
+  justify-content: center;  /* центрирует оба по горизонтали */
+  align-items: flex-start;  /* выравнивает их по верху */
+  gap: 40px;                /* расстояние между карточками */
+  flex-wrap: wrap;          /* если не влезают по ширине, перенесёт на новую строку */
+  padding: 1rem;            /* опционально — внутренние отступы вокруг */
+}
+

@@ -4,6 +4,7 @@ import {openUserProfilePage} from './userProfile.js'
 function friendsPage()
 {
 	return `
+	<div class="neon-panel">
 		<div class="text-center">
 			<h2>Your friends:<br></h2>
 			<div id="friendsList"></div>
@@ -14,6 +15,7 @@ function friendsPage()
 			<input type="text" id="friendId" placeholder="Enter friend ID" />
 			<button id="addFriendButton">Add friend</button>
 			<p id="addFriendResponse" style="margin-top: 10px;"></p>
+		</div>
 		</div>
 	`;
 }

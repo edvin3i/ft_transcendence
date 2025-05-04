@@ -6,8 +6,10 @@ import {showMatchHistory} from './userProfile.js'
 function profilePage()
 {
 	return `
-		<div style="display: flex; justify-content: center; gap: 40px; align-items: flex-start;">
-			<div class="text-center">
+	<div class="panels-wrapper">
+		// <div style="display: flex; justify-content: center; gap: 40px; align-items: flex-start;">
+		<div class="neon-panel">	
+		<div class="text-center">
 				<h2>Your profile</h2>
 				<img id="avatar" alt="Avatar" class="rounded-circle mx-auto" style="width: 150px; height: 150px; object-fit: cover; display: block">
 				<input type="file" accept="image/*" id="avatarInput" style="display: none;"></input>
@@ -19,6 +21,8 @@ function profilePage()
 				<p>2FA: <span id="status"></span></p>
 				<button id="enableOrDisableButton"></button>
 			</div>
+			</div>
+			<div class="neon-panel">
 			<div class="text-center">
 				<h2>Stats</h2>
 				<div id="matchStats" style="justify-content: space-around; display: flex; margin-bottom: 15px; text-align: center;">
@@ -33,6 +37,8 @@ function profilePage()
 				</div>
 				<h2>Match History</h2>
 				<ul id="matchHistory" style="list-style: none; padding: 0;"></ul>
+			</div>
+			</div>
 			</div>
 		</div>
 	`;
