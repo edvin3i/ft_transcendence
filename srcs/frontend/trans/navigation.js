@@ -77,7 +77,7 @@ export function openPage(page, push = 1, id = -1)
 	  openLogInPage(page, push);
 	} else {
 	  if (push) {
-		history.pushState({ page: page }, '', '');
+		history.pushState({ page: page, id: id }, '', '');
 	  }
 	  stopPong?.(); //Stop local Pong if it's running
 	  resetTournament?.();

@@ -233,8 +233,8 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 		  socket.close();
 		}
 	  
-		document.removeEventListener("keydown", handleRemoteKeyDown);
-		document.removeEventListener("keyup", handleRemoteKeyUp);
+	//	document.removeEventListener("keydown", handleRemoteKeyDown);
+	//	document.removeEventListener("keyup", handleRemoteKeyUp);
 	  
 		if (status) status.innerText = "Game disconnected.";
 	  };
@@ -1223,7 +1223,7 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 		clearInterval(timerInterval);
 		clearInterval(rallyInterval);
 		clearInterval(aiThinkInterval);
-		gameEnded = true;
+	//	gameEnded = true;
 		gameInterval = null;
 		timerInterval = null;
 		rallyInterval = null;
