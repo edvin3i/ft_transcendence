@@ -43,9 +43,38 @@ export async function playPong({ remote = false, room = "myroom", onGameEnd = nu
 	  socket.onopen = () => {
 		socket.send(JSON.stringify({ type: "set_name", name: username }));
 	  };
+		
+	  socket.onclose = (event) => {
+		console.log("🔌 WebSocket closed");
+		console.log("  👉 Close code:", event.code);
+		console.log("  👉 Reason:", event.reason);
+		console.log("  👉 Was clean:", event.wasClean);
 	
-	  socket.onmessage = (event) => {
+		if (event.code === 4001) {
+			console.log("❌ Room is full — client rejected with custom code");
+			alert("❌ This room is full. Please try another one.");
+		} else if (event.code === 1006) {
+			console.warn("⚠️ WebSocket closed unexpectedly (code 1006)");
+			alert("⚠️ This room is already in use. Please choose another one.");
+			status.innerText = "WebSocket connection closed.";
+			nameLabel.innerText = "";
+			timerDisplay.innerText = "";
+			label.innerText = "";
+		} else {
+			console.log("ℹ️ WebSocket closed for another reason.");
+		}
+	
+		// Optional: Clear UI in all cases
+	
+	};
+	
+	 
+	socket.onmessage = (event) => {
 		const data = JSON.parse(event.data);
+
+
+		
+		
 	
 		if (data.type === "init") {
 		  playerId = data.playerId;
