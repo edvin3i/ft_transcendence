@@ -184,7 +184,7 @@ async function openChat(room = "general") {
 			senderSpan.title = "Click to view profile";
 			senderSpan.addEventListener("click", () => {
 		//		openUserProfilePage(senderId-1); // 👈 utilise l’ID ici
-				openPage('userProfilePage', 1, senderId-1); // 👈 utilise l’ID ici
+				openPage('userProfilePage', 1, senderId); // 👈 utilise l’ID ici
 			});
 		}
 
@@ -323,5 +323,5 @@ function switchRoom(room) {
 
 function startRemoteGameFromLink(roomName) {
 	document.getElementById("app").innerHTML = remoteGamePage();
-	playPong({ remote: true, room: roomName });
+	playPong({ remote: 0, room: roomName });
 }
