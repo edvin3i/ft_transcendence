@@ -56,15 +56,16 @@ export async function playPong({ remote = false, room = "myroom", onGameEnd = nu
 		} else if (event.code === 1006) {
 			console.warn("⚠️ WebSocket closed unexpectedly (code 1006)");
 			alert("⚠️ This room is already in use. Please choose another one.");
+			status.innerText = "WebSocket connection closed.";
+			nameLabel.innerText = "";
+			timerDisplay.innerText = "";
+			label.innerText = "";
 		} else {
 			console.log("ℹ️ WebSocket closed for another reason.");
 		}
 	
 		// Optional: Clear UI in all cases
-		status.innerText = "WebSocket connection closed.";
-		nameLabel.innerText = "";
-		timerDisplay.innerText = "";
-		label.innerText = "";
+	
 	};
 	
 	 
