@@ -12,10 +12,11 @@ const paddleSize = Math.PI / 6; // exemple : 15° d'arc
 function moshpitPage()
 {
 	return `
-		<div class="container">
+		<div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh; flex-direction: column;">
 			<h2 class="text-center">Moshpit</h2>
-			<canvas id="moshpitRemoteCanvas" width="600" height="600"></canvas>
-			<div id="countdown-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); color:white; text-align:center; padding-top:100px; z-index:9999;"></div>
+			<div style="position: relative;">
+				<canvas id="moshpitRemoteCanvas" width="600" height="600"></canvas>
+				<div id="countdown-overlay" style="display:none; position:absolute; top:0; left:0; width:600px; height:600px; padding-top: 100px; background: rgba(0, 0, 0, 0.5); color:white; text-align:center; flex-direction: column; z-index:9999;"></div>
 		</div>
 	`;
 }
