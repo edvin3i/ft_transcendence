@@ -98,7 +98,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"[👋 DISCONNECT] Leaving room: {self.room_group_name}")
 
     async def receive(self, text_data):
-        logger.debug(f"[📩 RECEIVE] Raw data: {text_data}")
+        logger.debug(f"[📩 RECEIVE] Raw data: {text_data}")#spam dans le container django
         try:
             data = json.loads(text_data)
             message = data.get("message", "")
