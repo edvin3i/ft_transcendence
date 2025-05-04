@@ -36,6 +36,7 @@ class MoshpitRemote {
 				this.matchId = data.match_id;
 				this.playerId = data.player_id;
 				console.log("✅ Match démarré avec ID :", this.matchId);
+				// showCountdown(data.players); 
 				this.sendGameStateRequest(); // demander l'état dès que prêt
 			}
 			if (data.type === 'game_update')
@@ -144,6 +145,14 @@ function drawCurvedPaddle(player) {
 	const startAngle = player.angle - paddleSize / 2;
 	const endAngle = player.angle + paddleSize / 2;
 
+	// Contour noir (fond)
+	context.beginPath();
+	context.arc(centerX, centerY, radius, startAngle - 0.01, endAngle + 0.01);
+	context.lineWidth = 14; // Plus large que le paddle
+	context.strokeStyle = 'black';
+	context.stroke();
+	context.closePath();
+
 	context.beginPath();
 	context.arc(centerX, centerY, radius, startAngle, endAngle);
 	context.lineWidth = 10;
@@ -175,12 +184,74 @@ function drawGameCircle(gameState) {
 	context.clearRect(0, 0, canvas.width, canvas.height);
 
 	drawAllPlayerSectors(gameState.players);
-	drawBall(gameState.ball);
-	drawAllPaddles(gameState.players);
+
 
 	context.beginPath();
 	context.arc(centerX, centerY, radius, 0, Math.PI * 2);
 	context.strokeStyle = "#fff";
 	context.lineWidth = 4;
 	context.stroke();
+
+	drawBall(gameState.ball);
+	drawAllPaddles(gameState.players);
 }
+
+// function showCountdown(players) {
+//     const overlay = document.createElement("div");
+//     overlay.style.position = "absolute";
+//     overlay.style.top = 0;
+//     overlay.style.left = 0;
+//     overlay.style.width = "100%";
+//     overlay.style.height = "100%";
+//     overlay.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+//     overlay.style.display = "flex";
+//     overlay.style.flexDirection = "column";
+//     overlay.style.alignItems = "center";
+//     overlay.style.justifyContent = "center";
+//     overlay.style.zIndex = 10;
+
+//     // Affiche la couleur du joueur
+//     const colorText = document.createElement("div");
+//     colorText.innerText = `Ta couleur : ${players[this.playerId].color}`;
+//     colorText.style.color = players[this.playerId].color;
+//     colorText.style.fontSize = "36px";
+//     colorText.style.marginBottom = "20px";
+//     overlay.appendChild(colorText);
+
+//     // Affiche le compte à rebours
+//     const countdown = document.createElement("div");
+//     countdown.style.color = "white";
+//     countdown.style.fontSize = "60px";
+//     overlay.appendChild(countdown);
+
+//     // Liste des joueurs
+//     const playersList = document.createElement("div");
+//     playersList.style.marginTop = "20px";
+//     playersList.style.color = "white";
+//     playersList.style.fontSize = "24px";
+//     playersList.style.textAlign = "center";
+
+//     Object.values(players).forEach(player => {
+//         const playerDiv = document.createElement("div");
+//         playerDiv.innerText = player.username;
+//         playerDiv.style.color = player.color;
+//         playersList.appendChild(playerDiv);
+//     });
+
+//     overlay.appendChild(playersList);
+//     document.body.appendChild(overlay);
+
+//     let seconds = 3;
+//     const interval = setInterval(() => {
+//         if (seconds > 0) {
+//             countdown.innerText = seconds;
+//             seconds--;
+//         } else {
+//             countdown.innerText = "Go!";
+//             setTimeout(() => {
+//                 overlay.remove();
+//             }, 1000);
+//             clearInterval(interval);
+//         }
+//     }, 1000);
+// }
