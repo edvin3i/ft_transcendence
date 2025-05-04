@@ -1,5 +1,7 @@
+import {checkToken} from './token.js'
+
 export let stopPong = () => {};
-export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai = false } = {}) {
+export async function playPong({ remote = false, room = "myroom", onGameEnd = null, ai = false } = {}) {
 
 	const canvas = document.getElementById("pongCanvas");
 	const status = document.getElementById("pongStatus");
@@ -19,7 +21,7 @@ export function playPong({ remote = false, room = "myroom", onGameEnd = null, ai
 	const ctx = canvas.getContext("2d");
 	
 	if (remote) {
-	  const token = localStorage.getItem("accessToken");
+	  const token = await checkToken();
 	  const socket = new WebSocket(`wss://${window.location.host}/ws/game/${room}/?token=${token}`);
 	
 	  const paddleWidth = 12;
