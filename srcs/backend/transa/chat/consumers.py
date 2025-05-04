@@ -1,6 +1,6 @@
 import json
 import redis.asyncio as redis
-from chat.utils import is_blocked, friendship_action
+from chat.utils import is_blocked, friendship_action, block, unblock
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from urllib.parse import parse_qs
@@ -98,7 +98,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"[👋 DISCONNECT] Leaving room: {self.room_group_name}")
 
     async def receive(self, text_data):
-        logger.debug(f"[📩 RECEIVE] Raw data: {text_data}")#spam dans le container django
+        logger.debug(
+            f"[📩 RECEIVE] Raw data: {text_data}"
+        )  # spam dans le container django
         try:
             data = json.loads(text_data)
             message = data.get("message", "")
@@ -149,6 +151,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         "username": "SYSTEM",
                         "message": f"{username} invited {target} to a game 🎮",
                     },
+                )
+                logger.info(f"[🎮 INVITE] {username} invited {target}")
+                return
+
+            if message.startswith("/block"):
+                target = message.split(" ", 1)[1]
+                await block(user, target)
+                await self.send(
+                    text_data=json.dumps(
+                        {
+                            "username": "SYSTEM",
+                            "message": f"Blocking -> {target} is done",
+                        }
+                    )
+                )
+                logger.info(f"[🎮 INVITE] {username} invited {target}")
+                return
+
+            if message.startswith("/unblock"):
+                target = message.split(" ", 1)[1]
+                await unblock(user, target)
+                await self.send(
+                    text_data=json.dumps(
+                        {
+                            "username": "SYSTEM",
+                            "message": f"Blocking -> {target} is done",
+                        }
+                    )
                 )
                 logger.info(f"[🎮 INVITE] {username} invited {target}")
                 return
@@ -210,7 +240,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "timestamp": datetime.now().strftime("%H:%M:%S"),
                 },
             )
-
 
         except Exception as e:
             logger.error(f"[❌ ERROR] receive() failed: {e}")
