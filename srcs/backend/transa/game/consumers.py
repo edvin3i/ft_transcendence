@@ -22,6 +22,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         await self.setup()
+        room = GameConsumer.rooms.get(self.room_name)
+
+        # ❌ Refuse si la room a déjà 2 joueurs
+        if room and len(room.get("players", {})) >= 2:
+            logger.warning(f"[❌ ROOM FULL] User tried to join full room: {self.room_name}")
+            await self.close(code=4001)
+            return
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         logger.info(f"GameConsumer CONNECTING TO ROOM: {self.room_name}")
         await self.accept()
