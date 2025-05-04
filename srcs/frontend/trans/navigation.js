@@ -73,14 +73,6 @@ export function openPage(page, push = 1, id = -1)
 {
 	const token = localStorage.getItem('accessToken');
   
-<<<<<<< HEAD
-	if (!token)
-		openLogInPage(page, push);
-	else
-	{
-		if (push)
-			history.pushState({page: page, id: id}, '', '');
-=======
 	if (!token) {
 	  openLogInPage(page, push);
 	} else {
@@ -90,10 +82,7 @@ export function openPage(page, push = 1, id = -1)
 	  stopPong?.(); //Stop local Pong if it's running
 	  resetTournament?.();
 	  if (window.stopPong3D) window.stopPong3D(); //Stop 3DPong if it's running
->>>>>>> 9409326 (MES PAUPIERES COMMENCENT A ETRE LOURDES)
 
-		console.log(stopPong);
-		stopPong?.();
 		if (window.stopPong3D)
 			window.stopPong3D();
 

@@ -1,12 +1,7 @@
-<<<<<<< HEAD
-import {checkToken} from './token.js'
-
-export let stopPong = () => {};
-export async function playPong({ remote = false, room = "myroom", onGameEnd = null, ai = false } = {}) {
-=======
 //remote === 0 -> remote
 //remote === 1 -> local tour
 //remote === 2 -> local
+import {checkToken} from './token.js'
 
 export let stopPong = () => {};
 
@@ -17,7 +12,6 @@ function preventArrowScrollDuringTournament(e) {
 }
 
 export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = false } = {}) {
->>>>>>> 7c65993 (Ulysse's work)
 
 	if (remote === 1) {
 		window.addEventListener("keydown", preventArrowScrollDuringTournament, { passive: false });
@@ -54,13 +48,8 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 	}
 	const ctx = canvas.getContext("2d");
 	
-<<<<<<< HEAD
-	if (remote) {
-	  const token = await checkToken();
-=======
 	if (remote === 0) {
 	  const token = localStorage.getItem("accessToken");
->>>>>>> 7c65993 (Ulysse's work)
 	  const socket = new WebSocket(`wss://${window.location.host}/ws/game/${room}/?token=${token}`);
 	
 	  const paddleWidth = 12;
