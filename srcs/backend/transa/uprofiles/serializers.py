@@ -158,7 +158,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
         user_data = validated_data.pop("user")
         user_serializer = UserSerializer()
         user_instance = user_serializer.create(user_data)
-        user_profile = UserProfile.objects.create(user=user_instance, **validated_data)
+        user_profile, created = UserProfile.objects.get_or_create(
+            user=user_instance, defaults=validated_data
+        )
+        if not created:
+            for attr, value in validated_data.items():
+                setattr(user_profile, attr, value)
+            user_profile.save()
 
         return user_profile
 

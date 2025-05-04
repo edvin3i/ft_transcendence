@@ -4,6 +4,7 @@ from trans_auth.utils import get_unique_name
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from uprofiles.models import User, UserProfile
+from django.db import transaction
 from transa.settings import (
     OA_CLIENT_ID,
     OA_SECRET,
@@ -60,41 +61,32 @@ class FortyTwoOpenAuthSerializer(serializers.Serializer):
         ft_fname = user_data.get("first_name")
         ft_lname = user_data.get("last_name")
         ft_avatar_url = user_data.get("image").get("link")
-        #
-        # user, _created = User.objects.get_or_create(
-        #     username=ft_login,
-        #     email=ft_email,
-        #     first_name=ft_fname,
-        #     last_name=ft_lname,
-        # )
 
-        # If user profile exist - just get it
-        # user_profile, _created = UserProfile.objects.get_or_create(user=user)
-        # user_profile.bio = ""
-        # user_profile.avatar_url = ft_avatar_url
-        # user_profile.save()
-
-        try:
-            user_profile = UserProfile.objects.select_related("user").get(ft_id=ft_id)
-            user = user_profile.user
-        except UserProfile.DoesNotExist:
-            user = User.objects.create_user(
+        with transaction.atomic():
+            user, _ = User.objects.get_or_create(
                 username=get_unique_name(ft_login),
-                email=ft_email,
-                first_name=ft_fname,
-                last_name=ft_lname,
-            )
-            user_profile = UserProfile.objects.create(
-                user=user,
-                ft_id=ft_id,
-                avatar_url=ft_avatar_url,
-                bio="",
+                defaults={
+                    "email": ft_email,
+                    "first_name": ft_fname,
+                    "last_name": ft_lname,
+                },
             )
 
         user.email = ft_email if not user.email else user.email
         user.first_name = ft_fname
         user.last_name = ft_lname
         user.save()
+
+        user_profile, _ = UserProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                "ft_id": ft_id,
+                "avatar_url": ft_avatar_url,
+            },
+        )
+        user_profile.ft_id = user_profile.ft_id or ft_id
+        user_profile.avatar_url = ft_avatar_url
+        user_profile.save()
 
         user_profile.avatar_url = ft_avatar_url
         user_profile.save()
