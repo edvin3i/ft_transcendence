@@ -1,9 +1,11 @@
 import {showChat, closeChat} from './chat.js'
 import {openLogInPage} from './logIn.js'
 import {openProfilePage} from './profile.js'
+import {openUserProfilePage} from './userProfile.js'
 import {openFriendsPage} from './friends.js'
 import {openGamePage} from './game.js'
 import { stopPong } from './pong.js';
+import { resetTournament} from './tournament.js';
 
 const homePage = 'profilePage';
 
@@ -12,7 +14,9 @@ window.addEventListener('popstate', handleNavigation);
 
 function openApp()
 {
-	history.replaceState({page: homePage}, '', '');
+	const params = new URLSearchParams(window.location.search);
+	const gameRoom = params.get("room");
+	history.replaceState({page: homePage}, '', window.location.pathname); // ⚠️ nettoie l'URL
 
 	const token = localStorage.getItem('accessToken');
 
@@ -22,14 +26,23 @@ function openApp()
 		showChat();
 	}
 
-	openPage(homePage, 0);
+	if (gameRoom) {
+		import('./game.js').then(module => {
+			document.getElementById('app').innerHTML = module.remoteGamePage();
+			module.playPong({ remote: true, room: gameRoom });
+		});
+	} else {
+		openPage(homePage, 0);
+	}
 }
+
 
 function handleNavigation(event)
 {
 	const page = event.state.page;
+	const id = event.state.id;
 
-	openPage(page, 0);
+	openPage(page, 0, id);
 }
 
 function navigationHeader()
@@ -66,24 +79,33 @@ export function showNavigationHeader()
 	logOutButton.addEventListener('click', logOut);
 }
 
-export function openPage(page, push = 1) {
+export function openPage(page, push = 1, id = -1)
+{
 	const token = localStorage.getItem('accessToken');
   
 	if (!token) {
 	  openLogInPage(page, push);
 	} else {
 	  if (push) {
-		history.pushState({ page: page }, '', '');
+		history.pushState({ page: page, id: id }, '', '');
 	  }
 	  stopPong?.(); //Stop local Pong if it's running
+	  resetTournament?.();
 	  if (window.stopPong3D) window.stopPong3D(); //Stop 3DPong if it's running
 
-  
-	  if (page === 'profilePage') openProfilePage();
-	  else if (page === 'friendsPage') openFriendsPage();
-	  else if (page === 'gamePage') openGamePage();
+		if (window.stopPong3D)
+			window.stopPong3D();
+
+		if (page === 'profilePage')
+			openProfilePage();
+		else if (page === 'friendsPage')
+			openFriendsPage();
+		else if (page === 'gamePage')
+			openGamePage();
+		else if (page === 'userProfilePage')
+			openUserProfilePage(id);
 	}
-  }
+}
   
 
 function logOut()

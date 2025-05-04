@@ -28,7 +28,7 @@ function accountCreationPage()
             type="email"
             id="email"
             placeholder="user@example.com"
-            pattern="^[a-zA-Z0-9._%+\-]+@([a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,}$"
+            pattern="^[a-zA-Z0-9._%+\\-]+@([a-zA-Z0-9\\-]+\\.)+[a-zA-Z]{2,}$"
             required
           />
         </div>

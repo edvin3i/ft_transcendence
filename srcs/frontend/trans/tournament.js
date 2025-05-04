@@ -1,4 +1,13 @@
-function tournamentPage() {
+import { stopPong } from "./pong.js";
+
+function preventArrowScrollDuringMatch(e) {
+	if (["ArrowUp", "ArrowDown"].includes(e.key)) {
+		e.preventDefault();
+	}
+}
+
+function tournamentPage()
+{
 	return `
 		<div class="text-center">
 			<h2>Tournament Mode 🏆</h2>
@@ -12,10 +21,15 @@ function tournamentPage() {
 
 			<div id="gameArea" style="display:none;">
 				<h3 id="playerNames">Match</h3>
-				<canvas id="pongCanvas" width="500" height="300"></canvas>
-			</div>
+				<div id="tournamentFrameContainer">
+					<canvas id="tournamentCanvas" width="500" height="300"></canvas>
+					<img id="tournamentFrameOverlay" src="./assets/frame.png" alt="Tournament Frame" />
+				</div>
 
+			</div>
+			
 			<p><button id="nextMatchBtn" style="display: none;">▶️ Next Match</button></p>
+			
 			<p><button id="restartBtn" style="display: none;">✨ New Tournament</button></p>
 
 			<!-- START: Hidden results section -->
@@ -35,47 +49,48 @@ function tournamentPage() {
 	`;
 }
 
-export function openTournamentPage() {
+export function openTournamentPage()
+{
 	document.getElementById('app').innerHTML = tournamentPage();
+
 	playTournament();
 }
 
+// tournament.js — version with manual Next Match, full reset, clean bracket and winner display
+
 // Global state variables
-let players = [];
-let currentMatchIndex = 0;
-let currentRoundIndex = 0;
-let bracketStructure = [];
+let players = [];                  // List of players
+let currentMatchIndex = 0;         // Current match index within the round
+let currentRoundIndex = 0;         // Current round index
+let bracketStructure = [];         // 2D array representing rounds and matches
 
 export function playTournament() {
-	resetTournament();
-	// Si une fonction externe de binding est utilisée :
-	if (typeof addTournamentEventListeners === 'function') {
-		addTournamentEventListeners();
-	}
-
-	const addBtn = document.getElementById('addPlayerBtn');
-	const input = document.getElementById('playerAlias');
-	const startBtn = document.getElementById('startTournamentBtn');
-	const nextBtn = document.getElementById('nextMatchBtn');
-	const restartBtn = document.getElementById('restartBtn');
-
-	addBtn.addEventListener('click', addPlayer);
-	startBtn.addEventListener('click', startTournament);
-
-	input.addEventListener('keydown', (e) => {
-		if (e.key === 'Enter') addBtn.click();
-	});
-
-	nextBtn.addEventListener('click', () => {
-		nextBtn.style.display = 'none';
-		startMatch();
-	});
-
-	restartBtn.addEventListener('click', () => {
 		resetTournament();
-	});
+
+		const addBtn = document.getElementById('addPlayerBtn');
+		const input = document.getElementById('playerAlias');
+		const startBtn = document.getElementById('startTournamentBtn');
+		const nextBtn = document.getElementById('nextMatchBtn');
+		const restartBtn = document.getElementById('restartBtn');
+
+		addBtn.addEventListener('click', addPlayer);
+		startBtn.addEventListener('click', startTournament);
+
+		input.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') addBtn.click(); // Enable Enter to add player
+		});
+
+		nextBtn.addEventListener('click', () => {
+			nextBtn.style.display = 'none';
+			startMatch(); // Launch next match manually
+		});
+
+		restartBtn.addEventListener('click', () => {
+			resetTournament(); // Restart with cleared state
+		});
 }
 
+// Render the list of player names to the DOM
 function renderPlayerList() {
 	const list = document.getElementById("playerList");
 	const counter = document.getElementById("playerCount");
@@ -90,7 +105,6 @@ function renderPlayerList() {
 		counter.textContent = `${players.length} / 8 players maximum`;
 	}
 }
-
 
 // Add a player name from input field and update the display
 export function addPlayer() {
@@ -164,6 +178,7 @@ export function startTournament() {
 
 // Start a single match or skip to next round if needed
 export function startMatch() {
+	window.addEventListener("keydown", preventArrowScrollDuringMatch, { passive: false });
 	const round = bracketStructure[currentRoundIndex];
 	if (!round || currentMatchIndex >= round.length) {
 		currentRoundIndex++;
@@ -183,26 +198,43 @@ export function startMatch() {
 		return;
 	}
 
-	// Show players before launching pong game
 	const [player1, player2] = match;
-	document.getElementById("playerNames").textContent = `Next match: ${player1} vs ${player2}`;
+	const playerNamesEl = document.getElementById("playerNames");
 
-	setTimeout(() => {
-		document.getElementById("playerNames").textContent = `${player1} vs ${player2}`;
-		import('./pong.js').then(({ playPong }) => {
-			playPong({
-				remote: false,
-				onGameEnd: (winnerSide) => {
-					const winner = winnerSide === "left" ? player1 : player2;
-					placeWinner(winner, player1, player2);
-					currentMatchIndex++;
-					renderBracket();
-					showNextOrRestartButton();
-				}
-			});
-		});
-	}, 2000);
+	// Affiche les noms
+	playerNamesEl.textContent = `Next match: ${player1} vs ${player2}`;
+
+	// Décompte : 3, 2, 1, GO!
+	let countdown = 3;
+	const countdownInterval = setInterval(() => {
+		if (countdown > 0) {
+			playerNamesEl.textContent = `${player1} vs ${player2} — Starting in ${countdown}...`;
+			countdown--;
+		} else {
+			clearInterval(countdownInterval);
+			playerNamesEl.textContent = `${player1} vs ${player2} — GO!`;
+
+			setTimeout(() => {
+				playerNamesEl.textContent = `${player1} vs ${player2}`;
+				import('./pong.js').then(({ playPong }) => {
+					playPong({
+						remote: 1,
+						onGameEnd: (winnerSide) => {
+							window.removeEventListener("keydown", preventArrowScrollDuringMatch); // ✅ clean up scroll blocker
+						
+							const winner = winnerSide === "left" ? player1 : player2;
+							placeWinner(winner, player1, player2);
+							currentMatchIndex++;
+							renderBracket();
+							showNextOrRestartButton();
+						}						
+					});
+				});
+			}, 500); // petite pause sur "GO!" avant de démarrer
+		}
+	}, 1000); // 1 seconde entre chaque nombre
 }
+
 
 // Place winner in next round's correct slot
 function placeWinner(winner, player1, player2) {
@@ -323,26 +355,43 @@ function addTournamentEventListeners() {
 
 // External reset that clears the UI and memory
 export function resetTournament() {
+	
 	players = [];
 	currentMatchIndex = 0;
 	currentRoundIndex = 0;
 	bracketStructure = [];
 
 	const list = document.getElementById("playerList");
-	if (list) list.innerHTML = "";
+if (list) list.innerHTML = "";
 
-	const input = document.getElementById("playerAlias");
-	if (input) input.value = "";
+const input = document.getElementById("playerAlias");
+if (input) input.value = "";
 
-	const counter = document.getElementById("playerCount");
-	if (counter) counter.textContent = "0 / 8 players maximum";
+const counter = document.getElementById("playerCount");
+if (counter) counter.textContent = "0 / 8 players maximum";
 
-	document.getElementById("historyList").innerHTML = "";
-	document.getElementById("bracketContainer").innerHTML = "";
-	document.getElementById("playerNames").textContent = "";
-	document.getElementById("gameArea").style.display = "none";
-	document.getElementById("registration").style.display = "block";
-	document.getElementById("nextMatchBtn").style.display = "none";
-	document.getElementById("restartBtn").style.display = "none";
-	document.getElementById("tournamentResults").style.display = "none";
+const historyList = document.getElementById("historyList");
+if (historyList) historyList.innerHTML = "";
+
+const bracket = document.getElementById("bracketContainer");
+if (bracket) bracket.innerHTML = "";
+
+const names = document.getElementById("playerNames");
+if (names) names.textContent = "";
+
+const gameArea = document.getElementById("gameArea");
+if (gameArea) gameArea.style.display = "none";
+
+const registration = document.getElementById("registration");
+if (registration) registration.style.display = "block";
+
+const nextBtn = document.getElementById("nextMatchBtn");
+if (nextBtn) nextBtn.style.display = "none";
+
+const restartBtn = document.getElementById("restartBtn");
+if (restartBtn) restartBtn.style.display = "none";
+
+const results = document.getElementById("tournamentResults");
+if (results) results.style.display = "none";
+
 }

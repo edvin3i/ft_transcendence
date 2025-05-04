@@ -57,14 +57,48 @@ async function getFriendsList()
 		{
 			const p = document.createElement('p');
 
+			let friendUsername;
+			let friendId;
+
 			if (friend.to_user_username === username)
-				p.textContent = friend.from_user_username;
+			{
+				friendUsername = friend.from_user_username;
+				friendId = friend.from_user;
+			}
 			else
-				p.textContent = friend.to_user_username;
+			{
+				friendUsername = friend.to_user_username;
+				friendId = friend.to_user;
+			}
+
+			p.innerHTML = `${friendUsername} <span id="onlineStatus" class="rounded-circle bg-success me-2" style="width: 10px; height: 10px;"></span>`;
 
 			friendsList.appendChild(p);
+
+			const onlineStatus = document.getElementById('onlineStatus');
+			if (await getOnlineStatus(friendId-1) === true)
+				onlineStatus.style.display = 'inline-block';
 		}
 	}
+}
+
+async function getOnlineStatus(id)
+{
+	const token = await checkToken();
+
+	const response = await fetch(`api/users/${id}/`, 
+	{
+		method: 'GET',
+		headers: 
+		{
+			'Authorization': `Bearer ${token}`,
+			'Content-Type': 'application/json'
+		}
+	});
+
+	const data = await response.json();
+
+	return(data.is_online);
 }
 
 async function getIncomingRequestsList()

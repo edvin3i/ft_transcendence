@@ -1,6 +1,6 @@
 import json
 import redis.asyncio as redis
-from chat.utils import is_blocked, friendship_action
+from chat.utils import is_blocked, friendship_action, block, unblock
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from urllib.parse import parse_qs
@@ -8,6 +8,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from datetime import datetime
+import uuid
 
 import logging
 
@@ -98,7 +99,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"[👋 DISCONNECT] Leaving room: {self.room_group_name}")
 
     async def receive(self, text_data):
-        logger.debug(f"[📩 RECEIVE] Raw data: {text_data}")#spam dans le container django
+        logger.debug(
+            f"[📩 RECEIVE] Raw data: {text_data}"
+        )  # spam dans le container django
         try:
             data = json.loads(text_data)
             message = data.get("message", "")
@@ -141,14 +144,85 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 return
 
             if message.startswith("/invite "):
-                target = message.split(" ", 1)[1]
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        "type": "chat_message",
+                try:
+                    parts = message.split()
+                    if len(parts) != 3:
+                        raise ValueError("Usage: /invite <username> <room_name>")
+
+                    target, room_name = parts[1], parts[2]
+                    if target == username:
+                        await self.send(text_data=json.dumps({
+                            "username": "SYSTEM",
+                            "message": "❌ You cannot invite yourself."
+                        }))
+                        return
+
+                    User = get_user_model()
+                    try:
+                        await database_sync_to_async(User.objects.get)(username=target)
+                    except User.DoesNotExist:
+                        await self.send(text_data=json.dumps({
+                            "username": "SYSTEM",
+                            "message": f"❌ User '{target}' does not exist."
+                        }))
+                        return
+
+                    # Génère un ID unique pour le lien
+                    invite_id = str(uuid.uuid4())[:8]
+
+                    html_message = (
+                        f"{username} invited {target} to a game 🎮 → "
+                        f"<a href='#' class='game-invite-link' data-room='{room_name}' data-invite-id='{invite_id}'>Join Game</a>"
+                    )
+
+                    # Envoie uniquement à l'invitant et l'invité
+                    for recipient in {username, target}:
+                        await self.channel_layer.group_send(
+                            f"user_notify_{recipient}",
+                            {
+                                "type": "chat_message",
+                                "username": "SYSTEM",
+                                "message": html_message,
+                                "is_html": True,
+                            },
+                        )
+
+                    logger.info(f"[🎮 PRIVATE INVITE] {username} invited {target} to room {room_name}")
+
+                except Exception as e:
+                    await self.send(text_data=json.dumps({
                         "username": "SYSTEM",
-                        "message": f"{username} invited {target} to a game 🎮",
-                    },
+                        "message": f"❌ Error with /invite command: {str(e)}"
+                    }))
+                return
+
+
+
+
+            if message.startswith("/block"):
+                target = message.split(" ", 1)[1]
+                await block(user, target)
+                await self.send(
+                    text_data=json.dumps(
+                        {
+                            "username": "SYSTEM",
+                            "message": f"Blocking -> {target} is done",
+                        }
+                    )
+                )
+                logger.info(f"[🎮 INVITE] {username} invited {target}")
+                return
+
+            if message.startswith("/unblock"):
+                target = message.split(" ", 1)[1]
+                await unblock(user, target)
+                await self.send(
+                    text_data=json.dumps(
+                        {
+                            "username": "SYSTEM",
+                            "message": f"Blocking -> {target} is done",
+                        }
+                    )
                 )
                 logger.info(f"[🎮 INVITE] {username} invited {target}")
                 return
@@ -211,7 +285,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 },
             )
 
-
         except Exception as e:
             logger.error(f"[❌ ERROR] receive() failed: {e}")
 
@@ -231,9 +304,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "user_id": event.get("user_id"),
                     "message": message,
                     "timestamp": event.get("timestamp"),
+                    "is_html": event.get("is_html", False),
                 }
             )
         )
+
 
     async def open_dm(self, event):
         await self.send(

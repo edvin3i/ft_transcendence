@@ -176,6 +176,7 @@ class FriendsOnlineListAPIView(APIView):
     """
     online
     """
+
     serializer_class = FriendshipSerializer
     permission_classes = [
         IsAuthenticated,
@@ -197,10 +198,12 @@ class FriendsOnlineListAPIView(APIView):
         online = [u for u in friend_profiles if is_online(u.id)]
         online_ids = [u.id for u in online]
         online_map = {u.id: u.username for u in online}
-        return Response({
-            "online_ids": online_ids,
-            "online_map": online_map,
-        })
+        return Response(
+            {
+                "online_ids": online_ids,
+                "online_map": online_map,
+            }
+        )
 
 
 class FriendsBlockedListAPIView(generics.ListAPIView):

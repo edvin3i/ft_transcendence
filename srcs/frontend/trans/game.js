@@ -3,7 +3,10 @@ import { playPong3D } from './pong3d.js';
 // import { playMoshpit } from './moshpitRemote.js';
 import { playTournament, openTournamentPage } from './tournament.js';
 import { openOnlineTournamentPage } from './tournamentOnline.js';
-import { openMoshpitPage } from './moshpitRemote.js';
+// import { openMoshpitPage } from './moshpitRemote.js';
+export { remoteGamePage };
+
+
 
 function gamePage()
 {
@@ -49,9 +52,6 @@ function localGamePage()
 				</div>
 				<img id="fullFrameOverlay" src="assets/frame.png" alt="Frame Overlay" />
 				<canvas id="pongCanvas"></canvas>
-				<div style="position: absolute; top: 10px; left: 10px;">
-					<button onclick="history.back()">← Back to main menu</button>
-				</div>
 			</div>
 		</div>
 	`;
@@ -61,7 +61,7 @@ function openLocalGamePage()
 {
 	document.getElementById('app').innerHTML = localGamePage();
 
-	playPong({remote: false});
+	playPong({remote: 2});
 }
 
 function enterRoomPage()
@@ -112,7 +112,7 @@ function startRemoteGame()
 
 	document.getElementById('app').innerHTML = remoteGamePage();
 
-	playPong({remote: true, room: room});
+	playPong({remote: 0, room: room});
 }
 
 

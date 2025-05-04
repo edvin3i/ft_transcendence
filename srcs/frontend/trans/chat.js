@@ -1,4 +1,8 @@
-import { openUserProfilePage } from './userProfile.js';
+import {checkToken} from './token.js';
+import {openPage} from './navigation.js';
+import { remoteGamePage } from './game.js';
+import { playPong } from './pong.js';
+
 
 let socket = null;
 let chatWs = null;
@@ -87,10 +91,10 @@ function addChatEventListeners()
 	openChat(); // 👈 Lancement ici, une fois que tout est prêt
 }
 
-function openChat(room = "general") {
+async function openChat(room = "general") {
 	let receivedHistory = false;
 	const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-	const token = localStorage.getItem("accessToken");
+	const token = await checkToken();
 	const wsUrl = `${protocol}://${window.location.host}/ws/chat/${room}/?token=${token}`;
 
 	if (!openRooms.has(room)) {
@@ -179,13 +183,25 @@ function openChat(room = "general") {
 		) {
 			senderSpan.title = "Click to view profile";
 			senderSpan.addEventListener("click", () => {
-				openUserProfilePage(senderId-1); // 👈 utilise l’ID ici
+		//		openUserProfilePage(senderId-1); // 👈 utilise l’ID ici
+				openPage('userProfilePage', 1, senderId); // 👈 utilise l’ID ici
 			});
 		}
 
 		p.appendChild(senderSpan);
-		const textNode = document.createTextNode(` : ${message}`);
-		p.appendChild(textNode);
+		const messageSpan = document.createElement("span");
+		if (data.is_html) {
+			const wrapper = document.createElement("span");
+			wrapper.innerHTML = ` : ${data.message}`;
+			messageSpan.appendChild(wrapper);
+			p.appendChild(messageSpan);
+			p.setAttribute("data-invite-id", wrapper.querySelector('.game-invite-link')?.dataset.inviteId || "");
+
+		} else {
+			messageSpan.textContent = ` : ${data.message}`;
+		}
+		p.appendChild(messageSpan);
+		
 
 		chatLog.appendChild(p);
 		chatLog.scrollTop = chatLog.scrollHeight;
@@ -217,6 +233,26 @@ function openChat(room = "general") {
 			document.getElementById("send").click();
 		}
 	});
+
+	document.addEventListener("click", function (e) {
+		if (e.target && e.target.classList.contains("game-invite-link")) {
+			e.preventDefault();
+			const roomName = e.target.getAttribute("data-room");
+			const inviteId = e.target.getAttribute("data-invite-id");
+	
+			if (roomName) {
+				startRemoteGameFromLink(roomName);
+			}
+	
+			// Supprimer le message du DOM
+			const messageEl = document.querySelector(`p[data-invite-id='${inviteId}']`);
+			if (messageEl) {
+				messageEl.remove();
+			}
+		}
+	});
+	
+	
 }
 
 function createChatTab(room) {
@@ -283,4 +319,9 @@ function switchRoom(room) {
 	});
 	currentRoom = room;
 	openChat(room);
+}
+
+function startRemoteGameFromLink(roomName) {
+	document.getElementById("app").innerHTML = remoteGamePage();
+	playPong({ remote: 0, room: roomName });
 }

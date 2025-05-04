@@ -44,6 +44,30 @@ def friendship_action(me, target_username, action):
 
 
 @database_sync_to_async
+def block(me, target_username):
+    user = get_user_model()
+    target_username = user.objects.get(username=target_username)
+
+    Friendship.objects.update_or_create(
+        from_user=me,
+        to_user=target_username,
+        defaults={"status": "blocked"},
+    )
+
+
+@database_sync_to_async
+def unblock(me, target_username):
+    user = get_user_model()
+    target_username = user.objects.get(username=target_username)
+
+    Friendship.objects.filter(
+        from_user=me,
+        to_user=target_username,
+        status="blocked",
+    ).delete()
+
+
+@database_sync_to_async
 def is_blocked(from_user, sender_username):
     """
     Checking the user is blocked

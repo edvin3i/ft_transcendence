@@ -21,7 +21,7 @@ function logInPage()
 		</div>
 		<p class="text-center">---or---</p>
 		<form id="logInForm" method="POST" class="container">
-			<div class="mb-3">
+			<div class="form-group mb-3">
 				<label for="username" class="form-label">username:</label>
 				<input  type="text"
 						id="username"
@@ -33,7 +33,7 @@ function logInPage()
 						title="Username can only contain letters, numbers, and underscores, and must be 3-20 characters long."
 						required/>
 			</div>
-			<div class="mb-3">
+			<div class="form-group mb-3">
 				<label for="password" class="form-label">password:</label>
 				<input type="password"
 						id="password"

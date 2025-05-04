@@ -1,12 +1,15 @@
 import {openUserInformationChangePage, uploadAvatar} from './userInformation.js'
 import {open2FAStatusChangePage} from './twoFactorAuthentication.js'
 import {checkToken} from './token.js'
+import {showMatchHistory} from './userProfile.js'
 
 function profilePage()
 {
 	return `
+	<div class="panels-wrapper">
 		<div style="display: flex; justify-content: center; gap: 40px; align-items: flex-start;">
-			<div class="text-center">
+		<div class="neon-panel">	
+		<div class="text-center">
 				<h2>Your profile</h2>
 				<img id="avatar" alt="Avatar" class="rounded-circle mx-auto" style="width: 150px; height: 150px; object-fit: cover; display: block">
 				<input type="file" accept="image/*" id="avatarInput" style="display: none;"></input>
@@ -18,8 +21,10 @@ function profilePage()
 				<p>2FA: <span id="status"></span></p>
 				<button id="enableOrDisableButton"></button>
 			</div>
+			</div>
+			<div class="neon-panel">
 			<div class="text-center">
-				<h2>Match History</h2>
+				<h2>Stats</h2>
 				<div id="matchStats" style="justify-content: space-around; display: flex; margin-bottom: 15px; text-align: center;">
 					<div>
 						<p class="text-success"><span id="wins"></span></p>
@@ -30,7 +35,10 @@ function profilePage()
 						<p>Losses</p>
 					</div>
 				</div>
-				<ul id="matchList" style="list-style: none; padding: 0;"></ul>
+				<h2>Match History</h2>
+				<ul id="matchHistory" style="list-style: none; padding: 0;"></ul>
+			</div>
+			</div>
 			</div>
 		</div>
 	`;
@@ -94,4 +102,6 @@ async function getStats()
 
 	document.getElementById('wins').innerHTML = data.total_wins;
 	document.getElementById('losses').innerHTML = data.total_losses;
+
+	showMatchHistory(data.match_history);
 }
