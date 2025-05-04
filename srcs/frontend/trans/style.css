@@ -110,8 +110,8 @@ canvas {
 
 #uiLayer {
    position: absolute;
-   left: 0;
-   right: 0;
+   width: 100;
+   height: 100%;
    top: 5rem;
    bottom: 4rem;
    display: flex;
@@ -142,8 +142,32 @@ canvas {
 	z-index: 10;
 	pointer-events: none;
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
+
+
+#tournamentFrameContainer {
+	position: relative;
+	display: inline-block;
+	width: fit-content;
+	height: fit-content;
+	margin: 0 auto;
+}
+
+#tournamentCanvas {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+#tournamentFrameOverlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: fill;
+	pointer-events: none;
+	z-index: 10;
+}
 
 
 .neon-panel
@@ -357,6 +381,7 @@ canvas {
   width: 100%;
   text-align: center;
   color: #ff00ff;
+}
 
 .neon-panel p,
 .neon-panel span {
@@ -374,32 +399,3 @@ canvas {
   padding: 1rem;            /* опционально — внутренние отступы вокруг */
 }
 
-=======
->>>>>>> 7c65993 (Ulysse's work)
-=======
-
-#tournamentFrameContainer {
-	position: relative;
-	display: inline-block;
-	width: fit-content;
-	height: fit-content;
-	margin: 0 auto;
-}
-
-#tournamentCanvas {
-	display: block;
-	width: 100%;
-	height: auto;
-}
-
-#tournamentFrameOverlay {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	object-fit: fill;
-	pointer-events: none;
-	z-index: 10;
-}
->>>>>>> 85d03b6 (FRAME IS GOOD, PLUS QUE LES FIX DU LOCAL TOUR- HITBOX ETC)

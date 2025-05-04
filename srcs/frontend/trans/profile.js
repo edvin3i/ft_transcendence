@@ -7,7 +7,7 @@ function profilePage()
 {
 	return `
 	<div class="panels-wrapper">
-		// <div style="display: flex; justify-content: center; gap: 40px; align-items: flex-start;">
+		<div style="display: flex; justify-content: center; gap: 40px; align-items: flex-start;">
 		<div class="neon-panel">	
 		<div class="text-center">
 				<h2>Your profile</h2>
