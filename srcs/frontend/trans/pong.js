@@ -6,7 +6,7 @@ export let stopPong = () => {};
 
 export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = false } = {}) {
 
-	const canvas = document.getElementById("pongCanvas");
+	const canvas = document.getElementById("tournamentCanvas") || document.getElementById("pongCanvas");
 	const status = document.getElementById("pongStatus");
 	const label = document.getElementById("playerLabel");
 	const nameLabel = document.getElementById("playerNames");
@@ -187,24 +187,18 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 	
 	  drawRemote();
 	
-	  window.addEventListener("beforeunload", () => {
-		if (socket.readyState === WebSocket.OPEN) {
-		  socket.send(JSON.stringify({ type: "end" }));
+	    
+	  stopPong = function () {
+		if (socket && socket.readyState === WebSocket.OPEN) {
 		  socket.close();
 		}
-	  });
-	
-	  document.addEventListener("visibilitychange", () => {
-		if (document.hidden && socket.readyState === WebSocket.OPEN) {
-		  socket.send(JSON.stringify({ type: "end" }));
-		  socket.close();
-		  ctx.clearRect(0, 0, canvas.width, canvas.height);
-		  status.innerText = "Left the match";
-		  nameLabel.innerText = "";
-		  timerDisplay.innerText = "";
-		  label.innerText = "";
-		}
-	  });
+	  
+		document.removeEventListener("keydown", handleRemoteKeyDown);
+		document.removeEventListener("keyup", handleRemoteKeyUp);
+	  
+		if (status) status.innerText = "Game disconnected.";
+	  };
+	  
 	}
 	
   
@@ -217,8 +211,8 @@ export function playPong({ remote = 2, room = "myroom", onGameEnd = null, ai = f
 	  let pauseOverlay = null;
 	  let isResuming = false;
   
-	  canvas.width = window.innerWidth * 0.95;
-	  canvas.height = window.innerHeight * 0.95;
+	  canvas.width = window.innerWidth * 0.70;
+	  canvas.height = window.innerHeight * 0.65;
 	
 	  const ctx = canvas.getContext("2d");
 	
