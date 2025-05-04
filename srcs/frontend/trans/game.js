@@ -3,7 +3,7 @@ import { playPong3D } from './pong3d.js';
 // import { playMoshpit } from './moshpitRemote.js';
 import { playTournament, openTournamentPage } from './tournament.js';
 import { openOnlineTournamentPage } from './tournamentOnline.js';
-// import { openMoshpitPage } from './moshpitRemote.js';
+ import { openMoshpitPage } from './moshpitRemote.js';
 export { remoteGamePage };
 
 
@@ -17,7 +17,7 @@ function gamePage()
 				<button id="localButton" class="btn btn-primary">Local 🎮</button>
 				<button id="remoteButton" class="btn btn-primary">Remote 🌐</button>
 				<button id="tournamentButton" class="btn btn-primary">Tournament 🏆</button>
-				<button id="tournamentOnlineButton" class="btn btn-primary">Online Tournament 🏆</button>
+				<!--button id="tournamentOnlineButton" class="btn btn-primary">Online Tournament 🏆</button-->
 				<button id="moshpitButton" class="btn btn-primary">Moshpit 👾</button>
 				<button id="threeDButton" class="btn btn-primary">3D Mode 🧠</button>
 			</div>
@@ -34,7 +34,7 @@ export function openGamePage() {
 	document.getElementById('localButton')?.addEventListener('click', openLocalGamePage);
 	document.getElementById('remoteButton')?.addEventListener('click', openRemoteGamePage);
 	document.getElementById('tournamentButton')?.addEventListener('click', openTournamentPage);
-	document.getElementById('tournamentOnlineButton')?.addEventListener('click', openOnlineTournamentPage);
+//	document.getElementById('tournamentOnlineButton')?.addEventListener('click', openOnlineTournamentPage);
 	document.getElementById('moshpitButton')?.addEventListener('click', openMoshpitPage);
 	document.getElementById('threeDButton')?.addEventListener('click', open3DPage);
   }

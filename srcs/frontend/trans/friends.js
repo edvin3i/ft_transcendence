@@ -11,9 +11,9 @@ function friendsPage()
 			<div id="incomingRequestsList"></div>
 			<h2>Outgoing friend requests:<br></h2>
 			<div id="outgoingRequestsList"></div>
-			<input type="text" id="friendId" placeholder="Enter friend ID" />
-			<button id="addFriendButton">Add friend</button>
-			<p id="addFriendResponse" style="margin-top: 10px;"></p>
+			<!--input type="text" id="friendId" placeholder="Enter friend ID" /-->
+			<!--button id="addFriendButton">Add friend</button-->
+			<!p id="addFriendResponse" style="margin-top: 10px;"></p-->
 		</div>
 	`;
 }
@@ -26,8 +26,8 @@ export function openFriendsPage()
 	getIncomingRequestsList();
 	getOutgoingRequestsList();
 
-	const addFriendButton = document.getElementById('addFriendButton');
-	addFriendButton.addEventListener('click', addFriend);
+//	const addFriendButton = document.getElementById('addFriendButton');
+//	addFriendButton.addEventListener('click', addFriend);
 }
 
 async function getFriendsList()
