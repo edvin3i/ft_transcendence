@@ -7,11 +7,7 @@ function userProfilePage()
 			<div class="text-center">
 				<h2><span id="user"></span>'s profile</h2>
 				<img id="avatar" alt="Avatar" class="rounded-circle mx-auto" style="width: 150px; height: 150px; object-fit: cover; display: block">
-				<h2>Information:</h2>
 				<p id="userInformation">username: <span id="username"></span><br>email: <span id="email"></span></p>
-			</div>
-			<div class="text-center">
-				<h2>Stats</h2>
 				<div id="matchStats" style="justify-content: space-around; display: flex; margin-bottom: 15px; text-align: center;">
 					<div>
 						<p class="text-success"><span id="wins"></span></p>
@@ -22,6 +18,8 @@ function userProfilePage()
 						<p>Losses</p>
 					</div>
 				</div>
+			</div>
+			<div class="text-center">
 				<h2>Match History</h2>
 				<ul id="matchHistory" style="list-style: none; padding: 0;"></ul>
 			</div>
