@@ -143,17 +143,35 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 return
 
             if message.startswith("/invite "):
-                target = message.split(" ", 1)[1]
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        "type": "chat_message",
+                try:
+                    parts = message.split()
+                    if len(parts) != 3:
+                        raise ValueError("Usage: /invite <username> <room_name>")
+
+                    target, room_name = parts[1], parts[2]
+                    invite_link = f"/game?room={room_name}"
+                    html_message = (
+                        f"{username} invited {target} to a game 🎮 → "
+                        f"<a href='{invite_link}' class='game-invite-link' data-room='{room_name}'>Join Game</a>"
+                    )
+
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            "type": "chat_message",
+                            "username": "SYSTEM",
+                            "message": html_message,
+                            "is_html": True,
+                        },
+                    )
+                    logger.info(f"[🎮 INVITE] {username} invited {target} to room {room_name}")
+                except Exception as e:
+                    await self.send(text_data=json.dumps({
                         "username": "SYSTEM",
-                        "message": f"{username} invited {target} to a game 🎮",
-                    },
-                )
-                logger.info(f"[🎮 INVITE] {username} invited {target}")
+                        "message": f"❌ Error with /invite command: {str(e)}"
+                    }))
                 return
+
 
             if message.startswith("/block"):
                 target = message.split(" ", 1)[1]
@@ -260,9 +278,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "user_id": event.get("user_id"),
                     "message": message,
                     "timestamp": event.get("timestamp"),
+                    "is_html": event.get("is_html", False),
                 }
             )
         )
+
 
     async def open_dm(self, event):
         await self.send(
